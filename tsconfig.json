@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "resolveJsonModule": true,
+        "rootDir": ".",
+
+        "strict": true,
+        "allowJs": true,
+        "noImplicitOverride": true,
+        "noPropertyAccessFromIndexSignature": true,
+        "useDefineForClassFields": true,
+        "experimentalDecorators": true,
+        "forceConsistentCasingInFileNames": true,
+
+        "plugins": [{ "name": "typescript-plugin-css-modules" }]
+    },
+    "include": ["packages", "plugins/*/src"],
+    "exclude": ["packages/chili-wasm/lib"]
+}

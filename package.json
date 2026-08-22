@@ -1,0 +1,54 @@
+{
+    "name": "cad-drafting",
+    "version": "0.0.1",
+    "description": "A web-based CAD drafting application built with TypeScript, React, and WebAssembly.",
+    "documentVersion": "0.7.1",
+    "author": "Arindam Bhattacharya <arindambhattacharyya.ab@gmail.com>",
+    "type": "module",
+    "scripts": {
+        "build": "rspack build && node scripts/build-plugins.mjs",
+        "build:wasm": "cd cpp && cmake --preset release && cmake --build --preset release",
+        "build:types": "node scripts/generate_types.mjs",
+        "check": "biome check --write",
+        "dev": "rspack dev",
+        "format": "biome check --write . && npx clang-format --style=Webkit --sort-includes -i ./cpp/src/**",
+        "preview": "rspack preview",
+        "release": "node scripts/release.mjs",
+        "setup:wasm": "node scripts/setup_wasm_deps.mjs",
+        "test": "rstest run"
+    },
+    "simple-git-hooks": {
+        "pre-commit": "npx lint-staged"
+    },
+    "lint-staged": {
+        "*.{ts,js,css,json,mjs}": [
+            "npx biome check --write"
+        ],
+        "*.{c,h,cxx,hxx,cpp,hpp}": [
+            "npx clang-format --style=Webkit --sort-includes -i"
+        ]
+    },
+    "workspaces": [
+        "packages/*",
+        "plugins/*"
+    ],
+    "devDependencies": {
+        "@biomejs/biome": "^2.4.15",
+        "@rspack/cli": "^2.0.3",
+        "@rspack/core": "^2.0.3",
+        "@rspack/dev-server": "^2.0.0",
+        "@rstest/core": "^0.10.0",
+        "@rstest/coverage-istanbul": "^0.10.0",
+        "clang-format": "^1.8.0",
+        "happy-dom": "^20.9.0",
+        "lint-staged": "^17.0.5",
+        "simple-git-hooks": "2.13.1",
+        "ts-checker-rspack-plugin": "^1.3.0",
+        "typescript": "^6.0.3",
+        "typescript-plugin-css-modules": "^5.2.0"
+    },
+    "dependencies": {
+        "@types/jszip": "^3.4.0",
+        "jszip": "^3.10.1"
+    }
+}
