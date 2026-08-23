@@ -23,7 +23,7 @@
  * ASYNC & CONTROL FLOW:
  * - asyncController:   Manage long-running operations (file I/O, calculations)
  * - lazy:              Deferred initialization for expensive objects
- * - gc:                Automatic resource cleanup (memory management)
+ * - garbageCollection:   Automatic resource cleanup (memory management)
  * - transaction:       ACID-like operations for undo/redo
  * - history:           State snapshots for undo/redo functionality
  *
@@ -98,10 +98,9 @@ export * from "./comparers";
 export * from "./converter";
 export * from "./deepObserver";
 export * from "./disposable";
-export * from "./drawingSetup";
 export * from "./dto";
 export * from "./equalityComparer";
-export * from "./gc";
+export * from "./garbageCollection";
 export * from "./history";
 export * from "./id";
 export * from "./lazy";
