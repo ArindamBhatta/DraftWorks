@@ -1,0 +1,149 @@
+import type { IDocument } from "../document";
+import type { AsyncController } from "../foundation";
+import type { I18nKeys } from "../i18n";
+import type { ShapeNode } from "../model";
+import type { INodeFilter, IShapeFilter } from "../selectionFilter";
+import { type ShapeType, ShapeTypeUtils } from "../shape";
+import type { SnapResult } from "../snap";
+import type { VisualShapeData, VisualState } from "../visual";
+import type { IStep } from "./step";
+
+export interface SelectShapeOptions {
+    multiple?: boolean;
+    nodeFilter?: INodeFilter;
+    shapeFilter?: IShapeFilter;
+    selectedState?: VisualState;
+    highlightState?: VisualState;
+    keepSelection?: boolean;
+    /** In multiple mode, finish the selection automatically once this returns true. */
+    canFinish?: (selected: VisualShapeData[]) => boolean;
+    beforeSelection?: () => void;
+    afterSelection?: () => void;
+}
+
+export interface SelectNodeOptions {
+    multiple?: boolean;
+    filter?: INodeFilter;
+    keepSelection?: boolean;
+}
+
+export abstract class SelectStep implements IStep {
+    constructor(
+        readonly snapeType: ShapeType,
+        readonly prompt: I18nKeys,
+        readonly options?: SelectShapeOptions,
+    ) {}
+
+    async execute(document: IDocument, controller: AsyncController): Promise<SnapResult | undefined> {
+        if (!this.options?.keepSelection) {
+            document.selection.clearSelection();
+        }
+
+        this.options?.beforeSelection?.();
+        return Promise.try(this.select.bind(this), document, controller).finally(() => {
+            this.options?.afterSelection?.();
+        });
+    }
+
+    abstract select(document: IDocument, controller: AsyncController): Promise<SnapResult | undefined>;
+}
+
+export class SelectShapeStep extends SelectStep {
+    override async select(document: IDocument, controller: AsyncController): Promise<SnapResult | undefined> {
+        const shapes = await document.picker.pickShape(this.prompt, controller, {
+            shapeType: this.snapeType,
+            shapeFilter: this.options?.shapeFilter,
+            nodeFilter: this.options?.nodeFilter,
+            multi: this.options?.multiple,
+            selectedState: this.options?.selectedState,
+            highlightState: this.options?.highlightState,
+            canFinish: this.options?.canFinish,
+        });
+        if (shapes.length === 0) return undefined;
+        return {
+            view: document.application.activeView!,
+            shapes,
+            nodes: shapes.map((x) => x.owner.node),
+            type: "shape",
+        };
+    }
+}
+
+export class GetOrSelectShapeStep extends SelectShapeStep {
+    override execute(document: IDocument, controller: AsyncController): Promise<SnapResult | undefined> {
+        const shapes = document.selection.getSelectedShapes().filter((x) => {
+            let isValid = ShapeTypeUtils.contains(this.snapeType, x.shape.shapeType);
+            if (this.options?.shapeFilter?.allow) {
+                isValid &&= this.options.shapeFilter.allow(x.shape, x.transform);
+            }
+            if (this.options?.nodeFilter?.allow) {
+                isValid &&= this.options.nodeFilter.allow(x.owner.node);
+            }
+
+            return isValid;
+        });
+
+        if (shapes.length > 0) {
+            controller.success();
+            return Promise.resolve({
+                view: document.application.activeView!,
+                shapes,
+                nodes: shapes.map((x) => x.owner.node),
+                type: "shape",
+            });
+        }
+
+        return super.execute(document, controller);
+    }
+}
+
+export class SelectNodeStep implements IStep {
+    constructor(
+        readonly prompt: I18nKeys,
+        readonly options?: SelectNodeOptions,
+    ) {}
+
+    async execute(document: IDocument, controller: AsyncController): Promise<SnapResult | undefined> {
+        if (!this.options?.keepSelection) {
+            document.selection.clearSelection();
+        }
+
+        return Promise.try(async () => {
+            const nodes = await document.picker.pickNode(this.prompt, controller, {
+                nodeFilter: this.options?.filter,
+                multi: this.options?.multiple,
+            });
+            if (nodes.length === 0) return undefined;
+            return {
+                view: document.application.activeView!,
+                shapes: [],
+                nodes,
+                type: "node",
+            } satisfies SnapResult;
+        });
+    }
+}
+
+export class GetOrSelectNodeStep extends SelectNodeStep {
+    override execute(document: IDocument, controller: AsyncController): Promise<SnapResult | undefined> {
+        const selected = document.selection.getSelectedNodes().filter((x) => {
+            if (this.options?.filter?.allow) {
+                return this.options.filter.allow(x);
+            }
+
+            return true;
+        });
+
+        if (selected.length > 0) {
+            controller.success();
+            return Promise.resolve({
+                view: document.application.activeView!,
+                shapes: [],
+                nodes: selected as ShapeNode[],
+                type: "node",
+            });
+        }
+
+        return super.execute(document, controller);
+    }
+}

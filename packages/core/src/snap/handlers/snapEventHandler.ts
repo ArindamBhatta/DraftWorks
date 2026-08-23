@@ -1,0 +1,299 @@
+import { Config, VisualConfig } from "../../config";
+import type { IDocument } from "../../document";
+import { type AsyncController, type MessageType, PubSub, Result, UnitSetup } from "../../foundation";
+import type { I18nKeys } from "../../i18n";
+import type { XYZ } from "../../math";
+import { MeshDataUtils, type ShapeMeshData, type ShapeType, ShapeTypes } from "../../shape";
+import { type IEventHandler, type IView, type MeshOption, screenDistance } from "../../visual";
+import type { ISnap, MouseAndDetected, SnapData, SnapResult } from "../snap";
+import { snapMarkerMesh } from "../snapMarker";
+
+type SnapState = "idle" | "snapping" | "inputing" | "cancelled" | "completed";
+
+export abstract class SnapEventHandler<D extends SnapData = SnapData> implements IEventHandler {
+    private _tempPoint?: number;
+    private _tempShapes?: number[];
+    protected showTempPoint: boolean = true;
+    protected _snaped?: SnapResult;
+    private _state: SnapState = "idle";
+
+    facePreviewOpion: MeshOption = { meshOpacity: 1 };
+    isEnabled: boolean = true;
+
+    constructor(
+        readonly document: IDocument,
+        readonly controller: AsyncController,
+        readonly snaps: ISnap[],
+        readonly data: D,
+    ) {
+        this.showTempShape(undefined);
+        controller.onCancelled(() => this.handleCancel());
+        controller.onCompleted(() => this.handleSuccess());
+    }
+
+    get snaped() {
+        return this._snaped;
+    }
+    get state() {
+        return this._state;
+    }
+
+    dispose() {
+        this._snaped = undefined;
+        this._state = "completed";
+    }
+
+    private handleSuccess() {
+        if (this._state === "completed") return;
+
+        this._state = "completed";
+        this.controller.success();
+        this.cleanupResources();
+    }
+
+    private handleCancel() {
+        if (this._state === "cancelled") return;
+
+        this._state = "cancelled";
+        this.controller.cancel();
+        this.cleanupResources();
+    }
+
+    private cleanupResources() {
+        this.clearSnapPrompt();
+        this.clearInput();
+        this.removeTempVisuals();
+        this.snaps.forEach((snap) => snap.clear());
+    }
+
+    private clearInput() {
+        PubSub.default.pub("clearInput");
+    }
+
+    pointerMove(view: IView, event: PointerEvent): void {
+        this._state = "snapping";
+        this.removeTempVisuals();
+        this.updateSnapPoint(view, event);
+        this.updateVisualFeedback(view);
+    }
+
+    private updateSnapPoint(view: IView, event: PointerEvent) {
+        this.setSnaped(view, event);
+        if (this._snaped) {
+            this.showSnapPrompt(this._snaped);
+        } else {
+            this.clearSnapPrompt();
+        }
+    }
+
+    private updateVisualFeedback(view: IView) {
+        this.showTempShape(this._snaped?.point);
+        view.document.visual.update();
+    }
+
+    protected setSnaped(view: IView, event: PointerEvent) {
+        this.findSnapPoint((ShapeTypes.edge | ShapeTypes.vertex | ShapeTypes.face) as ShapeType, view, event);
+
+        this.snaps.forEach((snap) => snap.handleSnaped?.(view.document.visual.document, this._snaped));
+    }
+
+    private findNearestFeaturePoint(view: IView, event: PointerEvent) {
+        let minDist = Number.MAX_VALUE;
+        let nearest;
+
+        for (const point of this.data.featurePoints || []) {
+            if (point.when && !point.when()) continue;
+
+            const dist = screenDistance(view, event.offsetX, event.offsetY, point.point);
+            if (dist < minDist) {
+                minDist = dist;
+                nearest = point;
+            }
+        }
+
+        return minDist < Config.instance.SnapDistance ? nearest : undefined;
+    }
+
+    protected findSnapPoint(shapeType: ShapeType, view: IView, event: PointerEvent) {
+        const featurePoint = this.findNearestFeaturePoint(view, event);
+        if (featurePoint) {
+            this._snaped = {
+                view,
+                point: featurePoint.point,
+                info: featurePoint.prompt,
+                shapes: [],
+                type: "feature",
+            };
+        } else {
+            const detected = this.detectShapes(shapeType, view, event);
+            for (const snap of this.snaps) {
+                const snaped = snap.snap(detected);
+                if (snaped && this.validateSnapPoint(snaped)) {
+                    this._snaped = snaped;
+                    return;
+                }
+            }
+        }
+    }
+
+    private validateSnapPoint(snaped: SnapResult) {
+        return !this.data.validator || this.data.validator(snaped.point!);
+    }
+
+    private detectShapes(shapeType: ShapeType, view: IView, event: MouseEvent): MouseAndDetected {
+        const shapes = view.detectShapes(shapeType, event.offsetX, event.offsetY, this.data.filter);
+        return { shapes, view, mx: event.offsetX, my: event.offsetY };
+    }
+
+    protected clearSnapPrompt() {
+        PubSub.default.pub("clearFloatTip");
+    }
+
+    protected showSnapPrompt(snaped: SnapResult) {
+        const prompt = this.formatSnapPrompt(snaped);
+        if (!prompt) {
+            this.clearSnapPrompt();
+            return;
+        }
+        PubSub.default.pub("showFloatTip", prompt);
+    }
+
+    protected formatSnapPrompt(
+        snaped: SnapResult,
+    ): HTMLElement | { level: MessageType; msg: string } | undefined {
+        let prompt = this.data.prompt?.(snaped);
+        if (!prompt) {
+            const distance = snaped.distance ?? snaped.refPoint?.distanceTo(snaped.point!);
+            if (distance) {
+                prompt = this.formatSnapDistance(distance);
+            }
+        }
+
+        if (!prompt && !snaped.info) {
+            return undefined;
+        }
+
+        return {
+            level: "info",
+            msg: [snaped.info, prompt].filter((x) => x !== undefined).join(" -> "),
+        };
+    }
+
+    // Shared by every snap handler, so routing it through UnitSetup makes the live
+    // cursor tooltip honour the drawing's configured units - the same formatting the
+    // user typed in (see UnitSetup.tryParseLength on the input side).
+    protected formatSnapDistance(num: number) {
+        return UnitSetup.formatLength(num);
+    }
+
+    private removeTempVisuals() {
+        this.removeTempShapes();
+        this.snaps.forEach((snap) => snap.removeDynamicObject());
+    }
+
+    private showTempShape(point: XYZ | undefined) {
+        if (point && this.showTempPoint) {
+            this._tempPoint = this.document.visual.context.displayMesh([this.acquiredSnapMesh(point)]);
+        }
+
+        this._tempShapes = this.data
+            .preview?.(point)
+            ?.map((shape) => this.document.visual.context.displayMesh([shape], this.facePreviewOpion));
+    }
+
+    /**
+     * What marks the point the cursor has actually acquired. When the snap has an
+     * AutoCAD glyph - a square for an endpoint, a triangle for a midpoint - that glyph
+     * is drawn in the acquired colour, so it stands out from the paler markers
+     * ObjectSnap puts on the other key points of the same object. Snaps with no glyph
+     * (typed input, tracking, axis locks) keep the plain point.
+     */
+    private acquiredSnapMesh(point: XYZ): ShapeMeshData {
+        const view = this._snaped?.view ?? this.document.application.activeView;
+        const type = this._snaped?.type;
+        const marker = view && type && snapMarkerMesh(view, type, point, VisualConfig.snapAcquiredColor);
+
+        return (
+            marker ??
+            MeshDataUtils.createVertexMesh(
+                point,
+                VisualConfig.temporaryVertexSize,
+                VisualConfig.temporaryVertexColor,
+            )
+        );
+    }
+
+    private removeTempShapes() {
+        if (this._tempPoint) {
+            this.document.visual.context.removeMesh(this._tempPoint);
+            this._tempPoint = undefined;
+        }
+        this._tempShapes?.forEach((id) => {
+            this.document.visual.context.removeMesh(id);
+        });
+        this.document.visual.update();
+        this._tempShapes = undefined;
+    }
+
+    pointerDown(view: IView, event: PointerEvent): void {
+        if (event.pointerType === "mouse" && event.button === 0) {
+            if (this._snaped) {
+                this.handleSuccess();
+            } else {
+                PubSub.default.pub("showToast", "toast.snap.notFoundValidPoint");
+            }
+        }
+    }
+
+    pointerUp(view: IView, event: PointerEvent): void {
+        if (event.pointerType !== "mouse" && event.isPrimary && this._snaped) {
+            this.handleSuccess();
+        }
+    }
+
+    pointerOut(view: IView, event: PointerEvent) {
+        this._snaped = undefined;
+    }
+
+    mouseWheel(view: IView, event: WheelEvent): void {
+        view.update();
+    }
+
+    keyDown(view: IView, event: KeyboardEvent): void {
+        this.data.onKeyDown?.(event, () => {
+            this.removeTempShapes();
+            this.showTempShape(this._snaped?.point);
+            view.document.visual.update();
+        });
+
+        if (event.key === "Escape") {
+            this._snaped = undefined;
+            this.handleCancel();
+        } else if (event.key === "Enter" || event.key === " ") {
+            // should cancel when enter or space keydown, and should not trigger HotKeyService
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            this._snaped = undefined;
+            this.handleCancel();
+        } else {
+            this.handleNumericInput(view, event);
+        }
+    }
+
+    private handleNumericInput(view: IView, event: KeyboardEvent) {
+        if (!["#", "-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"].includes(event.key)) return;
+
+        this._state = "inputing";
+        PubSub.default.pub("showInput", event.key, (text: string) => {
+            const error = this.inputError(text);
+            if (error) return Result.err(error);
+
+            this._snaped = this.getPointFromInput(view, text);
+            this.handleSuccess();
+            return Result.ok(text);
+        });
+    }
+
+    protected abstract getPointFromInput(view: IView, text: string): SnapResult;
+    protected abstract inputError(text: string): I18nKeys | undefined;
+}
