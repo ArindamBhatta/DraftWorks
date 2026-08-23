@@ -1,0 +1,124 @@
+import type { IDisposable, Result } from "../foundation";
+import type { BoundingBox, Line, Matrix4, OrientedBoundingBox, Plane, XYZ, XYZLike } from "../math";
+import type { Continuity, ICurve, ITrimmedCurve } from "./curve";
+import type { EdgeMeshData, IShapeMeshData } from "./meshData";
+import type { ShapeType } from "./shapeType";
+import type { ISurface } from "./surface";
+
+export type Orientation = "forward" | "reversed" | "internal" | "external";
+
+// IShape is the base topology interface every OCCT shape implements, whether it's a
+// 0D vertex or a 3D solid - IVertex/IEdge/IWire/IFace/IShell/ISolid/ICompound below
+// all `extends IShape`, narrowing it with kind-specific behavior (IFace.area(),
+// ISolid.volume(), IEdge.curve, ...). There is deliberately no separate "2D shape"
+// vs "3D shape" branch of this hierarchy: OCCT's own topology model (TopoDS_*) makes
+// no such distinction - a wire is a wire whether it happens to be planar or not - so
+// this TS hierarchy mirrors that rather than inventing a seam the kernel doesn't have.
+// Alongside the compile-time subtype, every shape also carries a runtime `shapeType`
+// bitmask (see shapeType.ts) so code can do cheap "is this any kind of edge/wire"
+// checks without a chain of instanceof/type-guards - see
+// EdgeCornerCommand.isPlanarParent() in packages/app/src/commands/modify/
+// edgeCornerCommand.ts for a real example that classifies a shape as "2D" (face/
+// wire/edge, no solid) vs "3D" this way.
+export interface IShape extends IDisposable {
+    readonly shapeType: ShapeType;
+    get id(): string;
+    get mesh(): IShapeMeshData;
+    transformed(matrix: Matrix4): IShape;
+    transformedMul(matrix: Matrix4): IShape;
+    edgesMeshPosition(): EdgeMeshData;
+    matrix: Matrix4;
+    isClosed(): boolean;
+    isNull(): boolean;
+    /**
+     * they share the same TShape with the same Locations and Orientations.
+     */
+    isEqual(other: IShape): boolean;
+    /**
+     * they share the same TShape with the same Locations, Orientations may differ.
+     */
+    isSame(other: IShape): boolean;
+    /**
+     * they share the same TShape. Locations and Orientations may differ.
+     */
+    isPartner(other: IShape): boolean;
+    orientation(): Orientation;
+    findAncestor(ancestorType: ShapeType, fromShape: IShape): IShape[];
+    findSubShapes(subshapeType: ShapeType): IShape[];
+    directSubShapes(): IShape[];
+    section(shape: IShape | Plane): IShape;
+    split(shapes: IShape[], tolerance?: number): IShape;
+    reserve(): void;
+    clone(): IShape;
+    hlr(position: XYZLike, direction: XYZLike, xDir: XYZLike): IShape;
+    boundingBox(): BoundingBox;
+    orientedBoundingBox(): OrientedBoundingBox;
+    extremaDistance(other: IShape): number;
+    checkShape(): boolean;
+    checkFaces(): { index: number; isValid: boolean; status: string[] }[];
+    fixShape(tolerance: number): IShape;
+    fixSmallFace(tolerance: number): IShape;
+    fixSolid(tolerance: number): IShape;
+    shellSewing(tolerance: number): IShape;
+    setTolerance(tolerance: number): void;
+}
+
+export interface ISubShape extends IShape {
+    index: number;
+    parent: IShape;
+}
+
+export interface ISubVertexShape extends ISubShape, IVertex {}
+
+export interface ISubEdgeShape extends ISubShape, IEdge {}
+
+export interface ISubFaceShape extends ISubShape, IFace {}
+
+export interface IVertex extends IShape {
+    point(): XYZ;
+}
+
+export interface IEdge extends IShape {
+    update(curve: ICurve): void;
+    intersect(other: IEdge | Line): { parameter: number; point: XYZ }[];
+    length(): number;
+    get curve(): ITrimmedCurve;
+    offset(distance: number, dir: XYZ): Result<IEdge>;
+    trim(start: number, end: number): IEdge;
+    hasContinuity(face1: IFace, face2: IFace): boolean;
+    continuity(face1: IFace, face2: IFace): Continuity;
+}
+
+export type JoinType = "arc" | "tangent" | "intersection";
+
+export interface IWire extends IShape {
+    toFace(): Result<IFace>;
+    edgeLoop(): IEdge[];
+    offset(distance: number, joinType: JoinType): Result<IShape>;
+}
+
+export interface IFace extends IShape {
+    area(): number;
+    normal(u: number, v: number): [point: XYZ, normal: XYZ];
+    outerWire(): IWire;
+    surface(): ISurface;
+    intersectLine(point: XYZLike, direction: XYZLike, tolerance?: number): XYZ | undefined;
+    segmentsOfEdgeOnFace(edge: IEdge):
+        | undefined
+        | {
+              start: number;
+              end: number;
+          };
+    containsPoint(point: XYZLike, containsEdge: boolean, tolerance: number): boolean;
+}
+
+export interface IShell extends IShape {}
+
+export interface ISolid extends IShape {
+    volume(): number;
+    containsPoint(point: XYZLike, containsSurface: boolean, tolerance: number): boolean;
+}
+
+export interface ICompound extends IShape {}
+
+export interface ICompoundSolid extends IShape {}
