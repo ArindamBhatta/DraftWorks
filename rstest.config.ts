@@ -2,14 +2,12 @@
 // See LICENSE file in the project root for full license information.
 
 import { defineConfig } from "@rstest/core";
-import { GlobalRegistrator } from "happy-dom";
 import packages from "./package.json" with { type: "json" };
-
-GlobalRegistrator.register();
 
 // The same compile-time constants rspack.config.ts injects via DefinePlugin. Without
 // them, importing anything that reaches foundation/logger.ts throws at module load.
 export default defineConfig({
+    testEnvironment: "happy-dom",
     source: {
         define: {
             __APP_VERSION__: JSON.stringify(packages.version),
