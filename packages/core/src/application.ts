@@ -1,0 +1,90 @@
+import type { CommandKeys, ICommand } from "./command";
+import type { IDataExchange } from "./dataExchange";
+import type { IDocument } from "./document";
+import type { IPropertyChanged, IStorage, ObservableCollection } from "./foundation";
+import type { IPluginManager } from "./plugin";
+import type { Serialized } from "./serialize";
+import type { IService } from "./service";
+import type { IShapeConverter, IShapeFactory, IShapeProvider } from "./shape";
+import type { IWindow } from "./ui/window";
+import type { IView, IVisualFactory } from "./visual";
+
+export interface IApplication extends IPropertyChanged {
+    readonly mainWindow?: IWindow;
+    readonly dataExchange: IDataExchange;
+    readonly visualFactory: IVisualFactory;
+    readonly shapeProvider: IShapeProvider;
+    readonly services: IService[];
+    readonly storage: IStorage;
+    readonly views: ObservableCollection<IView>;
+    readonly documents: Set<IDocument>;
+    readonly pluginManager: IPluginManager;
+    lastCommand: CommandKeys | undefined;
+    executingCommand: ICommand | undefined;
+    activeView: IView | undefined;
+    newDocument(name: string): Promise<IDocument>;
+    openDocument(id: string): Promise<IDocument | undefined>;
+    loadDocument(data: Serialized): Promise<IDocument | undefined>;
+    loadFileFromUrl(url: string): Promise<void>;
+}
+
+let currentApplication: IApplication;
+export function getCurrentApplication() {
+    if (!currentApplication) {
+        throw new Error(
+            "No application instance is set. Please create an instance of Application before accessing it.",
+        );
+    }
+    return currentApplication;
+}
+
+export function setCurrentApplication(app: IApplication): void {
+    if (currentApplication) {
+        throw new Error("An application instance is already set. Multiple instances are not allowed.");
+    }
+    currentApplication = app;
+}
+
+declare global {
+    var app: IApplication;
+    var shapeFactory: IShapeFactory;
+    var shapeConverter: IShapeConverter;
+    var activeView: IView | undefined;
+    var activeDocument: IDocument | undefined;
+}
+
+Object.defineProperty(globalThis, "app", {
+    configurable: true,
+    get() {
+        const app = getCurrentApplication();
+        return app;
+    },
+});
+
+Object.defineProperty(globalThis, "shapeFactory", {
+    configurable: true,
+    get() {
+        return app.shapeProvider.factory;
+    },
+});
+
+Object.defineProperty(globalThis, "shapeConverter", {
+    configurable: true,
+    get() {
+        return app.shapeProvider.converter;
+    },
+});
+
+Object.defineProperty(globalThis, "activeView", {
+    configurable: true,
+    get() {
+        return app.activeView;
+    },
+});
+
+Object.defineProperty(globalThis, "activeDocument", {
+    configurable: true,
+    get() {
+        return app.activeView?.document;
+    },
+});
