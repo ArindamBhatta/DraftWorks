@@ -198,54 +198,6 @@ export class ShapeFactory implements IShapeFactory {
         ) as Result<IEdge[]>;
     }
 
-    removeFeature(shape: IShape, faces: IFace[]): Result<IShape> {
-        if (!(shape instanceof OccShape)) {
-            return Result.err("Not OccShape");
-        }
-        const occFaces = ensureOccShape(faces);
-        const result = wasm.ShapeFactory.removeFeature(shape.shape, occFaces);
-        if (!result.isOk) {
-            return Result.err(result.error);
-        }
-        if (result.shape.isNull() || shape.shape.isEqual(result.shape)) {
-            return Result.err("Can not remove feature");
-        }
-        return Result.ok(OccShape.wrap(result.shape));
-    }
-
-    removeFillet(shape: IShape, faces: IFace[]) {
-        if (!(shape instanceof OccShape)) {
-            return Result.err("Not OccShape");
-        }
-        const occFaces = ensureOccShape(faces);
-        const result = wasm.ShapeFactory.removeFillet(shape.shape, occFaces);
-        if (!result.isOk) {
-            return Result.err(result.error);
-        }
-        if (result.shape.isNull() || shape.shape.isEqual(result.shape)) {
-            return Result.err("Can not remove fillet");
-        }
-
-        const newEdges: OccEdge[] = [];
-        const visited = new Set();
-        const edges = result.newEdges;
-        for (let i = 0; i < edges.length; i++) {
-            const ts = edges[i];
-            if (
-                !ts ||
-                ts.shapeType() !== wasm.TopAbs_ShapeEnum.TopAbs_EDGE ||
-                visited.has(wasm.Shape.ptr(ts))
-            )
-                continue;
-
-            newEdges.push(OccShape.wrap(ts) as OccEdge);
-        }
-
-        return Result.ok({
-            shape: OccShape.wrap(result.shape),
-            newEdges,
-        });
-    }
 
     removeSubShape(shape: IShape, subShapes: IShape[]): Result<IShape> {
         const occShape = ensureOccShape(shape);
@@ -348,43 +300,6 @@ export class ShapeFactory implements IShapeFactory {
     polygon(points: XYZLike[]): Result<IWire> {
         return convertShapeResult(wasm.ShapeFactory.polygon, [points], "Polygon Error") as Result<IWire>;
     }
-    box(plane: Plane, dx: number, dy: number, dz: number): Result<ISolid> {
-        return convertShapeResult(
-            wasm.ShapeFactory.box,
-            [
-                {
-                    location: plane.origin,
-                    direction: plane.normal,
-                    xDirection: plane.xvec,
-                },
-                dx,
-                dy,
-                dz,
-            ],
-            "Box Error",
-        ) as Result<ISolid>;
-    }
-    cylinder(dir: XYZ, center: XYZ, radius: number, dz: number): Result<ISolid> {
-        return convertShapeResult(
-            wasm.ShapeFactory.cylinder,
-            [dir, center, radius, dz],
-            "Cylinder Error",
-        ) as Result<ISolid>;
-    }
-    cone(dir: XYZ, center: XYZ, radius: number, radiusUp: number, dz: number): Result<ISolid> {
-        return convertShapeResult(
-            wasm.ShapeFactory.cone,
-            [dir, center, radius, radiusUp, dz],
-            "Cone Error",
-        ) as Result<ISolid>;
-    }
-    sphere(center: XYZ, radius: number): Result<ISolid> {
-        return convertShapeResult(
-            wasm.ShapeFactory.sphere,
-            [center, radius],
-            "Sphere Error",
-        ) as Result<ISolid>;
-    }
     ellipse(
         normal: XYZLike,
         center: XYZLike,
@@ -398,22 +313,6 @@ export class ShapeFactory implements IShapeFactory {
             "Ellipse Error",
         ) as Result<IEdge>;
     }
-    pyramid(plane: Plane, dx: number, dy: number, dz: number): Result<ISolid> {
-        return convertShapeResult(
-            wasm.ShapeFactory.pyramid,
-            [
-                {
-                    location: plane.origin,
-                    direction: plane.normal,
-                    xDirection: plane.xvec,
-                },
-                dx,
-                dy,
-                dz,
-            ],
-            "Pyramid Error",
-        ) as Result<ISolid>;
-    }
     wire(edges: IEdge[]): Result<IWire> {
         return convertShapeResult(
             wasm.ShapeFactory.wire,
@@ -421,76 +320,11 @@ export class ShapeFactory implements IShapeFactory {
             "Wire Error",
         ) as Result<IWire>;
     }
-    shell(faces: IFace[]): Result<IShell> {
-        return convertShapeResult(
-            wasm.ShapeFactory.shell,
-            [ensureOccShape(faces)],
-            "Shell Error",
-        ) as Result<IShell>;
-    }
-    solid(shells: IShell[]): Result<ISolid> {
-        return convertShapeResult(
-            wasm.ShapeFactory.solid,
-            [ensureOccShape(shells)],
-            "Solid Error",
-        ) as Result<ISolid>;
-    }
-    prism(shape: IShape, vec: XYZ): Result<IShape> {
-        if (vec.length() === 0) {
-            return Result.err(`The vector length is 0, the prism cannot be created.`);
-        }
-        return convertShapeResult(wasm.ShapeFactory.prism, [ensureOccShape(shape)[0], vec], "Prism Error");
-    }
-    pushPull(shape: IShape, face: IShape, vec: XYZ): Result<IShape> {
-        if (vec.length() === 0) {
-            return Result.err(`The vector length is 0, the prism cannot be created.`);
-        }
-        return convertShapeResult(
-            wasm.ShapeFactory.pushPull,
-            [ensureOccShape(shape)[0], ensureOccShape(face)[0], vec],
-            "PushPull Error",
-        );
-    }
     fuse(bottom: IShape, top: IShape): Result<IShape> {
         return convertShapeResult(
             wasm.ShapeFactory.booleanFuse,
             [ensureOccShape(bottom), ensureOccShape(top)],
             "Fuse Error",
-        );
-    }
-    sweep(profile: IShape[], path: IWire, isRound: boolean): Result<IShape> {
-        return convertShapeResult(
-            wasm.ShapeFactory.sweep,
-            [ensureOccShape(profile), ensureOccShape(path)[0], true, isRound],
-            "Sweep Error",
-        );
-    }
-    revolve(profile: IShape, axis: Line, angle: number): Result<IShape> {
-        return convertShapeResult(
-            wasm.ShapeFactory.revolve,
-            [
-                ensureOccShape(profile)[0],
-                {
-                    location: axis.point,
-                    direction: axis.direction,
-                },
-                MathUtils.degToRad(angle),
-            ],
-            "Revolve Error",
-        );
-    }
-    booleanCommon(shape1: IShape[], shape2: IShape[]): Result<IShape> {
-        return convertShapeResult(
-            wasm.ShapeFactory.booleanCommon,
-            [ensureOccShape(shape1), ensureOccShape(shape2)],
-            "BooleanCommon Error",
-        );
-    }
-    booleanCut(shape1: IShape[], shape2: IShape[]): Result<IShape> {
-        return convertShapeResult(
-            wasm.ShapeFactory.booleanCut,
-            [ensureOccShape(shape1), ensureOccShape(shape2)],
-            "BooleanCut Error",
         );
     }
     booleanFuse(shape1: IShape[], shape2: IShape[], simplifyShape: boolean): Result<IShape> {
@@ -514,60 +348,12 @@ export class ShapeFactory implements IShapeFactory {
             "SimplifyShape Error",
         );
     }
-    sewing(shapes: IShape[]): Result<IShape> {
-        const occShapes = ensureOccShape(shapes);
-        return convertShapeResult(wasm.ShapeFactory.sewing, [occShapes], "Sewing Error");
-    }
     combine(shapes: IShape[]): Result<ICompound> {
         return convertShapeResult(
             wasm.ShapeFactory.combine,
             [ensureOccShape(shapes)],
             "Combine Error",
         ) as Result<ICompound>;
-    }
-    makeThickSolidBySimple(shape: IShape, thickness: number): Result<IShape> {
-        return convertShapeResult(
-            wasm.ShapeFactory.makeThickSolidBySimple,
-            [ensureOccShape(shape)[0], thickness],
-            "MakeThickSolidBySimple Error",
-        );
-    }
-    makeThickSolidByJoin(
-        shape: IShape,
-        closingFaces: IShape[],
-        thickness: number,
-        joinType: JoinType,
-    ): Result<IShape> {
-        return convertShapeResult(
-            wasm.ShapeFactory.makeThickSolidByJoin,
-            [ensureOccShape(shape)[0], ensureOccShape(closingFaces), thickness, getJoinType(joinType)],
-            "MakeThickSolidByJoin Error",
-        );
-    }
-    loft(
-        sections: (IVertex | IEdge | IWire)[],
-        isSolid: boolean,
-        isRuled: boolean,
-        continuity: Continuity,
-    ): Result<IShape> {
-        for (let i = 0; i < sections.length; i++) {
-            const section = sections[i];
-            if (section.shapeType === ShapeTypes.edge) {
-                sections[i] = this.wire([section as IEdge]).value;
-            }
-        }
-        return convertShapeResult(
-            wasm.ShapeFactory.loft,
-            [ensureOccShape(sections), isSolid, isRuled, convertFromContinuity(continuity)],
-            "Loft Error",
-        );
-    }
-    curveProjection(curve: IEdge | IWire, targetFace: IFace, vec: XYZ): Result<IShape> {
-        return convertShapeResult(
-            wasm.ShapeFactory.curveProjection,
-            [ensureOccShape(curve)[0], ensureOccShape(targetFace)[0], new wasm.gp_Dir(vec.x, vec.y, vec.z)],
-            "CurveProjection Error",
-        );
     }
     simplifyShape(
         shape: IShape,
