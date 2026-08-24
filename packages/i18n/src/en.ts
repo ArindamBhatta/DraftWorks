@@ -89,7 +89,6 @@ export default {
         "command.modify.mirror": "Mirror",
         "command.modify.move": "Move",
         "command.modify.properties": "Properties",
-        "command.modify.removeShapes": "Remove Shapes",
         "command.modify.rotate": "Rotate",
         "command.modify.repairShape": "Repair Shape",
         "command.modify.simplifyShape": "Simplify",

@@ -81,7 +81,6 @@ export const I18N_KEYS = [
     "command.modify.mirror",
     "command.modify.move",
     "command.modify.properties",
-    "command.modify.removeShapes",
     "command.modify.rotate",
     "command.modify.repairShape",
     "command.modify.simplifyShape",

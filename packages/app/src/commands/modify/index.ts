@@ -10,7 +10,6 @@ export * from "./explode";
 export * from "./fillet";
 export * from "./mirror";
 export * from "./move";
-export * from "./removeSubShapes";
 export * from "./repair";
 export * from "./rotate";
 export * from "./simplify";

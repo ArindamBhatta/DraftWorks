@@ -29,7 +29,7 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                     ["modify.rotate", "modify.mirror", "modify.array"],
                     ["modify.trim", "modify.split", "modify.break"],
                     ["modify.fillet", "modify.chamfer"],
-                    ["modify.deleteNode", "modify.removeShapes"],
+                    "modify.deleteNode",
                 ],
             },
             {

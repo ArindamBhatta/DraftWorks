@@ -44,7 +44,6 @@ export const CommandAliases: Partial<Record<CommandKeys, string[]>> = {
     // AutoCAD's four ways of saying PROPERTIES, all of which open the same palette.
     "modify.properties": ["pr", "ch", "mo", "props", "properties", "ddmodify"],
     "modify.deleteNode": ["e", "erase", "del", "delete"],
-    "modify.removeShapes": ["rems", "removeshapes"],
     "create.offset": ["o", "off", "offset"],
     "create.copyShape": ["co", "cp", "copy"],
     "create.group": ["g", "group"],
