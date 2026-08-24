@@ -3,7 +3,6 @@ import type { IDisposable } from "../foundation";
 import type { Plane } from "../math";
 import type { IEventHandler } from "./eventHandler";
 import type { IHighlighter } from "./highlighter";
-import type { IMeshExporter } from "./meshExporter";
 import type { IView } from "./view";
 import type { IVisualContext } from "./visualContext";
 
@@ -25,8 +24,6 @@ export interface IVisual extends IDisposable {
     readonly context: IVisualContext;
     /** Drives hover/selection highlighting feedback (e.g. lighting up an edge under the cursor). */
     readonly highlighter: IHighlighter;
-    /** Exports the current tessellated scene data (e.g. for saving a mesh format). */
-    readonly meshExporter: IMeshExporter;
     /** Requests a re-render of the current frame. */
     update(): void;
     /**

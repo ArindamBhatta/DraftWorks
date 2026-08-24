@@ -10,17 +10,4 @@ export interface IShapeConverter {
     convertFromSTEP(document: IDocument, step: Uint8Array): Result<FolderNode>;
     convertToBrep(shape: IShape): Result<string>;
     convertFromBrep(brep: string): Result<IShape>;
-    /**
-     * Headless STL export: tessellates each shape (OCCT mesh) and writes STL
-     * bytes with no visual layer. Binary by default. See {@link StlExportOptions}.
-     */
-    convertToSTL(shapes: IShape[], options?: StlExportOptions): Result<Uint8Array>;
-    convertFromSTL(document: IDocument, stl: Uint8Array): Result<FolderNode>;
-}
-
-export interface StlExportOptions {
-    /** Binary STL when true (default), ASCII otherwise. */
-    binary?: boolean;
-    /** Solid name written into the ASCII header (ignored for binary). */
-    name?: string;
 }
