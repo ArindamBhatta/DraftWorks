@@ -20,7 +20,7 @@ export class Plane {
     // The one drawing plane. This is a 2D drafting app: the view never leaves plan,
     // so the Bottom/Left/Right elevation planes that fed the old view gizmo and the
     // "Set working plane" command are gone with them.
-    static readonly Top: Plane = Plane.ZX;
+    static readonly Top: Plane = Plane.XY;
 
     @serialize()
     readonly origin: XYZ;

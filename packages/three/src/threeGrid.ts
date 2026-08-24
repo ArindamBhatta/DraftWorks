@@ -128,9 +128,9 @@ export class ThreeGrid implements IDisposable {
         const centerV = Math.round(offset.dot(plane.yvec) / major) * major;
 
         // One half-extent for both axes, taken from the viewport's circumradius. The
-        // plane's u/v axes are not required to line up with screen x/y - under the
-        // default ZX workplane, u is world Z (screen vertical) and v is world X - so
-        // sizing u by width and v by height would leave a bare strip on wide viewports.
+        // plane's u/v axes line up with screen x/y - under the default XY workplane, u is
+        // world X (screen horizontal) and v is world Y (screen vertical) - so sizing u by
+        // width and v by height covers the viewport correctly.
         const half = (Math.hypot(worldWidth, worldHeight) * OVERDRAW) / 2;
 
         const signature = `${minor}|${centerU}|${centerV}|${half.toFixed(3)}`;

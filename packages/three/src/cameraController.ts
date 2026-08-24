@@ -22,7 +22,16 @@ const CAMERA_FAR = 1e6;
 const MIN_CARME_TO_TARGET = 50;
 const SHAPE_EMPTY_SIZE = 800;
 
-Camera.DEFAULT_UP = new Vector3(0, 0, 1);
+/**
+ * Screen up, and the camera's standoff from the drawing plane. The drawing plane is
+ * Plane.Top (XY), so the camera looks along -Z with world Y up - that is what makes
+ * world X read as screen right and world Y as screen up, so a typed `2000,500` comes
+ * out 2000 wide and 500 tall.
+ */
+const CAMERA_UP = new Vector3(0, 1, 0);
+const CAMERA_OFFSET = new Vector3(0, 0, 1000);
+
+Camera.DEFAULT_UP = CAMERA_UP.clone();
 
 /**
  * Orthographic-only camera. The old free-orbit controls (perspective camera,
@@ -33,7 +42,7 @@ export class CameraController extends Observable implements ICameraController {
     private _width: number = 100;
     private _height: number = 100;
     private _target: Vector3 = new Vector3();
-    private _position: Vector3 = new Vector3(0, 1000, 0);
+    private _position: Vector3 = CAMERA_OFFSET.clone();
     private _camera: OrthographicCamera;
 
     get target() {
@@ -63,6 +72,9 @@ export class CameraController extends Observable implements ICameraController {
     constructor(readonly view: ThreeView) {
         super();
         this._camera = this.createCamera(CAMERA_NEAR, CAMERA_FAR);
+        // Place the camera up front rather than waiting for the first fit/pan/zoom, so
+        // the very first frame already looks down the drawing plane's normal.
+        this.updateCameraPosionTarget();
     }
 
     private createCamera(near: number, far: number) {
@@ -74,6 +86,11 @@ export class CameraController extends Observable implements ICameraController {
             near,
             far,
         );
+        // Set on the instance rather than relying on Camera.DEFAULT_UP having been
+        // assigned before this module's first camera is built. It also has to stay
+        // non-parallel to the view direction: pan() takes direction x up, so a parallel
+        // pair collapses to the zero vector and normalize() hands back NaN.
+        camera.up.copy(CAMERA_UP);
         this.setCameraLayer(camera, this.view.mode);
         return camera;
     }
