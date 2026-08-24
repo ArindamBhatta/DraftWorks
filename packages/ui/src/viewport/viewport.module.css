@@ -1,0 +1,94 @@
+.root {
+    position: relative;
+}
+
+.viewControls {
+    position: absolute;
+    height: 100%;
+    top: 0;
+    right: 16px;
+    z-index: 999;
+    pointer-events: none;
+    padding-top: 160px;
+    color: var(--foreground-color);
+
+    svg {
+        border: none;
+        background: transparent;
+        width: 22px;
+        height: 22px;
+        padding: 8px;
+        border-radius: 7.5px;
+        color: inherit;
+        fill: currentColor;
+        /* The viewport itself is a crosshair; these are buttons on top of it. */
+        cursor: pointer;
+
+        &:hover {
+            background: var(--hover-background-color);
+        }
+
+        &:active {
+            background: var(--active-background-color);
+        }
+    }
+
+    .border {
+        border: 1px solid var(--border-color);
+        background: var(--panel-background-color);
+        border-radius: 10px;
+        margin: 1px 0px;
+        padding: 2px;
+        pointer-events: all;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        color: var(--foreground-color);
+
+        div {
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: 7.5px;
+            color: inherit;
+        }
+    }
+}
+
+@media (max-width: 680px) {
+    .viewControls {
+        display: none;
+    }
+}
+
+.viewLabel {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 30;
+    padding: 6px;
+    font-size: 14px;
+    user-select: none;
+    pointer-events: none;
+    color: var(--foreground-color);
+}
+
+.ucsIcon {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    z-index: 30;
+    width: 40px;
+    height: 40px;
+    user-select: none;
+    pointer-events: none;
+    color: var(--foreground-color);
+
+    svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+}
