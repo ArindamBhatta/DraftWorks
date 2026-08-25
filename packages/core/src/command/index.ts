@@ -7,4 +7,3 @@ export * from "./decorator";
 export * from "./multistepCommand";
 export * from "./prompt";
 export * from "./shortcutProfiles";
-
