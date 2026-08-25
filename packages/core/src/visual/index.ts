@@ -3,7 +3,6 @@ export * from "./cursorType";
 export * from "./detectedData";
 export * from "./eventHandler";
 export * from "./highlighter";
-export * from "./meshExporter";
 export * from "./textGenerator";
 export * from "./view";
 export * from "./viewport";

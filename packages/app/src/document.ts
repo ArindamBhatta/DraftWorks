@@ -1,0 +1,145 @@
+// Part of the Chili3d Project, under the AGPL-3.0 License.
+// See LICENSE file in the project root for full license information.
+
+import {
+    Constants,
+    History,
+    I18n,
+    type IApplication,
+    type IDocument,
+    Id,
+    InternalClassName,
+    type IPicker,
+    type ISelection,
+    type IVisual,
+    Logger,
+    ModelManager,
+    Observable,
+    PubSub,
+    type Serialized,
+} from "@chili3d/core";
+import { Picker } from "./picker";
+import { SelectionManager } from "./selectionManager";
+
+export class Document extends Observable implements IDocument {
+    readonly visual: IVisual;
+    readonly history: History;
+    readonly selection: ISelection;
+    readonly picker: IPicker;
+    readonly modelManager: ModelManager;
+    userData: Record<string, unknown> = {};
+
+    static readonly version = __DOCUMENT_VERSION__;
+
+    get name(): string {
+        return this.getPrivateValue("name");
+    }
+    set name(name: string) {
+        if (this.name === name) return;
+        this.setProperty("name", name);
+        if (this.modelManager.rootNode) this.modelManager.rootNode.name = name;
+    }
+
+    constructor(
+        readonly application: IApplication,
+        name: string,
+        readonly id: string = Id.generate(),
+    ) {
+        super();
+        this.setPrivateValue("name", name);
+        // History first: ModelManager records undo entries for its collections (layers,
+        // materials, components) and creates the mandatory layer 0 while constructing,
+        // so document.history has to exist before it runs.
+        this.history = new History();
+        this.modelManager = new ModelManager(this);
+        this.selection = new SelectionManager(this);
+        this.picker = new Picker(this);
+        this.visual = application.visualFactory.create(this);
+
+        application.documents.add(this);
+    }
+
+    serialize(): Serialized {
+        const serialized = {
+            [InternalClassName]: "Document",
+            version: __DOCUMENT_VERSION__,
+            id: this.id,
+            name: this.name,
+            models: this.modelManager.serialize(),
+            userData: this.userData,
+        };
+        return serialized;
+    }
+
+    override disposeInternal(): void {
+        super.disposeInternal();
+
+        this.modelManager.dispose();
+        this.visual.dispose();
+        this.history.dispose();
+        this.selection.dispose();
+    }
+
+    async save() {
+        const data = this.serialize();
+        await this.application.storage.put(Constants.DBName, Constants.DocumentTable, this.id, data);
+        const image = this.application.activeView?.toImage();
+        await this.application.storage.put(Constants.DBName, Constants.RecentTable, this.id, {
+            id: this.id,
+            name: this.name,
+            date: Date.now(),
+            image,
+        });
+    }
+
+    async close() {
+        if (window.confirm(I18n.translate("prompt.saveDocument{0}", this.name))) {
+            await this.save();
+        }
+
+        const views = this.application.views.filter((x) => x.document === this);
+        this.application.views.remove(...views);
+        this.application.activeView = this.application.views.at(0);
+        this.application.documents.delete(this);
+
+        PubSub.default.pub("documentClosed", this);
+
+        Logger.info(`document: ${this.name} closed`);
+        this.dispose();
+    }
+
+    static async open(application: IApplication, id: string) {
+        const data = (await application.storage.get(
+            Constants.DBName,
+            Constants.DocumentTable,
+            id,
+        )) as Serialized;
+        if (data === undefined) {
+            Logger.warn(`document: ${id} not find`);
+            return;
+        }
+        const document = await Document.load(application, data);
+        if (document !== undefined) {
+            Logger.info(`document: ${document.name} opened`);
+        }
+        return document;
+    }
+
+    static async load(app: IApplication, data: Serialized): Promise<IDocument | undefined> {
+        if ((data as any).version !== __DOCUMENT_VERSION__) {
+            alert(
+                "The file version has been upgraded, no compatibility treatment was done in the development phase",
+            );
+            return undefined;
+        }
+        const document = new Document(app, data["name"], data["id"]);
+        document.history.disabled = true;
+        if (data["userData"]) {
+            document.userData = data["userData"];
+        }
+
+        await document.modelManager.deserialize(data["models"]);
+        document.history.disabled = false;
+        return document;
+    }
+}

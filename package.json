@@ -1,7 +1,7 @@
 {
-    "name": "cad-drafting",
+    "name": "draftworks",
     "version": "0.0.1",
-    "description": "A web-based CAD drafting application built with TypeScript, React, and WebAssembly.",
+    "description": "DraftWorks — a web-based 2D CAD drafting application for civil engineering, built with TypeScript, React, and WebAssembly.",
     "documentVersion": "0.7.1",
     "author": "Arindam Bhattacharya <arindambhattacharyya.ab@gmail.com>",
     "type": "module",

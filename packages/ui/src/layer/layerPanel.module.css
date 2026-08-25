@@ -1,0 +1,144 @@
+.root {
+    display: flex;
+    flex-direction: column;
+}
+
+.headerPanel {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex: 0;
+    margin: 0px 12px;
+}
+
+.header {
+    font-size: 1.15rem;
+    font-weight: bolder;
+    flex: 1;
+    margin: 2px 6px;
+}
+
+.tools {
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
+
+    svg {
+        width: 14px;
+        height: 14px;
+        padding: 5px;
+        border-radius: 4px;
+        cursor: pointer;
+        color: var(--foreground-color);
+        fill: currentColor;
+
+        &:hover {
+            background-color: var(--hover-background-color);
+        }
+    }
+}
+
+.list {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    overflow-y: auto;
+    background-color: var(--panel-background-color);
+}
+
+.list .row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    cursor: pointer;
+    user-select: none;
+    border-left: 3px solid transparent;
+
+    &:hover {
+        background-color: var(--hover-background-color);
+    }
+
+    svg {
+        width: 13px;
+        height: 13px;
+        padding: 3px;
+        border-radius: 3px;
+        flex: 0 0 auto;
+        color: var(--foreground-color);
+        fill: currentColor;
+
+        &:hover {
+            background-color: var(--active-background-color);
+        }
+    }
+}
+
+/* The current layer is where new objects land, so it gets the strongest marker. */
+.current {
+    border-left-color: var(--checked-color, #4a90d9);
+    font-weight: bold;
+    background-color: var(--hover-background-color);
+}
+
+.off {
+    opacity: 0.45;
+}
+
+.swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid var(--border-color);
+    flex: 0 0 auto;
+    padding: 0;
+    cursor: pointer;
+    background-clip: content-box;
+}
+
+/* Checkerboard behind a "follows the theme" layer colour, so it reads as "no colour
+   of its own" rather than as an opaque swatch that happens to match the background. */
+.themeSwatch {
+    background-image:
+        linear-gradient(45deg, #888 25%, transparent 25%), linear-gradient(-45deg, #888 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #888 75%), linear-gradient(-45deg, transparent 75%, #888 75%);
+    background-size: 8px 8px;
+    background-position:
+        0 0,
+        0 4px,
+        4px -4px,
+        -4px 0px;
+}
+
+.name {
+    flex: 1;
+    font: inherit;
+    font-size: 0.9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background: transparent;
+    border: none;
+    color: inherit;
+    padding: 2px;
+    min-width: 0;
+}
+
+.name:focus {
+    background-color: var(--background-color);
+    border-radius: 3px;
+    outline: 1px solid var(--border-color);
+}
+
+.count {
+    font-size: 0.75rem;
+    opacity: 0.6;
+    flex: 0 0 auto;
+}
+
+@media (max-width: 680px) {
+    .root {
+        display: none;
+    }
+}

@@ -1,0 +1,206 @@
+.panel {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 16px;
+    min-width: 100px;
+    max-width: 90%;
+    overflow: hidden;
+    padding: 1px;
+    border: none;
+    background-color: var(--panel-background-color);
+    opacity: 0.95;
+    box-shadow: var(--panel-shadow);
+    text-wrap: nowrap;
+    font-size: 13px;
+    z-index: 9999;
+}
+
+.container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+    padding: 6px 20px;
+    gap: 20px;
+
+    div {
+        display: flex;
+        align-items: center;
+    }
+}
+
+.panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    padding: 2px;
+    background: linear-gradient(
+        90deg,
+        #e03131,
+        #e8590c,
+        #f08c00,
+        #2f9e44,
+        #1971c2,
+        #7048e8,
+        #c2255c,
+        #e03131
+    );
+    background-size: 300% 100%;
+    pointer-events: none;
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    animation:
+        rainbow-shift 8s linear infinite,
+        breathe-border 4s ease-in-out infinite;
+}
+
+@keyframes rainbow-shift {
+    to {
+        background-position: -300% 0;
+    }
+}
+
+@keyframes breathe-border {
+    0%,
+    100% {
+        opacity: 0.35;
+    }
+    35% {
+        opacity: 1;
+    }
+    65% {
+        opacity: 0.7;
+    }
+}
+
+.command {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px;
+
+    .icon {
+        width: 24px;
+        height: 24px;
+    }
+
+    .title {
+        font-weight: bold;
+        margin-top: 1px;
+    }
+}
+
+.group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+}
+
+.button {
+    padding: 2px 12px;
+    font-size: 1em;
+    border-radius: 6px;
+    color: var(--foreground-color);
+    border: 1px solid var(--border-color);
+    background-color: var(--control-background-color);
+
+    &:hover {
+        background-color: var(--hover-background-color);
+    }
+}
+.input {
+    margin-left: 8px;
+    width: 64px;
+    background-color: var(--input-background-color);
+    border: 1px solid var(--input-border-color);
+    color: var(--input-text-color);
+}
+
+.select {
+    margin-left: 8px;
+    padding: 2px 12px;
+    font-size: 1em;
+    border-radius: 6px;
+    color: var(--foreground-color);
+    border: 1px solid var(--border-color);
+    background-color: var(--control-background-color);
+}
+
+.materialButton {
+    flex: 1 1 auto;
+    font-size: 1rem;
+    padding: 2px 24px;
+    outline: none;
+    background-color: transparent;
+
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+
+    &:hover {
+        background-color: var(--hover-background-color);
+    }
+}
+
+.selectionControl {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    margin-left: 6px;
+    padding-left: 12px;
+    border-left: 1px solid var(--border-color);
+}
+
+.cancelButton {
+    margin-left: auto;
+    padding-left: 12px;
+    border-left: 1px solid var(--border-color);
+}
+
+.selectionInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 6px;
+}
+
+.selectionCount {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--foreground-color);
+    line-height: 20px;
+}
+
+.selectionCountLabel {
+    font-size: 11px;
+    color: var(--secondary-foreground-color, #888);
+}
+
+.selectionButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    padding: 6px;
+    cursor: pointer;
+
+    &:hover {
+        background-color: var(--hover-background-color);
+    }
+
+    svg {
+        width: 20px;
+        height: 20px;
+    }
+}

@@ -1,0 +1,21 @@
+.panel {
+    margin: 4px;
+}
+
+.selected {
+    background-color: var(--hover-background-color);
+}
+
+.current {
+    outline: 1px dashed rgba(128, 128, 128, 0.5);
+}
+
+.dragging {
+    opacity: 0.56;
+    pointer-events: none;
+}
+
+.dropTarget {
+    outline: 2px solid var(--primary-color);
+    opacity: 0.8;
+}
