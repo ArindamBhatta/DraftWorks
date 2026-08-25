@@ -1,6 +1,6 @@
 # DraftWorks
 
-A web-based 2D CAD drafting application for civil engineering — structural drawings, architectural plans, and 2D elevations, running entirely in the browser.
+A web-based 2D CAD drafting application for civil engineering — structural drawings, architectural plans, and 2D elevations, running entirely in the browser. Similar to AutoCAD, but with a proactive UI: unit setup, dimension setup, and MV (paper/scale) setup are prompted upfront when a new drawing starts.
 
 DraftWorks pairs an OCCT (OpenCascade) geometry kernel compiled to WebAssembly with a Three.js renderer, so drafting stays precise (real B-Rep geometry, not just pixels) while running with no install and no server round-trip per edit.
 

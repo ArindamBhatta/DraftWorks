@@ -279,10 +279,14 @@ export class ThreeVisualContext implements IVisualContext {
                 return false;
             }
 
-            const boundingBox = BoundingBox.transformed(x.boundingBox()!, node.worldTransform());
-            if (boundingBox === undefined) {
+            // Not every visual is a ThreeGeometry (dimensions, texts, meshes and
+            // components have no geometryNode), so take the world transform from the
+            // visual itself - VisualNode.worldTransform() only delegates back here anyway.
+            const localBox = x.boundingBox();
+            if (localBox === undefined) {
                 return false;
             }
+            const boundingBox = BoundingBox.transformed(localBox, x.worldTransform());
 
             const testBox = new Box3(
                 new Vector3(boundingBox.min.x, boundingBox.min.y, boundingBox.min.z),

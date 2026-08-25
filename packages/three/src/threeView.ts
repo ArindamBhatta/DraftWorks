@@ -465,6 +465,8 @@ export class ThreeView extends Observable implements IView {
             node = threeObject.componentNode;
         } else if (threeObject instanceof ThreeRefSegmentAnnotation) {
             node = threeObject.annotation;
+        } else if (threeObject instanceof ThreeDimension) {
+            node = threeObject.annotation;
         } else if (threeObject instanceof ThreeText) {
             node = threeObject.annotation;
         }
@@ -921,7 +923,11 @@ export class ThreeView extends Observable implements IView {
             if (!x.visible || x.locked) return;
             if (x instanceof ThreeVisualObject) {
                 visuals.push(...x.wholeVisual());
-            } else if (x instanceof ThreeRefSegmentAnnotation || x instanceof ThreeText) {
+            } else if (
+                x instanceof ThreeRefSegmentAnnotation ||
+                x instanceof ThreeDimension ||
+                x instanceof ThreeText
+            ) {
                 visuals.push(...x.wholeVisual());
             }
         });

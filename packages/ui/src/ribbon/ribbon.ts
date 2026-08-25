@@ -19,7 +19,7 @@ import {
     type RibbonTab,
     type RibbonTabKeys,
 } from "@chili3d/core";
-import { a, collection, createIcon, div, label, span, svg } from "@chili3d/element";
+import { a, collection, createIcon, div, img, label, span, svg } from "@chili3d/element";
 import { LanguageSelector, ThemeSelector } from "./appSettings";
 import style from "./ribbon.module.css";
 import { RibbonGroupElement } from "./ribbonGroup";
@@ -115,8 +115,8 @@ export class RibbonUI extends HTMLElement {
             { className: style.left },
             div(
                 { className: style.appIcon },
-                svg({ className: style.icon, icon: "icon-chili" }),
-                span({ id: "appName", textContent: `Chili3D - v${__APP_VERSION__}` }),
+                img({ className: style.icon, src: "favicon.svg", alt: "DraftWorks" }),
+                span({ id: "appName", textContent: `DraftWorks - v${__APP_VERSION__}` }),
             ),
             div(
                 { className: style.ribbonTitlePanel },

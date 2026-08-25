@@ -1,4 +1,3 @@
-
 /**
  * The line rendering style for an edge, matching familiar CAD drafting linetypes:
  * "solid" is CONTINUOUS; the rest are dash/gap patterns

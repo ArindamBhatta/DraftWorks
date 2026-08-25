@@ -198,7 +198,6 @@ export class ShapeFactory implements IShapeFactory {
         ) as Result<IEdge[]>;
     }
 
-
     removeSubShape(shape: IShape, subShapes: IShape[]): Result<IShape> {
         const occShape = ensureOccShape(shape);
         const occSubShapes = ensureOccShape(subShapes);

@@ -1,8 +1,8 @@
 /** Acts as the bridge connecting the data model to the UI/DOM elements so you don't have to write manual event listeners everywhere. */
 
-
 import type { IConverter } from "./converter";
 import type { IPropertyChanged } from "./observer";
+
 // Uses WeakRef and FinalizationRegistry to track DOM elements. When a bound UI element is removed and garbage-collected, the binding automatically cleans up its event listeners from the model.
 
 const registry = new FinalizationRegistry((binding: PathBinding<IPropertyChanged>) => {
@@ -22,14 +22,14 @@ export class PathBinding<T extends IPropertyChanged = IPropertyChanged> {
         public converter?: IConverter,
     ) {}
 
-//setBinding sets the target element and property for the binding, and registers the binding with the FinalizationRegistry to ensure proper cleanup when the target element is garbage collected.
+    //setBinding sets the target element and property for the binding, and registers the binding with the FinalizationRegistry to ensure proper cleanup when the target element is garbage collected.
     setBinding<U extends object>(element: U, property: keyof U) {
         if (this._target) throw new Error("Binding already set");
         this._target = { element: new WeakRef(element), property };
         registry.register(element, this);
         this.addPropertyChangedHandler();
     }
-//removeBinding removes the binding by unregistering the target element from the FinalizationRegistry, clearing the target reference, and removing any property changed handlers associated with the binding.
+    //removeBinding removes the binding by unregistering the target element from the FinalizationRegistry, clearing the target reference, and removing any property changed handlers associated with the binding.
     removeBinding() {
         const element = this._target?.element.deref();
         if (element) registry.unregister(element);
@@ -37,7 +37,7 @@ export class PathBinding<T extends IPropertyChanged = IPropertyChanged> {
         this.removePropertyChangedHandler();
     }
 
-//handleAllPathPropertyChanged is a private method that handles property changes for all properties in the binding path. It checks if the property change should trigger an update to the binding and, if so, removes and re-adds the property changed handlers to ensure the binding reflects the latest state.
+    //handleAllPathPropertyChanged is a private method that handles property changes for all properties in the binding path. It checks if the property change should trigger an update to the binding and, if so, removes and re-adds the property changed handlers to ensure the binding reflects the latest state.
     private readonly handleAllPathPropertyChanged = (property: string, source: any) => {
         if (this.shouldUpdateHandler(property, source)) {
             this.removePropertyChangedHandler();
@@ -45,14 +45,14 @@ export class PathBinding<T extends IPropertyChanged = IPropertyChanged> {
         }
     };
 
-//handlePropertyChanged is a private method that handles property changes for the final property in the binding path. It updates the target element's property value when the observed property changes.
+    //handlePropertyChanged is a private method that handles property changes for the final property in the binding path. It updates the target element's property value when the observed property changes.
     private readonly handlePropertyChanged = (property: string, source: any) => {
         if (this.path.endsWith(property) && this._target) {
             this.setValue(source, property);
         }
     };
 
-//shouldUpdateHandler determines whether the property change should trigger an update to the binding.
+    //shouldUpdateHandler determines whether the property change should trigger an update to the binding.
     private shouldUpdateHandler(property: string, source: any) {
         if (this._oldPathObjects === undefined) {
             return true;

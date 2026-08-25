@@ -12,4 +12,3 @@ export * from "./visualContext";
 export * from "./visualFactory";
 export * from "./visualObject";
 export * from "./visualShape";
-

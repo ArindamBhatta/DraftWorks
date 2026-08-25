@@ -6,5 +6,6 @@
  * else here (observer, collection, history, pubsub, gc, signal, ...) is generic editor
  * infrastructure that owes nothing to CAD.
  */
-export * from "./unitSetup";
+
 export * from "./drawingSetup";
+export * from "./unitSetup";

@@ -1,5 +1,5 @@
 import type { IDocument } from "../document";
-import { HistoryObservable, type IDisposable, type IPropertyChanged, Id } from "../foundation";
+import { HistoryObservable, type IDisposable, Id, type IPropertyChanged } from "../foundation";
 import { property } from "../property";
 import { type Serialized, Serializer, serialize } from "../serialize";
 

@@ -1,13 +1,7 @@
 // Part of the Chili3d Project, under the AGPL-3.0 License.
 // See LICENSE file in the project root for full license information.
 
-import {
-    type IDocument,
-    type IEventHandler,
-    type IVisual,
-    isDisposable,
-    type Plane,
-} from "@chili3d/core";
+import { type IDocument, type IEventHandler, type IVisual, isDisposable, type Plane } from "@chili3d/core";
 import { AmbientLight, Object3D, Scene } from "three";
 import { ThreeHighlighter } from "./threeHighlighter";
 import { ThreeView } from "./threeView";

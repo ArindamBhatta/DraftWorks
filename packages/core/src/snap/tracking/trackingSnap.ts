@@ -1,4 +1,3 @@
-import type { ISnap, MouseAndDetected, SnapResult, SnapType } from "../";
 import { Config, VisualConfig } from "../../config";
 import type { IDocument } from "../../document";
 import { Precision } from "../../foundation";
@@ -6,6 +5,7 @@ import { I18n } from "../../i18n";
 import { type Line, MathUtils, XY, type XYZ } from "../../math";
 import { type ISubEdgeShape, MeshDataUtils, ShapeTypes } from "../../shape";
 import { type IView, screenDistance } from "../../visual";
+import type { ISnap, MouseAndDetected, SnapResult, SnapType } from "../";
 import type { Axis } from "./axis";
 import { AxisTracking } from "./axisTracking";
 import { ObjectTracking } from "./objectTracking";

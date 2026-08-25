@@ -1,6 +1,6 @@
-import type { SnapResult } from "..";
 import type { IDocument } from "../../document";
 import { MeshDataUtils } from "../../shape";
+import type { SnapResult } from "..";
 
 export abstract class TrackingBase {
     protected readonly tempMeshes: Map<IDocument, number[]> = new Map();

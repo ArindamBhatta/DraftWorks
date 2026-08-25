@@ -126,5 +126,4 @@ export class OccShapeConverter implements IShapeConverter {
         }
         return Result.ok(OccShape.wrap(shape));
     }
-
 }

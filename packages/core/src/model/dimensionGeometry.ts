@@ -123,8 +123,8 @@ function linearGeometry(
 }
 
 /**
- * Which way the dimension line runs. Aligned follows the measured span; linear snaps to
- * whichever frame axis the span is more along, unless the drag direction says otherwise.
+ * Which way the dimension line runs. Aligned follows the measured span; linear picks the
+ * frame axis from which side of the two origins the dimension line was dragged past.
  */
 function resolveDirection(
     type: "linear" | "aligned",
@@ -135,11 +135,20 @@ function resolveDirection(
 ): XYZ | undefined {
     if (type === "aligned") return span.normalize();
 
-    const yAxis = unit(frame.normal.cross(frame.xAxis), XYZ.unitY);
-    const drag = offsetPoint.sub(start);
-    // Dragging sideways asks for a vertical dimension and vice versa: the dimension line
-    // ends up perpendicular to the direction the pointer moved away in.
-    return Math.abs(drag.dot(frame.xAxis)) > Math.abs(drag.dot(yAxis)) ? yAxis : frame.xAxis;
+    const xAxis = unit(frame.xAxis, XYZ.unitX);
+    const yAxis = unit(frame.normal.cross(xAxis), XYZ.unitY);
+
+    // AutoCAD resolves DIMLINEAR by where the dimension line sits relative to the *pair*
+    // of origins, so measure the drag from the midpoint and discount the span's own half
+    // extent on each axis. Measuring from `start` let a long span outvote the drag: on a
+    // wide horizontal span, dragging straight up still read as "sideways" and produced a
+    // vertical dimension of zero length, which draws nothing at all.
+    const toOffset = offsetPoint.sub(start.add(span.multiply(0.5)));
+    const beyondX = Math.abs(toOffset.dot(xAxis)) - Math.abs(span.dot(xAxis)) / 2;
+    const beyondY = Math.abs(toOffset.dot(yAxis)) - Math.abs(span.dot(yAxis)) / 2;
+
+    // Clear of the origins vertically asks for a horizontal dimension, and vice versa.
+    return beyondY >= beyondX ? xAxis : yAxis;
 }
 
 function extensionLine(target: number[], origin: XYZ, to: XYZ, gap: number, overshoot: number) {
