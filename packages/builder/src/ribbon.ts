@@ -10,17 +10,25 @@ export const DefaultRibbon: RibbonTabProfile[] = [
             {
                 groupName: "ribbon.group.draw",
                 items: [
-                    "create.line",
-                    {
-                        type: "split",
-                        items: ["create.rect", "create.circle", "create.ellipse", "create.regularPolygon"],
-                    },
-                    {
-                        type: "split",
-                        items: ["create.arc", "create.arc2point", "create.arc3point"],
-                    },
+                    // Line's flyout holds AutoCAD's other "click through points" draw
+                    // tools - Polyline (create.polygon; see commandAliases.ts, it's
+                    // already aliased "pl"/"pline"/"polyline") and Ray.
+                    { type: "split", items: ["create.line", "create.polygon", "create.ray"] },
+                    // Rectangle's flyout holds Regular Polygon only.
+                    { type: "split", items: ["create.rect", "create.regularPolygon"] },
+                    "create.circle",
                 ],
-                collapsedItems: ["create.point", "create.polygon", "create.bezier", "create.hatch"],
+                // Only Line, Rectangle and Circle sit directly in the group; everything
+                // else is one tap away behind the group's overflow arrow.
+                collapsedItems: [
+                    "create.ellipse",
+                    "create.arc",
+                    "create.arc2point",
+                    "create.arc3point",
+                    "create.point",
+                    "create.bezier",
+                    "create.hatch",
+                ],
             },
             {
                 groupName: "ribbon.group.modify",
