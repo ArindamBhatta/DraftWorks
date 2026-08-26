@@ -2,9 +2,10 @@ import { Config, VisualConfig } from "../../config";
 import type { IDocument } from "../../document";
 import { type AsyncController, type MessageType, PubSub, Result, UnitSetup } from "../../foundation";
 import type { I18nKeys } from "../../i18n";
-import type { XYZ } from "../../math";
+import type { Plane, XYZ } from "../../math";
 import { MeshDataUtils, type ShapeMeshData, type ShapeType, ShapeTypes } from "../../shape";
 import { type IEventHandler, type IView, type MeshOption, screenDistance } from "../../visual";
+import { applyDynamicLocks, type DynamicInputLocks, hasAnyLock, polarOf } from "../dynamicInput";
 import {
     hasStepOptions,
     type ISnap,
@@ -23,6 +24,9 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
     protected showTempPoint: boolean = true;
     protected _snaped?: SnapResult;
     private _state: SnapState = "idle";
+    /** What the user has pinned in the cursor's distance/angle boxes. */
+    private _locks: DynamicInputLocks = {};
+    private _dynamicShown = false;
 
     facePreviewOpion: MeshOption = { meshOpacity: 1 };
     isEnabled: boolean = true;
@@ -69,6 +73,8 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
     private cleanupResources() {
         this.clearSnapPrompt();
         this.clearInput();
+        this.clearDynamicInput();
+        this._locks = {};
         this.removeTempVisuals();
         this.snaps.forEach((snap) => snap.clear());
     }
@@ -86,12 +92,94 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
 
     private updateSnapPoint(view: IView, event: PointerEvent) {
         this.setSnaped(view, event);
+        this.applyDynamicInput();
         if (this._snaped) {
             this.showSnapPrompt(this._snaped);
         } else {
             this.clearSnapPrompt();
         }
     }
+
+    // ------------------------------------------------------------ dynamic input
+
+    /**
+     * The plane the cursor's distance/angle boxes are measured in, or undefined when
+     * this kind of pick has no use for them. Handlers that measure from a reference
+     * point (see PointSnapEventHandler) opt in by overriding this; everything else
+     * inherits "no dynamic input" and behaves exactly as it did before.
+     */
+    protected dynamicInputPlane(): Plane | undefined {
+        return undefined;
+    }
+
+    protected dynamicInputRefPoint(): XYZ | undefined {
+        return undefined;
+    }
+
+    /**
+     * Bends the snapped point to whatever the user has locked, then publishes what
+     * the boxes should read. Runs after snapping so the readings describe the point
+     * that will actually be committed - an endpoint snap shows its true distance,
+     * not the raw cursor's.
+     */
+    private applyDynamicInput() {
+        const plane = this.dynamicInputPlane();
+        const refPoint = this.dynamicInputRefPoint();
+        if (!plane || !refPoint) {
+            // Genuinely not applicable here - the first point of a command, or DYN
+            // switched off - so take the boxes down.
+            this.clearDynamicInput();
+            return;
+        }
+        // No snap for an instant (the cursor left the view, say). Leave the boxes
+        // exactly as they are rather than tearing them down: the user may be typing
+        // into one, and destroying the element would swallow what they had entered.
+        if (!this._snaped?.point) return;
+
+        if (hasAnyLock(this._locks)) {
+            this._snaped.point = applyDynamicLocks(refPoint, this._snaped.point, this._locks, plane);
+        }
+
+        this._dynamicShown = true;
+        PubSub.default.pub("showDynamicInput", {
+            reading: polarOf(refPoint, this._snaped.point, plane),
+            locks: this._locks,
+            setLocks: this.setDynamicLocks,
+            commit: this.commitDynamicInput,
+        });
+    }
+
+    private clearDynamicInput() {
+        if (!this._dynamicShown) return;
+        this._dynamicShown = false;
+        PubSub.default.pub("clearDynamicInput");
+    }
+
+    /**
+     * Finishes the pick at whatever the boxes describe - Enter with a distance, an
+     * angle, or both. Anything left unlocked keeps the value the cursor last had,
+     * which is exactly what the boxes were showing at the time.
+     */
+    private readonly commitDynamicInput = (locks: DynamicInputLocks) => {
+        const plane = this.dynamicInputPlane();
+        const refPoint = this.dynamicInputRefPoint();
+        const view = this._snaped?.view ?? this.document.application.activeView;
+        if (!plane || !refPoint || !view) return;
+
+        this._snaped = {
+            view,
+            point: applyDynamicLocks(refPoint, this._snaped?.point ?? refPoint, locks, plane),
+            shapes: [],
+            type: "input",
+            refPoint,
+        };
+        this.handleSuccess();
+    };
+
+    /** Pins or releases one of the two boxes without committing the point. */
+    private readonly setDynamicLocks = (locks: DynamicInputLocks) => {
+        this._locks = locks;
+    };
 
     private updateVisualFeedback(view: IView) {
         this.showTempShape(this._snaped?.point);
@@ -276,6 +364,11 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
         if (event.key === "Escape") {
             this._snaped = undefined;
             this.handleCancel();
+        } else if (event.key === "Tab" && this._dynamicShown) {
+            // Tab moves into the boxes, and from there the widget's own two fields
+            // hand focus back and forth - AutoCAD's distance-then-angle rhythm.
+            event.preventDefault();
+            PubSub.default.pub("focusDynamicInput", "");
         } else if (event.key === "Enter" || event.key === " ") {
             // should cancel when enter or space keydown, and should not trigger HotKeyService
             event.preventDefault();
@@ -289,6 +382,15 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
 
     private handleTypedInput(view: IView, event: KeyboardEvent) {
         if (!this.canStartTyping(event.key)) return;
+
+        // With the boxes up, a typed number is a distance - it belongs in them, not
+        // in a second box that would cover them and mean something different. Option
+        // keys still fall through to the flyout, since the boxes take numbers only.
+        if (this._dynamicShown && /[0-9.-]/.test(event.key)) {
+            event.preventDefault();
+            PubSub.default.pub("focusDynamicInput", event.key);
+            return;
+        }
 
         this._state = "inputing";
         PubSub.default.pub("showInput", event.key, (text: string) => {

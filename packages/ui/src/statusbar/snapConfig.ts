@@ -86,7 +86,7 @@ export class SnapConfig extends HTMLElement {
             // GRID and ORTHO sit just ahead of the perpendicular snap, the way AutoCAD
             // keeps those two toggles next to the object snap settings.
             if (snapType.type === ObjectSnapTypes.perpendicular) {
-                items.push(this.createGridToggle(), this.createOrthoToggle());
+                items.push(this.createGridToggle(), this.createOrthoToggle(), this.createDynToggle());
             }
             items.push(this.createSnapCheckbox(snapType.type, snapType.display));
         }
@@ -124,6 +124,25 @@ export class SnapConfig extends HTMLElement {
             label({
                 htmlFor: "snap-grid",
                 textContent: new Localize("snap.grid"),
+            }),
+        );
+    }
+
+    /** AutoCAD's DYN button: the distance/angle boxes that ride the crosshair. */
+    private createDynToggle() {
+        return div(
+            { title: new Localize("snap.dynamicInputTip") },
+            input({
+                type: "checkbox",
+                id: "snap-dyn",
+                checked: Config.instance.enableDynamicInput,
+                onclick: () => {
+                    Config.instance.enableDynamicInput = !Config.instance.enableDynamicInput;
+                },
+            }),
+            label({
+                htmlFor: "snap-dyn",
+                textContent: new Localize("snap.dynamicInput"),
             }),
         );
     }

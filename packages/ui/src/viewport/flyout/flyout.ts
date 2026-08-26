@@ -1,7 +1,8 @@
 // Part of the Chili3d Project, under the AGPL-3.0 License.
 // See LICENSE file in the project root for full license information.
 
-import { type I18nKeys, type MessageType, PubSub, type Result } from "@chili3d/core";
+import { type DynamicInputState, type I18nKeys, type MessageType, PubSub, type Result } from "@chili3d/core";
+import { DynamicInput } from "./dynamicInput";
 import style from "./flyout.module.css";
 import { Input } from "./input";
 import { Tip } from "./tip";
@@ -9,6 +10,7 @@ import { Tip } from "./tip";
 export class Flyout extends HTMLElement {
     private _tip: HTMLElement | undefined;
     private _input: Input | undefined;
+    private _dynamicInput: DynamicInput | undefined;
     private lastFocus: HTMLElement | null = null;
 
     constructor() {
@@ -21,6 +23,9 @@ export class Flyout extends HTMLElement {
         PubSub.default.sub("clearFloatTip", this.clearTip);
         PubSub.default.sub("showInput", this.displayInput);
         PubSub.default.sub("clearInput", this.clearInput);
+        PubSub.default.sub("showDynamicInput", this.showDynamicInput);
+        PubSub.default.sub("clearDynamicInput", this.clearDynamicInput);
+        PubSub.default.sub("focusDynamicInput", this.focusDynamicInput);
     }
 
     disconnectedCallback(): void {
@@ -28,7 +33,36 @@ export class Flyout extends HTMLElement {
         PubSub.default.remove("clearFloatTip", this.clearTip);
         PubSub.default.remove("showInput", this.displayInput);
         PubSub.default.remove("clearInput", this.clearInput);
+        PubSub.default.remove("showDynamicInput", this.showDynamicInput);
+        PubSub.default.remove("clearDynamicInput", this.clearDynamicInput);
+        PubSub.default.remove("focusDynamicInput", this.focusDynamicInput);
     }
+
+    /**
+     * The boxes are created on the first reading of a pick and kept for its whole
+     * run, so the element the user is typing into is never swapped out from under
+     * them by the next mouse move.
+     */
+    private readonly showDynamicInput = (state: DynamicInputState) => {
+        if (this._dynamicInput === undefined) {
+            this._dynamicInput = new DynamicInput();
+            // Ahead of the tip, so the boxes sit closest to the crosshair.
+            this.prepend(this._dynamicInput);
+        }
+        this._dynamicInput.update(state);
+    };
+
+    private readonly clearDynamicInput = () => {
+        if (this._dynamicInput === undefined) return;
+        this._dynamicInput.reset();
+        this._dynamicInput.remove();
+        this._dynamicInput.dispose();
+        this._dynamicInput = undefined;
+    };
+
+    private readonly focusDynamicInput = (text: string) => {
+        this._dynamicInput?.focusDistance(text);
+    };
 
     private readonly showTip = (dom: HTMLElement | { level: MessageType; msg: string }) => {
         if (dom instanceof HTMLElement) {

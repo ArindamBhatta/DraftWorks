@@ -130,6 +130,20 @@ export class Config extends Observable {
     }
 
     /**
+     * AutoCAD's DYNMODE: while on, a point pick that has something to measure from
+     * carries live distance and angle boxes at the cursor, and typing into them
+     * constrains the point. On by default, as it is in AutoCAD. See dynamicInput.ts
+     * for the maths and DynamicInput for the boxes themselves.
+     */
+    @serialize()
+    get enableDynamicInput() {
+        return this.getPrivateValue("enableDynamicInput", true);
+    }
+    set enableDynamicInput(value: boolean) {
+        this.setProperty("enableDynamicInput", value);
+    }
+
+    /**
      * AutoCAD-style GRID mode: draws a reference grid across the drawing plane. The
      * spacing is not stored here because the grid is adaptive - it re-picks a 1/2/5
      * decade spacing from the current zoom so the lines never crowd together. See

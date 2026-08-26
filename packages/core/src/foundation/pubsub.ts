@@ -29,7 +29,7 @@ import type { IDocument } from "../document";
 import type { I18nKeys } from "../i18n";
 import type { Material } from "../material";
 import type { INode } from "../model";
-import type { StepOption } from "../snap";
+import type { DynamicInputState, StepOption } from "../snap";
 import type { DialogButton, FloatPanelOptions } from "../ui";
 import type { CursorType, IView } from "../visual";
 import type { AsyncController } from "./asyncController";
@@ -41,6 +41,7 @@ export interface PubSubEventMap {
     activeViewChanged: (view: IView | undefined) => void;
     clearFloatTip: () => void;
     clearInput: () => void;
+    clearDynamicInput: () => void;
     clearSelectionControl: () => void;
     clearStatusBarTip: () => void;
     clearStepOptions: () => void;
@@ -63,6 +64,18 @@ export interface PubSubEventMap {
      */
     refreshStepPrompt: () => void;
     showDialog: (title: I18nKeys, content: HTMLElement, buttons?: DialogButton[] | (() => void)) => void;
+    /**
+     * The cursor's live distance/angle boxes. Published on every mouse move while a
+     * point with a reference is being picked, so the boxes read the point the snap
+     * layer actually settled on rather than the raw cursor.
+     */
+    showDynamicInput: (state: DynamicInputState) => void;
+    /**
+     * "The user has started typing at the crosshair" - focus the distance box and
+     * seed it with `text`. Keeps the first keystroke from being swallowed, the same
+     * problem the command line solves in its own global key handler.
+     */
+    focusDynamicInput: (text: string) => void;
     showFloatPanel: (options: FloatPanelOptions) => void;
     showFloatTip: (dom: HTMLElement | { level: MessageType; msg: string }) => void;
     /** Opens AutoCAD's Layer Properties Manager (the LA command). */

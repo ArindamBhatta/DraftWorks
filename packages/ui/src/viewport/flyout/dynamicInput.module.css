@@ -1,0 +1,59 @@
+.panel {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    margin: 2px 0px;
+    font-size: 12px;
+}
+
+.field {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background-color: var(--panel-background-color);
+    color: var(--foreground-color);
+    border: 1px solid var(--input-border-color);
+    opacity: 0.9;
+}
+
+/* A pinned field is the one the point is obeying, so it reads as committed rather
+   than as a live readout. */
+.locked {
+    border-color: var(--primary-color, #2f6fd0);
+    opacity: 1;
+}
+
+.prefix {
+    opacity: 0.7;
+    font-family: monospace;
+}
+
+.box {
+    width: 68px;
+    padding: 0;
+    background: transparent;
+    color: var(--input-text-color, var(--foreground-color));
+    border: none;
+    outline: none;
+    font-size: 12px;
+    font-family: monospace;
+}
+
+.box::selection {
+    background: var(--primary-color, #2f6fd0);
+    color: #fff;
+}
+
+/* The padlock AutoCAD shows on a field you have pinned. */
+.lockMark {
+    font-size: 10px;
+    opacity: 0.8;
+}
+
+.lockMark:empty {
+    display: none;
+}

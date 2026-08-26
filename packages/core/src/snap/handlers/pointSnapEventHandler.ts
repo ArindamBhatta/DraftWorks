@@ -39,6 +39,20 @@ export class PointSnapEventHandler extends SnapEventHandler<PointSnapData> {
         this.snaps.push(...this.getInitSnaps(pointData));
     }
 
+    /**
+     * Dynamic input only means anything once there is a point to measure from, so
+     * like ortho it sits out the first pick of a command. Read fresh each time so
+     * toggling DYN in the status bar takes effect mid-command.
+     */
+    protected override dynamicInputPlane(): Plane | undefined {
+        if (!Config.instance.enableDynamicInput || this.getRefPoint() === undefined) return undefined;
+        return this.data.plane?.() ?? this.document.application.activeView?.workplane;
+    }
+
+    protected override dynamicInputRefPoint(): XYZ | undefined {
+        return this.getRefPoint();
+    }
+
     protected getInitSnaps(pointData: PointSnapData): ISnap[] {
         const objectSnap = new ObjectSnap(Config.instance.snapType, pointData.refPoint);
         const workplaneSnap = pointData.plane
