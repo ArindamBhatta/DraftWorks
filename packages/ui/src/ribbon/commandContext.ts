@@ -37,6 +37,13 @@ import style from "./commandContext.module.css";
 
 export class CommandContext extends HTMLElement implements IDisposable {
     private readonly propMap: Map<string | number | symbol, [Property, HTMLElement][]> = new Map();
+    /**
+     * The `<select>` behind each combobox property, so a change made anywhere else -
+     * typed at the prompt, clicked in the status bar's `[Diameter]` - is reflected
+     * here too. Without this the panel would keep showing the value it was built
+     * with while the command had already moved on: two views, two answers.
+     */
+    private readonly comboboxes = new Map<string | number | symbol, [Combobox<any>, HTMLSelectElement]>();
     private readonly container = div({ className: style.container });
     private selectionControlContainer?: HTMLDivElement;
     private closeIcon?: HTMLElement;
@@ -148,6 +155,7 @@ export class CommandContext extends HTMLElement implements IDisposable {
 
     dispose() {
         this.propMap.clear();
+        this.comboboxes.clear();
         this.disconnectedCallback();
     }
 
@@ -158,7 +166,21 @@ export class CommandContext extends HTMLElement implements IDisposable {
                 this.setVisible(control, prop);
             }
         }
+        this.syncCombobox(property);
     };
+
+    /** Point the dropdown at whatever the command's property now says. */
+    private syncCombobox(property: string | number | symbol) {
+        const entry = this.comboboxes.get(property);
+        if (!entry) return;
+
+        const [combobox, select] = entry;
+        const index = combobox.items.indexOf((this.command as any)[property]);
+        if (index < 0 || index === select.selectedIndex) return;
+
+        combobox.selectedIndex = index;
+        select.selectedIndex = index;
+    }
 
     private initContext() {
         const groupMap = new Map<I18nKeys, HTMLDivElement>();
@@ -233,6 +255,12 @@ export class CommandContext extends HTMLElement implements IDisposable {
     }
 
     private newCombobox(g: Property, combobox: Combobox<any>) {
+        // The command's own property is the source of truth, not the combobox: the
+        // command may already hold a value remembered from its last run, and the
+        // prompt can change it from under us while the panel is open.
+        const current = combobox.items.indexOf((this.command as any)[g.name]);
+        if (current >= 0) combobox.selectedIndex = current;
+
         const options = combobox.items.map((item, index) => {
             return option({
                 selected: index === combobox.selectedIndex,
@@ -242,19 +270,19 @@ export class CommandContext extends HTMLElement implements IDisposable {
             });
         });
 
-        return div(
-            label({ textContent: new Localize(g.display) }),
-            select(
-                {
-                    className: style.select,
-                    onchange: (e) => {
-                        combobox.selectedIndex = (e.target as HTMLSelectElement).selectedIndex;
-                        (this.command as any)[g.name] = combobox.selectedItem;
-                    },
+        const selectEl = select(
+            {
+                className: style.select,
+                onchange: (e) => {
+                    combobox.selectedIndex = (e.target as HTMLSelectElement).selectedIndex;
+                    (this.command as any)[g.name] = combobox.selectedItem;
                 },
-                ...options,
-            ),
+            },
+            ...options,
         );
+        this.comboboxes.set(g.name, [combobox, selectEl]);
+
+        return div(label({ textContent: new Localize(g.display) }), selectEl);
     }
 
     private newInput(g: Property, noType: any, converter?: (v: string) => any) {

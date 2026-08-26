@@ -29,6 +29,7 @@ import type { IDocument } from "../document";
 import type { I18nKeys } from "../i18n";
 import type { Material } from "../material";
 import type { INode } from "../model";
+import type { StepOption } from "../snap";
 import type { DialogButton, FloatPanelOptions } from "../ui";
 import type { CursorType, IView } from "../visual";
 import type { AsyncController } from "./asyncController";
@@ -42,6 +43,7 @@ export interface PubSubEventMap {
     clearInput: () => void;
     clearSelectionControl: () => void;
     clearStatusBarTip: () => void;
+    clearStepOptions: () => void;
     closeCommandContext: () => void;
     displayError: (message: string) => void;
     documentClosed: (document: IDocument) => void;
@@ -50,6 +52,16 @@ export interface PubSubEventMap {
     modelUpdate: (model: INode) => void;
     openCommandContext: (command: ICommand) => void;
     parentVisibleChanged: (model: INode) => void;
+    /**
+     * "Command state that the live prompt depends on has changed - re-read it."
+     *
+     * The running step re-derives its own tip and options and republishes both, so a
+     * change made anywhere (typed at the prompt, clicked in the status bar, picked
+     * from the ribbon's property panel) shows up on every surface. The publisher does
+     * not need to know which step is live, and the step does not need to know what
+     * changed - the command's observable property stays the single source of truth.
+     */
+    refreshStepPrompt: () => void;
     showDialog: (title: I18nKeys, content: HTMLElement, buttons?: DialogButton[] | (() => void)) => void;
     showFloatPanel: (options: FloatPanelOptions) => void;
     showFloatTip: (dom: HTMLElement | { level: MessageType; msg: string }) => void;
@@ -75,6 +87,13 @@ export interface PubSubEventMap {
      */
     showPropertiesPanel(document: IDocument, nodes: INode[]): void;
     showSelectionControl: (controller: AsyncController) => void;
+    /**
+     * The bracketed alternatives for the prompt now showing, rendered as clickable
+     * chips beside the status bar tip. Republished (not just cleared) whenever an
+     * option changes what the remaining options are - see the Circle command's
+     * Radius/Diameter pair, which swap places once one is chosen.
+     */
+    showStepOptions: (options: StepOption[]) => void;
     showToast: (message: I18nKeys, ...args: any[]) => void;
     statusBarTip: (tip: I18nKeys) => void;
     viewClosed: (view: IView) => void;

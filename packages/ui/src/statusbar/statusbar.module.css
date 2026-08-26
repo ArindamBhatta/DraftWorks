@@ -9,12 +9,75 @@
 
 .left {
     flex: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    min-width: 0;
 
     .tip {
         font-size: 12px;
         margin: 4px 8px;
         color: var(--statusbar-foreground-color);
+        white-space: nowrap;
     }
+}
+
+/* The running command, heading its prompt the way AutoCAD does. */
+.commandName {
+    font-size: 12px;
+    font-weight: 700;
+    font-family: monospace;
+    margin-left: 8px;
+    color: var(--statusbar-foreground-color);
+    white-space: nowrap;
+}
+
+.commandName:empty {
+    display: none;
+}
+
+/* `or [3P/2P]:` - empty (and so invisible) whenever the live prompt offers no
+   alternatives, which is most of them. */
+.options {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    overflow-x: auto;
+    font-size: 12px;
+}
+
+.optionsText,
+.optionsBracket {
+    color: var(--statusbar-foreground-color);
+    white-space: nowrap;
+}
+
+.optionsText {
+    margin-right: 2px;
+}
+
+/* Only the keys are clickable, so only the keys look it - that is what makes them
+   read as the thing you could have typed instead. */
+.option {
+    padding: 0 2px;
+    border: none;
+    border-radius: 2px;
+    background: transparent;
+    color: var(--primary-color, #2f6fd0);
+    font-size: 12px;
+    font-weight: 700;
+    font-family: monospace;
+    line-height: 18px;
+    white-space: nowrap;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.option:hover {
+    background: var(--hover-background-color);
 }
 
 .right {

@@ -3,7 +3,7 @@ import { type AsyncController, Precision } from "../foundation";
 import type { I18nKeys } from "../i18n";
 import type { XYZ } from "../math";
 import { AngleSnapEventHandler, Dimensions, type PointSnapData } from "../snap";
-import { SnapStep } from "./step";
+import { SnapStep, type StepTip } from "./step";
 
 function defaultSnapedData(): PointSnapData {
     return {
@@ -13,7 +13,7 @@ function defaultSnapedData(): PointSnapData {
 
 export class AngleStep extends SnapStep<PointSnapData> {
     constructor(
-        tip: I18nKeys,
+        tip: StepTip,
         private readonly handleCenter: () => XYZ,
         private readonly handleP1: () => XYZ,
         handleP2Data: () => PointSnapData = defaultSnapedData,

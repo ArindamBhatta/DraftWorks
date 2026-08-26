@@ -13,14 +13,14 @@ import {
     SnapPointOnCurveEventHandler,
     SnapPointPlaneEventHandler,
 } from "../snap";
-import { SnapStep } from "./step";
+import { SnapStep, type StepTip } from "./step";
 
 function defaultSnapedData(): PointSnapData {
     return { dimension: (Dimensions.D1 | Dimensions.D1D2D3) as Dimension };
 }
 
 export class PointStep extends SnapStep<PointSnapData> {
-    constructor(tip: I18nKeys, handleData: () => PointSnapData = defaultSnapedData, keepSelected = false) {
+    constructor(tip: StepTip, handleData: () => PointSnapData = defaultSnapedData, keepSelected = false) {
         super(tip, handleData, keepSelected);
     }
 
@@ -34,7 +34,7 @@ export class PointStep extends SnapStep<PointSnapData> {
 }
 
 export class PointOnCurveStep extends SnapStep<SnapPointOnCurveData> {
-    constructor(tip: I18nKeys, handleData: () => SnapPointOnCurveData, keepSelected = false) {
+    constructor(tip: StepTip, handleData: () => SnapPointOnCurveData, keepSelected = false) {
         super(tip, handleData, keepSelected);
     }
 
@@ -52,7 +52,7 @@ export class PointOnCurveStep extends SnapStep<SnapPointOnCurveData> {
 }
 
 export class PointOnAxisStep extends SnapStep<SnapPointOnAxisData> {
-    constructor(tip: I18nKeys, handleData: () => SnapPointOnAxisData, keepSelected = false) {
+    constructor(tip: StepTip, handleData: () => SnapPointOnAxisData, keepSelected = false) {
         super(tip, handleData, keepSelected);
     }
 
@@ -70,7 +70,7 @@ export class PointOnAxisStep extends SnapStep<SnapPointOnAxisData> {
 }
 
 export class PointOnPlaneStep extends SnapStep<PointSnapData> {
-    constructor(tip: I18nKeys, handleData: () => PointSnapData, keepSelected = false) {
+    constructor(tip: StepTip, handleData: () => PointSnapData, keepSelected = false) {
         super(tip, handleData, keepSelected);
     }
 

@@ -5,7 +5,14 @@ import type { I18nKeys } from "../../i18n";
 import type { XYZ } from "../../math";
 import { MeshDataUtils, type ShapeMeshData, type ShapeType, ShapeTypes } from "../../shape";
 import { type IEventHandler, type IView, type MeshOption, screenDistance } from "../../visual";
-import type { ISnap, MouseAndDetected, SnapData, SnapResult } from "../snap";
+import {
+    hasStepOptions,
+    type ISnap,
+    type MouseAndDetected,
+    matchStepOption,
+    type SnapData,
+    type SnapResult,
+} from "../snap";
 import { snapMarkerMesh } from "../snapMarker";
 
 type SnapState = "idle" | "snapping" | "inputing" | "cancelled" | "completed";
@@ -276,15 +283,23 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
             this._snaped = undefined;
             this.handleCancel();
         } else {
-            this.handleNumericInput(view, event);
+            this.handleTypedInput(view, event);
         }
     }
 
-    private handleNumericInput(view: IView, event: KeyboardEvent) {
-        if (!["#", "-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"].includes(event.key)) return;
+    private handleTypedInput(view: IView, event: KeyboardEvent) {
+        if (!this.canStartTyping(event.key)) return;
 
         this._state = "inputing";
         PubSub.default.pub("showInput", event.key, (text: string) => {
+            // An option key wins over a coordinate: "3P" is a mode, not a number, and
+            // the option list is short and explicit enough that nothing else collides.
+            const option = this.matchOption(text);
+            if (option) {
+                option.onSelect();
+                return Result.ok(text);
+            }
+
             const error = this.inputError(text);
             if (error) return Result.err(error);
 
@@ -292,6 +307,21 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
             this.handleSuccess();
             return Result.ok(text);
         });
+    }
+
+    /**
+     * Which keystrokes open the typing box. Digits and coordinate punctuation always
+     * do, as before. A letter only does when this prompt actually offers an option it
+     * could be spelling - otherwise letters stay inert during a pick, the way they
+     * were before options existed.
+     */
+    private canStartTyping(key: string) {
+        if (["#", "-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"].includes(key)) return true;
+        return key.length === 1 && /[a-z]/i.test(key) && hasStepOptions(this.data.options);
+    }
+
+    private matchOption(text: string) {
+        return matchStepOption(this.data.options, text);
     }
 
     protected abstract getPointFromInput(view: IView, text: string): SnapResult;
