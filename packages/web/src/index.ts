@@ -1,5 +1,5 @@
 // * Starting Point of 2D Cad */
-import { promptDrawingSetup } from "@chili3d/app";
+import { promptDrawingSetupIfFirstRun } from "@chili3d/app";
 import { AppBuilder } from "@chili3d/builder";
 import { type IApplication, Logger } from "@chili3d/core";
 import { Loading } from "./loading";
@@ -27,7 +27,7 @@ async function handleApplicaionBuilt(app: IApplication) {
     // AppBuilder has already opened a blank drawing, so the editor is behind these
     // dialogs rather than a spinner. Deliberately not awaited by build(): the loading
     // overlay has to come down first, or it would sit on top of the dialogs.
-    await promptDrawingSetup();
+    await promptDrawingSetupIfFirstRun();
 }
 
 // prettier-ignore

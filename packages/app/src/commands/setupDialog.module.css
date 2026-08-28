@@ -1,0 +1,149 @@
+/* The shared shape of AutoCAD's drawing-setup dialogs (Drawing Units, Dimension Style):
+   settings fenced into captioned group boxes, and a live preview panel that answers
+   "what will this actually look like" once for the whole dialog rather than leaving each
+   control to describe itself. */
+
+.root {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    /* Wide enough that the two columns each get a usable half - at 440px the preview
+       pane was ~200px and its dimension text rendered around 3px tall. */
+    min-width: 660px;
+    font-size: 13px;
+    color: var(--foreground-color);
+}
+
+/* Length and Insertion scale sit side by side, as they do in AutoCAD. */
+.columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+}
+
+.group {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 6px 14px 14px;
+    margin: 0;
+    min-width: 0;
+}
+
+.groupTitle {
+    padding: 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--foreground-secondary-color);
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+    min-width: 0;
+}
+
+.fieldLabel {
+    color: var(--foreground-secondary-color);
+}
+
+.select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    font-size: 13px;
+    border: 1px solid var(--input-border-color);
+    border-radius: 4px;
+    background-color: var(--input-background-color);
+    color: var(--input-text-color);
+}
+
+.select:hover {
+    border-color: var(--border-hover-color);
+}
+
+.select:focus-visible {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* The one panel that tells the truth about the settings above it: monospace, because
+   these are formatted numbers meant to be compared line to line as the type changes. */
+.sample {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    background-color: var(--title-background);
+    font-family: monospace;
+    font-size: 15px;
+    min-height: 52px;
+}
+
+/* A settings column beside a preview column, the way the Dimension Style dialog puts the
+   sample drawing next to the controls that change it. The preview takes the wider share. */
+.split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: 16px;
+    align-items: start;
+}
+
+/* One caption + control per line, captions sharing a column so the controls line up. */
+.rows {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.rowLabel {
+    color: var(--foreground-secondary-color);
+}
+
+.numberBox {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    font-size: 13px;
+    border: 1px solid var(--input-border-color);
+    border-radius: 4px;
+    background-color: var(--input-background-color);
+    color: var(--input-text-color);
+}
+
+.numberBox:hover {
+    border-color: var(--border-hover-color);
+}
+
+.numberBox:focus-visible {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* The sample drawing. A fixed aspect box so the figure does not reflow as the numbers
+   beside it change - only the dimensions drawn inside it should move. */
+.preview {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-top: 8px;
+    border-radius: 4px;
+    background-color: var(--title-background);
+}
+
+@media (max-width: 760px) {
+    .root {
+        min-width: 0;
+    }
+
+    .columns,
+    .split {
+        grid-template-columns: 1fr;
+    }
+}

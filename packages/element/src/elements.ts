@@ -79,6 +79,9 @@ export const sup = createElement("sup");
 export const form = createElement("form");
 export const br = createElement("br");
 export const hr = createElement("hr");
+/** Group box, the way a desktop CAD dialog fences off a set of related settings. */
+export const fieldset = createElement("fieldset");
+export const legend = createElement("legend");
 
 export function svg(props: HTMLProps<HTMLElement> & { icon: string }) {
     const ns = "http://www.w3.org/2000/svg";

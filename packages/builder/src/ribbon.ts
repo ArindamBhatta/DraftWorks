@@ -52,7 +52,7 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                 groupName: "ribbon.group.tools",
                 items: [
                     "units.setup",
-                    ["dimension.setup", "mv.setup"],
+                    "dimension.setup",
                     "create.group",
                     ["create.offset", "create.copyShape"],
                 ],

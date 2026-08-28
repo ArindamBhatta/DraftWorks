@@ -23,6 +23,7 @@ import { a, collection, createIcon, div, img, label, span, svg } from "@chili3d/
 import { LanguageSelector, ThemeSelector } from "./appSettings";
 import style from "./ribbon.module.css";
 import { RibbonGroupElement } from "./ribbonGroup";
+import { SaveIndicator } from "./saveIndicator";
 
 export const QuickButton = (command: ICommand) => {
     const data = CommandStore.getComandData(command);
@@ -185,7 +186,11 @@ export class RibbonUI extends HTMLElement {
                     this.app.activeView = view;
                 },
             },
-            div({ className: style.name }, span({ textContent: new Binding(view.document, "name") })),
+            div(
+                { className: style.name },
+                span({ textContent: new Binding(view.document, "name") }),
+                new SaveIndicator(view.document),
+            ),
             svg({
                 className: style.close,
                 icon: "icon-times",

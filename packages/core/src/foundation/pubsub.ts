@@ -48,6 +48,12 @@ export interface PubSubEventMap {
     closeCommandContext: () => void;
     displayError: (message: string) => void;
     documentClosed: (document: IDocument) => void;
+    /**
+     * The drawing no longer matches what is on disk. Published from the document's own
+     * history, so "dirty" means exactly "undoable" - autosave and undo cannot drift
+     * apart into two ideas of what counts as a change. See AutosaveService.
+     */
+    documentDirty: (document: IDocument) => void;
     editMaterial: (document: IDocument, material: Material, callback: (material: Material) => void) => void;
     executeCommand: (commandName: CommandKeys) => void;
     modelUpdate: (model: INode) => void;

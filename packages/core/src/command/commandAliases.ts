@@ -73,7 +73,6 @@ export const CommandAliases: Partial<Record<CommandKeys, string[]>> = {
     "edit.redo": ["red", "redo"],
     "view.pan": ["p", "pan"],
     "units.setup": ["un", "units", "ddunits"],
-    "mv.setup": ["mvs", "mvsetup"],
     "layer.moveToCurrent": ["laymcur", "movetolayer"],
     "layer.setup": ["la", "layer", "ddlmodes"],
     "convert.toWire": ["towire"],

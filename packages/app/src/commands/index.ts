@@ -14,7 +14,6 @@ export * from "./importExport";
 export * from "./layer";
 export * from "./measure";
 export * from "./modify";
-export * from "./mvSetupCommand";
 export * from "./properties";
 export * from "./redo";
 export * from "./undo";

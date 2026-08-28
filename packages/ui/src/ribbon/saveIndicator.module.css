@@ -1,0 +1,36 @@
+/* The save status beside the drawing name. Deliberately quiet - it is glanced at, not
+   read, and it sits inside a 220px tab that the name itself has first claim on. */
+.indicator {
+    font-size: 11px;
+    line-height: 1;
+    margin-left: 6px;
+    padding-left: 6px;
+    border-left: 1px solid var(--border-color);
+    color: var(--statusbar-foreground-color);
+    opacity: 0.75;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 0 1 auto;
+    min-width: 0;
+    user-select: none;
+}
+
+/* Nothing to say yet - collapse entirely rather than leaving a stray divider. */
+.indicator:empty {
+    display: none;
+}
+
+/* Only the state that costs the user something is allowed to raise its voice. */
+.indicator[data-state="error"] {
+    color: var(--error-color, #d93025);
+    opacity: 1;
+}
+
+/* The tab is narrow. When there is not room for both, the name wins and the status
+   drops - the same trade Drive makes on a narrow window. */
+@media (max-width: 900px) {
+    .indicator {
+        display: none;
+    }
+}

@@ -1,3 +1,5 @@
+import { ObjectStorage } from "../objectStorage";
+
 export type UnitType = "architectural" | "engineering" | "decimal" | "fractional" | "scientific";
 export type BaseUnit = "mm" | "cm" | "m" | "in" | "ft";
 
@@ -45,12 +47,39 @@ const INCHES_PER_FOOT = 12;
 
 const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
 
+/** localStorage key holding the unit settings between sessions. */
+const STORAGE_KEY = "unitSetup";
+
 export class UnitSetup {
     private static _currentSettings: UnitSettings = {
         type: "architectural",
         baseUnit: "in",
         precision: 16,
     };
+
+    /**
+     * True once settings have been read back from a previous session, so start-up can
+     * tell "the user has chosen units before" from "this is a first run" and skip
+     * re-asking. AutoCAD does not interrogate a returning user about units either.
+     */
+    static #restored = false;
+    static get isRestored(): boolean {
+        return UnitSetup.#restored;
+    }
+
+    /**
+     * Load the settings saved by the last session. Call once during start-up, before
+     * anything formats a length. Safe to call when nothing was ever saved - it leaves
+     * the defaults in place and reports false.
+     */
+    static restore(): boolean {
+        const saved = ObjectStorage.default.value<Partial<UnitSettings>>(STORAGE_KEY);
+        if (!saved?.type) return false;
+
+        UnitSetup.configure(saved);
+        UnitSetup.#restored = true;
+        return true;
+    }
 
     static get settings(): UnitSettings {
         return { ...UnitSetup._currentSettings };
@@ -70,6 +99,9 @@ export class UnitSetup {
             baseUnit: settings.baseUnit ?? current.baseUnit,
             precision: UnitSetup.resolvePrecision(type, settings.precision, current.precision),
         };
+        // Written through on every change rather than saved by the dialog, so any caller
+        // that configures units gets persistence without having to remember to ask.
+        ObjectStorage.default.setValue(STORAGE_KEY, UnitSetup._currentSettings);
     }
 
     /** True when the type's precision is a fraction denominator rather than decimal places. */

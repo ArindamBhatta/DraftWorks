@@ -2,6 +2,7 @@
 // See LICENSE file in the project root for full license information.
 
 import {
+    AutosaveService,
     type CommandKeys,
     DOCUMENT_FILE_EXTENSION,
     I18n,
@@ -100,13 +101,33 @@ export class Application extends Observable implements IApplication {
         }
     };
 
+    /**
+     * Warn on leaving only when work would actually be lost.
+     *
+     * This used to fire whenever a drawing was open, which predates autosave: with every
+     * edit written a couple of seconds after it is made, an open drawing is almost always
+     * a fully saved one, and prompting anyway trains people to click through a dialog
+     * that is usually crying wolf. Now it asks autosave whether anything is still owed to
+     * the store - a change inside the debounce window, a write in flight, or a failed
+     * write awaiting retry - and stays silent otherwise, the way Drive does.
+     *
+     * The prompt is still worth showing in that narrow case: `beforeunload` cannot await,
+     * so the seconds it buys are the only chance the pending write has to finish. The
+     * flush itself is started from AutosaveService's own `pagehide` handler.
+     *
+     * With no autosave service running, fall back to the old always-warn behaviour -
+     * nothing is saving anything, so an open drawing really is unsaved work.
+     */
     private readonly handleWindowUnload = (event: BeforeUnloadEvent) => {
-        if (this.activeView) {
-            // Cancel the event as stated by the standard.
-            event.preventDefault();
-            // Chrome requires returnValue to be set.
-            event.returnValue = "";
-        }
+        if (!this.activeView) return;
+
+        const autosave = AutosaveService.instance;
+        if (autosave && !autosave.hasPendingWork()) return;
+
+        // Cancel the event as stated by the standard.
+        event.preventDefault();
+        // Chrome requires returnValue to be set.
+        event.returnValue = "";
     };
 
     private readonly handleDragStart = (ev: DragEvent) => {

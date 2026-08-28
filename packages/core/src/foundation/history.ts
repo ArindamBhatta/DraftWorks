@@ -17,6 +17,15 @@ export class History implements IDisposable {
     disabled = false;
     undoLimits = 50;
 
+    /**
+     * Fires whenever the undo stack moves, which is exactly when the drawing on screen
+     * stopped matching the drawing on disk. Autosave hangs off this rather than off its
+     * own change detection so the two can never disagree about what "changed" means: if
+     * an edit is undoable it is savable, and an edit that bypasses history (deserializing
+     * a file, a rollback) is silent here and silent there.
+     */
+    constructor(private readonly onChanged?: () => void) {}
+
     #isUndoing = false;
     get isUndoing() {
         return this.#isUndoing;
@@ -47,6 +56,8 @@ export class History implements IDisposable {
             const removed = this._undos.shift();
             removed?.dispose();
         }
+
+        this.onChanged?.();
     }
 
     undoCount() {
@@ -59,6 +70,7 @@ export class History implements IDisposable {
 
     undo() {
         this.#isUndoing = true;
+        let applied = false;
         this.tryOperate(
             () => {
                 const record = this._undos.pop();
@@ -66,15 +78,20 @@ export class History implements IDisposable {
 
                 record.undo();
                 this._redos.push(record);
+                applied = true;
             },
             () => {
                 this.#isUndoing = false;
             },
         );
+        // Undoing back to the last saved state still counts as a change - the file on
+        // disk holds the edit that was just taken back, so it needs rewriting too.
+        if (applied) this.onChanged?.();
     }
 
     redo() {
         this.#isRedoing = true;
+        let applied = false;
         this.tryOperate(
             () => {
                 const record = this._redos.pop();
@@ -82,11 +99,13 @@ export class History implements IDisposable {
 
                 record.redo();
                 this._undos.push(record);
+                applied = true;
             },
             () => {
                 this.#isRedoing = false;
             },
         );
+        if (applied) this.onChanged?.();
     }
 
     private tryOperate(action: () => void, onFinally: () => void) {
