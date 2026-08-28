@@ -2,9 +2,21 @@ import { Config, VisualConfig } from "../../config";
 import type { IDocument } from "../../document";
 import { I18n, type I18nKeys } from "../../i18n";
 import { Line, type Ray, type XYZ } from "../../math";
-import { CurveUtils, type ICircle, type IEdge, type IVertex, MeshDataUtils, ShapeTypes } from "../../shape";
+import { ShapeNode } from "../../model";
+import {
+    CurveUtils,
+    type ICircle,
+    type IEdge,
+    type IFace,
+    type IShape,
+    type IVertex,
+    type IWire,
+    MeshDataUtils,
+    ShapeTypes,
+} from "../../shape";
 import { type ObjectSnapType, ObjectSnapTypes, ObjectSnapTypeUtils } from "../../snapType";
 import { type IView, type IVisualContext, screenDistance, type VisualShapeData } from "../../visual";
+import { polygonCentroid } from "../geometricCenter";
 import type { MouseAndDetected, SnapResult, SnapType } from "../snap";
 import { snapMarkerMesh } from "../snapMarker";
 import { BaseSnap } from "./baseSnap";
@@ -295,14 +307,98 @@ export class ObjectSnap extends BaseSnap {
     }
 
     private showInvisibleSnaps(view: IView, shape: VisualShapeData) {
+        // Both of the snaps below are centres, so the status bar's Center checkbox is
+        // what decides whether they are on offer. It was not consulted before, which
+        // left circle centres snapping even with Center switched off.
+        if (!ObjectSnapTypeUtils.hasType(this._snapType, ObjectSnapTypes.center)) return;
+
         if (shape.shape.shapeType === ShapeTypes.edge) {
             if (this._invisibleInfos.has(shape)) return;
             const curve = (shape.shape as IEdge).curve;
             const basisCurve = curve.basisCurve;
             if (CurveUtils.isCircle(basisCurve)) {
                 this.showCircleCenter(basisCurve, view, shape);
+                return;
             }
+            // Not a circle, so there is no centre the curve itself defines - but the
+            // object this edge belongs to may still enclose an area, and its middle is
+            // what a draftsman means by "the centre of that rectangle".
+            this.showGeometricCenter(view, shape);
         }
+    }
+
+    /**
+     * AutoCAD's Geometric Center (GCEN): the centroid of a closed outline, offered
+     * from any edge of it. This is what lets MOVE take its base point from the middle
+     * of a rectangle or polygon the way it already could from a circle's centre.
+     *
+     * The hovered edge is only one side of the figure, so the whole shape is fetched
+     * from the node that owns it and walked as a loop.
+     */
+    private showGeometricCenter(view: IView, shape: VisualShapeData) {
+        const boundary = this.boundaryOf(shape);
+        if (!boundary) return;
+
+        const center = polygonCentroid(boundary, view.workplane);
+        if (!center) return;
+
+        this.addInvisibleSnap(view, shape, center, "snap.geometricCenter");
+    }
+
+    /**
+     * The owner object's outline in world coordinates, walked in loop order, or
+     * undefined when it has no enclosed area to have a centre of. Straight-sided
+     * figures are the case that matters here - a curved boundary is sampled only at
+     * its edge ends, which is enough for the rectangles, polygons and plines this
+     * serves and never worse than offering no snap at all.
+     */
+    private boundaryOf(shape: VisualShapeData): XYZ[] | undefined {
+        const node = shape.owner.node;
+        if (!(node instanceof ShapeNode) || !node.shape.isOk) return undefined;
+
+        const wire = this.outerWireOf(node.shape.value);
+        if (!wire?.isClosed()) return undefined;
+
+        const points: XYZ[] = [];
+        for (const edge of wire.edgeLoop()) {
+            const curve = edge.curve;
+            const [first, last] = [curve.firstParameter(), curve.lastParameter()];
+            // edgeLoop hands back edges in loop order, but a reversed edge runs against
+            // that order - taking its end first is what keeps the walk going one way
+            // round. A loop that doubles back would fold the shoelace sum onto itself.
+            points.push(
+                shape.transform.ofPoint(curve.value(edge.orientation() === "reversed" ? last : first)),
+            );
+        }
+        return points.length >= 3 ? points : undefined;
+    }
+
+    private outerWireOf(shape: IShape): IWire | undefined {
+        if (shape.shapeType === ShapeTypes.wire) return shape as IWire;
+        if (shape.shapeType === ShapeTypes.face) return (shape as IFace).outerWire();
+        return undefined;
+    }
+
+    private addInvisibleSnap(view: IView, shape: VisualShapeData, point: XYZ, info: I18nKeys) {
+        const temporary = MeshDataUtils.createVertexMesh(
+            point,
+            VisualConfig.hintVertexSize,
+            VisualConfig.hintVertexColor,
+        );
+        const id = view.document.visual.context.displayMesh([temporary]);
+        this._invisibleInfos.set(shape, {
+            view,
+            snaps: [
+                {
+                    view,
+                    point,
+                    info: I18n.translate(info),
+                    shapes: [shape],
+                    type: "center",
+                },
+            ],
+            displays: [id],
+        });
     }
 
     private showCircleCenter(curve: ICircle, view: IView, shape: VisualShapeData) {

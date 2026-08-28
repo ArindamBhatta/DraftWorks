@@ -41,7 +41,8 @@ export class Picker implements IPicker {
         handler.selectedState = options?.selectedState ?? VisualStates.edgeSelected;
         handler.highlightState = options?.highlightState ?? VisualStates.edgeHighlight;
         handler.canFinish = options?.canFinish;
-        await this.pickAsync(handler, prompt, controller, multi);
+        // Picking objects, not aiming at a point - AutoCAD shows the bare pickbox here.
+        await this.pickAsync(handler, prompt, controller, multi, "select.objects");
         return this.document.selection.getSelectedShapes();
     }
 
@@ -52,7 +53,7 @@ export class Picker implements IPicker {
     ): Promise<VisualNode[]> {
         const multi = options?.multi ?? false;
         const handler = new NodeSelectionHandler(this.document, multi, controller, options?.nodeFilter);
-        await this.pickAsync(handler, prompt, controller, multi);
+        await this.pickAsync(handler, prompt, controller, multi, "select.objects");
         return this.document.selection.getSelectedNodes() as VisualNode[];
     }
 

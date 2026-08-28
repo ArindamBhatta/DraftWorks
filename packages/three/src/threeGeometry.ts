@@ -19,7 +19,14 @@ import {
     ShapeTypeUtils,
     type VertexMeshData,
 } from "@chili3d/core";
-import { type Material, Mesh, type MeshLambertMaterial, Points, type PointsMaterial } from "three";
+import {
+    type Material,
+    Mesh,
+    type MeshBasicMaterial,
+    type MeshLambertMaterial,
+    Points,
+    type PointsMaterial,
+} from "three";
 import type { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
 import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js";
@@ -184,7 +191,12 @@ export class ThreeGeometry extends ThreeVisualObject implements IVisualGeometry 
         this._faces?.layers.set(this.geometryNode.filled ? Constants.Layers.Fill : Constants.Layers.Solid);
     }
 
-    setFacesMateiralTemperary(material: MeshLambertMaterial) {
+    /**
+     * Widened from MeshLambertMaterial because the selection and highlight overlays
+     * are unlit (MeshBasicMaterial) - they are cursor feedback rather than surfaces,
+     * so they must render at exactly the colour VisualConfig gives them.
+     */
+    setFacesMateiralTemperary(material: MeshLambertMaterial | MeshBasicMaterial) {
         if (this._faces) this._faces.material = material;
     }
 

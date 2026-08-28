@@ -2,7 +2,7 @@
 // See LICENSE file in the project root for full license information.
 
 import { type LineType, VisualConfig, type VisualItemConfig } from "@chili3d/core";
-import { DoubleSide, MeshLambertMaterial, PointsMaterial } from "three";
+import { DoubleSide, MeshBasicMaterial, MeshLambertMaterial, PointsMaterial } from "three";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { ThreeHelper } from "./threeHelper";
 
@@ -132,7 +132,11 @@ export const selectedEdgeMaterial = new LineMaterial({
     polygonOffsetUnits: -4,
 });
 
-export const faceTransparentMaterial = new MeshLambertMaterial({
+// Selection and highlight faces are cursor feedback, not surfaces, so they are drawn
+// unlit (Basic rather than Lambert). Shading them multiplied the configured colour
+// down by whatever the lights happened to contribute, which is why a bright colour
+// set in VisualConfig used to arrive on screen looking dark and muddy.
+export const faceTransparentMaterial = new MeshBasicMaterial({
     transparent: true,
     side: DoubleSide,
     color: ThreeHelper.fromColor(VisualConfig.selectedFaceColor),
@@ -142,7 +146,7 @@ export const faceTransparentMaterial = new MeshLambertMaterial({
     polygonOffsetUnits: -4,
 });
 
-export const selectedFaceColoredMaterial = new MeshLambertMaterial({
+export const selectedFaceColoredMaterial = new MeshBasicMaterial({
     side: DoubleSide,
     color: ThreeHelper.fromColor(VisualConfig.selectedFaceColor),
     polygonOffset: true,
@@ -150,7 +154,7 @@ export const selectedFaceColoredMaterial = new MeshLambertMaterial({
     polygonOffsetUnits: -4,
 });
 
-export const highlightFaceMaterial = new MeshLambertMaterial({
+export const highlightFaceMaterial = new MeshBasicMaterial({
     color: ThreeHelper.fromColor(VisualConfig.highlightFaceColor),
     side: DoubleSide,
     polygonOffset: true,

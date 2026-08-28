@@ -11,10 +11,27 @@ export const DefaultDarkEdgeColor = 0xeeeeee;
 
 export class VisualItemConfig extends Observable {
     defaultFaceColor = 0xdedede;
-    highlightEdgeColor = 0x33ff33;
-    highlightFaceColor = 0x99ff00;
-    selectedEdgeColor = 0x33ff33;
-    selectedFaceColor = 0x33ff33;
+    /**
+     * Selection feedback, kept deliberately light and deliberately blue.
+     *
+     * Light because the canvas is mid-grey in the light theme and near-black in the
+     * dark one, so a pale colour is the one value that stands out against both.
+     *
+     * Blue because everything else that lights up while drawing - snap markers,
+     * tracking lines, rubber-band previews, edit vertices - is the green below, and
+     * when selection shared that green there was no way to tell "this is chosen" from
+     * "this is where the cursor would land". Selection is the one cue that persists
+     * after the mouse moves on, so it gets its own hue.
+     *
+     * Hover is the paler of the two ("you could pick this") and selection the stronger
+     * ("you did pick this"). Both are drawn unlit - see materials.ts - because they are
+     * cursor feedback, not surfaces: shading them made the colour set here come out
+     * darker than it reads, which is what made the old green look muddy.
+     */
+    highlightEdgeColor = 0xbfe9ff;
+    highlightFaceColor = 0xbfe9ff;
+    selectedEdgeColor = 0x7fd4ff;
+    selectedFaceColor = 0x7fd4ff;
     editVertexSize = 7;
     editVertexColor = 0x33ff33;
     hintVertexSize = 5;
