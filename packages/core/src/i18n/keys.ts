@@ -1,4 +1,9 @@
+/*Keys.ts is the schema just an array of every valid key name, with no string attached. it exists purely so typescript can build I18nKeys, a union type of literal strings
+
+*/
+
 export const I18N_KEYS = [
+    // Annotation
     "annotation",
     "annotation.dimension",
     "annotation.text",
@@ -6,16 +11,20 @@ export const I18N_KEYS = [
     "annotation.text.height",
     "annotation.text.rotation",
     "annotation.text.width",
+    // Arc
     "arc.angle",
     "arc.start",
+    // Autosave
     "autosave.error",
     "autosave.offline",
     "autosave.pending",
     "autosave.saved",
     "autosave.saving",
+    // Axis
     "axis.x",
     "axis.y",
     "axis.z",
+    // Body
     "body.arc",
     "body.circle",
     "body.editableShape",
@@ -32,8 +41,10 @@ export const I18N_KEYS = [
     "body.regularPolygon",
     "body.rect",
     "body.wire",
+    // Circle
     "circle.center",
     "circle.radius",
+    // Command
     "command.convert.toFace",
     "command.convert.toWire",
     "command.create.arc",
@@ -87,6 +98,7 @@ export const I18N_KEYS = [
     "command.modify.fillet",
     "command.modify.mirror",
     "command.modify.move",
+    "command.modify.copy",
     "command.modify.properties",
     "command.modify.rotate",
     "command.modify.repairShape",
@@ -97,6 +109,7 @@ export const I18N_KEYS = [
     "command.special.last",
     "command.units.setup",
     "command.view.pan",
+    // Common
     "common.angle",
     "common.area",
     "common.cancel",
@@ -130,6 +143,7 @@ export const I18N_KEYS = [
     "common.warning",
     "common.trust",
     "common.dontTrust",
+    // Dialog
     "dialog.title.dimensionSetup",
     "dialog.title.dimGeometry",
     "dialog.title.dimPreview",
@@ -153,10 +167,13 @@ export const I18N_KEYS = [
     "dialog.checkShape.faceIndex",
     "dialog.checkShape.validity",
     "dialog.checkShape.noFaces",
+    // Ellipse
     "ellipse.majorRadius",
     "ellipse.minorRadius",
+    // Entity
     "entity.editable",
     "entity.parameter",
+    // Error
     "error.default:{0}",
     "error.export.noNodeCanBeExported",
     "error.import.unsupportedFileType:{0}",
@@ -169,7 +186,9 @@ export const I18N_KEYS = [
     "error.input.threeNumberCanBeInput",
     "error.input.unsupportedInputs",
     "error.select.twoEdges",
+    // File
     "file.format",
+    // Hatch
     "hatch.pattern",
     "hatch.pattern.brick",
     "hatch.pattern.concrete",
@@ -177,11 +196,13 @@ export const I18N_KEYS = [
     "hatch.pattern.sand",
     "hatch.pattern.solid",
     "hatch.scale",
+    // Items
     "items.header",
     "items.tool.delete",
     "items.tool.expandAll",
     "items.tool.newFolder",
     "items.tool.unexpandAll",
+    // Layer
     "layer.color",
     "layer.current",
     "layer.delete",
@@ -194,14 +215,17 @@ export const I18N_KEYS = [
     "layer.setCurrentTip",
     "layer.toggleLock",
     "layer.toggleOn",
+    // Line
     "line.end",
     "line.start",
     "line.type.line",
     "line.type.xline",
+    // LineType
     "lineType.dash",
     "lineType.dot",
     "lineType.hidden",
     "lineType.solid",
+    // Material
     "material.bumpMap",
     "material.emissive",
     "material.emissiveMap",
@@ -220,7 +244,9 @@ export const I18N_KEYS = [
     "material.texture.rotation",
     "material.texture.wrapS",
     "material.texture.wrapT",
+    // Model
     "model.visible",
+    // Option
     "option.command.circleMode",
     "option.command.circleMode.center",
     "option.command.circleMode.threePoint",
@@ -244,9 +270,13 @@ export const I18N_KEYS = [
     "option.command.patternType.rectangular",
     "option.command.repeat",
     "option.rect.centerRect",
+    // Point
     "point.position",
+    // Polygon
     "polygon.points",
+    // RegularPolygon
     "regularPolygon.sides",
+    // Prompt
     "prompt.default{0}",
     "prompt.pan",
     "prompt.dimension.arcPosition",
@@ -295,9 +325,16 @@ export const I18N_KEYS = [
     "prompt.line.nextPoint",
     "prompt.mirror.firstPoint",
     "prompt.mirror.secondPoint",
+    // Move command
     "prompt.move.basePoint",
     "prompt.move.displacement",
     "prompt.move.secondPoint",
+    // Copy command
+    "prompt.copy.basePoint",
+    "prompt.copy.displacement",
+    "prompt.copy.secondPoint",
+    "prompt.option.arc",
+    // Option
     "prompt.option.center",
     "prompt.option.copy",
     "prompt.option.eraseSource",
@@ -319,6 +356,7 @@ export const I18N_KEYS = [
     "prompt.pickRadius",
     "prompt.polygon.close",
     "prompt.saveDocument{0}",
+    // Prompt - Select
     "prompt.select.curve",
     "prompt.select.edges",
     "prompt.select.faces",
@@ -326,12 +364,15 @@ export const I18N_KEYS = [
     "prompt.select.noModelSelected",
     "prompt.select.shape",
     "prompt.selectedCount",
+    // Properties
     "properties.group.transform",
     "properties.header",
     "properties.multivalue",
     "properties.noSelection",
+    // Rect
     "rect.dx",
     "rect.dy",
+    // Ribbon
     "ribbon.group.2d",
     "ribbon.group.annotation",
     "ribbon.group.converter",
@@ -353,6 +394,7 @@ export const I18N_KEYS = [
     "ribbon.tab.manager",
     "ribbon.tab.model",
     "ribbon.tab.plugin",
+    // Snap
     "snap.center",
     "snap.end",
     "snap.geometricCenter",
@@ -369,8 +411,10 @@ export const I18N_KEYS = [
     "snap.nearCurve",
     "snap.onSurface",
     "snap.tangent",
+    // StatusBar
     "statusBar.snap",
     "statusBar.tracking",
+    // Toast
     "toast.command.{0}excuting",
     "toast.converter.error",
     "toast.converter.invalidColor",
@@ -385,10 +429,13 @@ export const I18N_KEYS = [
     "toast.select.noSelected",
     "toast.snap.notFoundValidPoint",
     "toast.success",
+    // Transform
     "transform.rotation",
     "transform.scale",
     "transform.translation",
+    // Vertex
     "vertex.point",
+    // Viewport
     "viewport.fitContent",
     "viewport.zoomIn",
     "viewport.zoomOut",
@@ -396,6 +443,7 @@ export const I18N_KEYS = [
     "viewport.mode.wireframe",
     "viewport.mode.solidAndWireframe",
     "viewport.2dWireframe",
+    // Warning
     "warning.script.fromDomain",
 ] as const;
 

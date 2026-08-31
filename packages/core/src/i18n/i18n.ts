@@ -3,6 +3,7 @@ import { I18N_KEYS, type I18nKeys } from "./keys";
 const I18nId = "chili18n";
 const I18nArgs = new WeakMap<HTMLElement, any[]>();
 
+//Interface for the translation data structure
 export type Locale = {
     display: string;
     language: string;

@@ -5,6 +5,7 @@ export * from "./array";
 export * from "./break";
 export * from "./brush";
 export * from "./chamfer";
+export * from "./copy";
 export * from "./edgeCornerCommand";
 export * from "./explode";
 export * from "./fillet";

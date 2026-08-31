@@ -1,12 +1,10 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 import type { Locale } from "@chili3d/core";
 
 export default {
     display: "English",
     language: "en",
     translation: {
+        // Annotation
         annotation: "Annotation",
         "annotation.dimension": "Dimension",
         "annotation.text": "Text",
@@ -14,16 +12,20 @@ export default {
         "annotation.text.height": "Height",
         "annotation.text.rotation": "Rotation",
         "annotation.text.width": "Width",
+        // Arc
         "arc.angle": "Angle",
         "arc.start": "Start",
+        // Autosave
         "autosave.error": "Couldn't save — retrying",
         "autosave.offline": "Offline — changes saved locally",
         "autosave.pending": "Unsaved changes",
         "autosave.saved": "All changes saved",
         "autosave.saving": "Saving…",
+        // Axis
         "axis.x": "X Axis",
         "axis.y": "Y Axis",
         "axis.z": "Z Axis",
+        // Body
         "body.arc": "Arc",
         "body.circle": "Circle",
         "body.editableShape": "Editable Shape",
@@ -40,8 +42,10 @@ export default {
         "body.regularPolygon": "Regular Polygon",
         "body.rect": "Rectangle",
         "body.wire": "Wire",
+        // Circle
         "circle.center": "Center",
         "circle.radius": "Radius",
+        // Command
         "command.convert.toFace": "To Face",
         "command.convert.toWire": "To Wire",
         "command.create.arc": "Arc",
@@ -95,6 +99,7 @@ export default {
         "command.modify.fillet": "Fillet",
         "command.modify.mirror": "Mirror",
         "command.modify.move": "Move",
+        "command.modify.copy": "Copy",
         "command.modify.properties": "Properties",
         "command.modify.rotate": "Rotate",
         "command.modify.repairShape": "Repair Shape",
@@ -105,6 +110,7 @@ export default {
         "command.special.last": "__Last_COMMAND__",
         "command.units.setup": "Units",
         "command.view.pan": "Pan",
+        // Common
         "common.angle": "Angle",
         "common.area": "Area",
         "common.cancel": "Cancel",
@@ -138,6 +144,7 @@ export default {
         "common.warning": "Warning",
         "common.trust": "Trust",
         "common.dontTrust": "Don't Trust",
+        // Dialog
         "dialog.title.dimensionSetup": "Dimension Style",
         "dialog.title.dimGeometry": "Lines and Arrows",
         "dialog.title.dimPreview": "Preview",
@@ -161,10 +168,13 @@ export default {
         "dialog.checkShape.faceIndex": "Face",
         "dialog.checkShape.validity": "Validity",
         "dialog.checkShape.noFaces": "No faces found in this shape.",
+        // Ellipse
         "ellipse.majorRadius": "major Radius",
         "ellipse.minorRadius": "minor Radius",
+        // Entity
         "entity.editable": "Editable Entity",
         "entity.parameter": "Parameter Entity",
+        // Error
         "error.default:{0}": "error: {0}",
         "error.export.noNodeCanBeExported": "No node can be exported",
         "error.import.unsupportedFileType:{0}": "Unsupported file type: {0}",
@@ -177,7 +187,9 @@ export default {
         "error.input.threeNumberCanBeInput": "Reference point is empty, only 3 numbers can be entered",
         "error.input.unsupportedInputs": "Exceeds the maximum number of inputs",
         "error.select.twoEdges": "Please select two adjacent edges",
+        // File
         "file.format": "Format",
+        // Hatch
         "hatch.pattern": "Pattern",
         "hatch.pattern.brick": "Brick",
         "hatch.pattern.concrete": "Concrete",
@@ -185,11 +197,13 @@ export default {
         "hatch.pattern.sand": "Sand",
         "hatch.pattern.solid": "Solid",
         "hatch.scale": "Scale",
+        // Items
         "items.header": "Items",
         "items.tool.delete": "Delete",
         "items.tool.expandAll": "Expand All",
         "items.tool.newFolder": "New Folder",
         "items.tool.unexpandAll": "Unexpand all",
+        // Layer
         "layer.color": "Layer colour",
         "layer.current": "Current Layer",
         "layer.delete": "Delete layer",
@@ -202,14 +216,17 @@ export default {
         "layer.setCurrentTip": "Click to make this the current layer",
         "layer.toggleLock": "Lock / unlock layer",
         "layer.toggleOn": "Turn layer on / off",
+        // Line
         "line.end": "End",
         "line.start": "Start",
         "line.type.line": "Line",
         "line.type.xline": "XLine",
+        // LineType
         "lineType.dash": "Dashed",
         "lineType.dot": "Dotted",
         "lineType.hidden": "Hidden",
         "lineType.solid": "Continuous",
+        // Material
         "material.bumpMap": "BumpMap",
         "material.emissive": "Emissive",
         "material.emissiveMap": "Emissive Map",
@@ -228,7 +245,9 @@ export default {
         "material.texture.rotation": "Rotation",
         "material.texture.wrapS": "Wrap S",
         "material.texture.wrapT": "Wrap T",
+        // Model
         "model.visible": "Visible",
+        // Option
         "option.command.circleMode": "Method",
         "option.command.circleMode.center": "Center",
         "option.command.circleMode.threePoint": "3P",
@@ -252,9 +271,13 @@ export default {
         "option.command.patternType.rectangular": "Rectangular",
         "option.command.repeat": "Repeat",
         "option.rect.centerRect": "Center Rectangle",
+        // Point
         "point.position": "Position",
+        // Polygon
         "polygon.points": "Points",
+        // RegularPolygon
         "regularPolygon.sides": "Number of Sides",
+        // Prompt
         "prompt.default{0}": "{0} to pan the view, Mouse wheel to zoom, Double {0} to fit the drawing",
         "prompt.pan": "Drag to pan the view, ESC or Enter to exit",
         "prompt.dimension.arcPosition": "pick the dimension arc position, ESC key to cancel",
@@ -303,10 +326,16 @@ export default {
         "prompt.line.nextPoint": "Specify next point",
         "prompt.mirror.firstPoint": "Specify first point of mirror line",
         "prompt.mirror.secondPoint": "Specify second point of mirror line",
+        // Move command
         "prompt.move.basePoint": "Specify base point",
         "prompt.move.displacement": "Specify displacement",
         "prompt.move.secondPoint": "Specify second point",
         "prompt.option.center": "Center",
+        // Copy command
+        "prompt.copy.basePoint": "Specify base point",
+        "prompt.copy.displacement": "Specify displacement",
+        "prompt.copy.secondPoint": "Specify second point",
+        "prompt.option.arc": "Arc",
         "prompt.option.copy": "Keep the original and rotate a copy",
         "prompt.option.eraseSource": "Erase the source objects",
         "prompt.option.keepSource": "Keep the source objects",
@@ -327,6 +356,7 @@ export default {
         "prompt.pickRadius": "input radius, ESC key to cancel",
         "prompt.polygon.close": "Close",
         "prompt.saveDocument{0}": "Do you want to save the changes to {0}?",
+        // Prompt - Select
         "prompt.select.curve": "Please select a curve",
         "prompt.select.edges": "Please select edges",
         "prompt.select.faces": "Please select faces",
@@ -334,12 +364,15 @@ export default {
         "prompt.select.noModelSelected": "No model selected",
         "prompt.select.shape": "Please select shape",
         "prompt.selectedCount": "Selected",
+        // Properties
         "properties.group.transform": "Transform",
         "properties.header": "Properties",
         "properties.multivalue": "Multi Value",
         "properties.noSelection": "No object selected",
+        // Rect
         "rect.dx": "Length",
         "rect.dy": "Width",
+        // Ribbon
         "ribbon.group.2d": "2D",
         "ribbon.group.annotation": "Annotation",
         "ribbon.group.converter": "Converter",
@@ -361,6 +394,7 @@ export default {
         "ribbon.tab.model": "Model",
         "ribbon.tab.manager": "Manager",
         "ribbon.tab.plugin": "Plugin",
+        // Snap
         "snap.center": "Center",
         "snap.end": "End",
         "snap.geometricCenter": "Geometric Center",
@@ -377,8 +411,10 @@ export default {
         "snap.nearCurve": "On the Curve",
         "snap.onSurface": "On the surface",
         "snap.tangent": "Tangent",
+        // StatusBar
         "statusBar.snap": "Snap",
         "statusBar.tracking": "Tracking",
+        // Toast
         "toast.command.{0}excuting": "Command {0} is runing",
         "toast.converter.error": "Converter error",
         "toast.converter.invalidColor": "The color is invalid",
@@ -393,10 +429,13 @@ export default {
         "toast.select.noSelected": "No selected",
         "toast.snap.notFoundValidPoint": "No valid point",
         "toast.success": "Success",
+        // Transform
         "transform.rotation": "Rotation",
         "transform.scale": "Scale",
         "transform.translation": "Translation",
+        // Vertex
         "vertex.point": "Point",
+        // Viewport
         "viewport.fitContent": "Fit Content",
         "viewport.zoomIn": "Zoom In",
         "viewport.zoomOut": "Zoom Out",
@@ -404,6 +443,7 @@ export default {
         "viewport.mode.wireframe": "Wireframe",
         "viewport.mode.solidAndWireframe": "Solid And Wireframe",
         "viewport.2dWireframe": "2D Wireframe",
+        // Warning
         "warning.script.fromDomain": "Do you trust scripts from the following domains?",
     },
 } satisfies Locale;
