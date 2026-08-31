@@ -78,8 +78,6 @@ export const CommandAliases: Partial<Record<CommandKeys, string[]>> = {
     "convert.toWire": ["towire"],
     "convert.toFace": ["toface"],
     "modify.checkShape": ["checkshape"],
-    "modify.repairShape": ["repair"],
-    "modify.simplifyShape": ["simplify"],
 };
 
 export interface CommandAliasMatch {

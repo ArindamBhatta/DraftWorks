@@ -3,15 +3,12 @@
 
 export * from "./array";
 export * from "./break";
-export * from "./brush";
 export * from "./chamfer";
 export * from "./edgeCornerCommand";
 export * from "./explode";
 export * from "./fillet";
 export * from "./mirror";
 export * from "./move";
-export * from "./repair";
 export * from "./rotate";
-export * from "./simplify";
 export * from "./split";
 export * from "./trim";

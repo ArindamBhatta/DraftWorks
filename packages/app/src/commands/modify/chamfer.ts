@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 import { command, type IEdge, type IFace, type IShape, property, type Result } from "@chili3d/core";
 import { EdgeCornerCommand } from "./edgeCornerCommand";
 
@@ -16,10 +13,6 @@ export class ChamferCommand extends EdgeCornerCommand {
 
     set length(value: number) {
         this.setProperty("length", value);
-    }
-
-    protected override applyToBody(shape: IShape, edgeIndexes: number[]): Result<IShape> {
-        return shapeFactory.chamfer(shape, edgeIndexes, this.length);
     }
 
     protected override applyToFace(face: IFace, edge1: IEdge, edge2: IEdge): Result<IShape> {

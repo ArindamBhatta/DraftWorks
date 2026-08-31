@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 import {
     EditableShapeNode,
     I18n,
@@ -20,14 +17,12 @@ import {
     type VisualShapeData,
 } from "@chili3d/core";
 
-const SOLID_PARENT_TYPES: ShapeType[] = [ShapeTypes.solid, ShapeTypes.compound, ShapeTypes.compoundSolid];
 const PLANAR_PARENT_TYPES: ShapeType[] = [ShapeTypes.face, ShapeTypes.wire, ShapeTypes.edge];
-const SUPPORTED_PARENT_TYPES: ShapeType[] = [...SOLID_PARENT_TYPES, ...PLANAR_PARENT_TYPES];
 
 /**
- * Whether the parent body holds planar geometry. A compound is classified by
- * its content: containing a solid makes it 3D, otherwise (faces, wires or
- * edges inside) it is treated as 2D.
+ * Whether the parent body holds planar (2D) geometry that this command
+ * supports: a face, a wire, a standalone edge, or a compound of faces. A
+ * compound containing a solid is rejected - solids are not supported.
  */
 function isPlanarParent(parent: IShape): boolean {
     if (PLANAR_PARENT_TYPES.includes(parent.shapeType)) return true;
@@ -86,15 +81,11 @@ function spliceCornerEdges(allEdges: IEdge[], corner: OrderedCorner, triple: IEd
 
 /**
  * Base class for the chamfer and fillet commands. Both reshape the corner of
- * the selected edges - on a solid or a compound of solids (3D), on a face or
- * a compound of faces (2D), on a wire, or between two standalone edge
- * bodies - and differ only in the actual shape operation, provided by the
- * `applyTo*` methods.
+ * two adjacent edges - on a face or a compound of faces, on a wire, or
+ * between two standalone edge bodies - and differ only in the actual shape
+ * operation, provided by the `applyTo*` methods.
  */
 export abstract class EdgeCornerCommand extends MultistepCommand {
-    /** Apply the operation to the selected edges of a solid or compound. */
-    protected abstract applyToBody(shape: IShape, edgeIndexes: number[]): Result<IShape>;
-
     /** Apply the operation to the corner between two edges of a face. */
     protected abstract applyToFace(face: IFace, edge1: IEdge, edge2: IEdge): Result<IShape>;
 
@@ -117,21 +108,12 @@ export abstract class EdgeCornerCommand extends MultistepCommand {
 
     private modifyNode(shapes: VisualShapeData[], parent: IShape) {
         const node = shapes[0].owner.node as ShapeNode;
-        const newShape = this.computeNewShape(shapes, parent, node);
+        const newShape = this.computePlanarShape(shapes, parent);
         if (!newShape.isOk) {
             PubSub.default.pub("displayError", newShape.error);
             return;
         }
         this.replaceNode(node, newShape.value);
-    }
-
-    private computeNewShape(shapes: VisualShapeData[], parent: IShape, node: ShapeNode): Result<IShape> {
-        if (isPlanarParent(parent)) {
-            return this.computePlanarShape(shapes, parent);
-        }
-
-        const edgeIndexes = shapes.map((x) => (x.shape as ISubEdgeShape).index);
-        return this.applyToBody(node.shape.value, edgeIndexes);
     }
 
     private computePlanarShape(shapes: VisualShapeData[], parent: IShape): Result<IShape> {
@@ -235,7 +217,7 @@ export abstract class EdgeCornerCommand extends MultistepCommand {
      * The first selected edge determines the main shape; subsequent edges can
      * only be picked on the same shape (same TShape as the first edge's parent).
      * A standalone edge body can only be paired with another standalone edge.
-     * 2D operations (face, wire, standalone edges) apply to exactly two edges.
+     * All operations (face, wire, standalone edges) apply to exactly two edges.
      */
     private readonly _edgeFilter: IShapeFilter = {
         allow: (shape) => this.canPickEdge(shape as ISubEdgeShape),
@@ -243,15 +225,14 @@ export abstract class EdgeCornerCommand extends MultistepCommand {
 
     private canPickEdge(shape: ISubEdgeShape): boolean {
         const parent = shape.parent;
-        if (parent === undefined || !SUPPORTED_PARENT_TYPES.includes(parent.shapeType)) return false;
+        if (parent === undefined || !isPlanarParent(parent)) return false;
 
         const selected = this.document.selection.getSelectedShapes();
         const firstParent = (selected.at(0)?.shape as ISubEdgeShape | undefined)?.parent;
         if (firstParent === undefined) return true;
         if (!this.isSameMainShape(parent, firstParent)) return false;
 
-        const is3d = !isPlanarParent(firstParent);
-        if (!is3d && selected.length >= 2) {
+        if (selected.length >= 2) {
             // allow re-picking an already selected edge so it can be toggled off
             return selected.some((x) => x.shape.isEqual(shape));
         }
@@ -276,10 +257,6 @@ export abstract class EdgeCornerCommand extends MultistepCommand {
         ];
     }
 
-    /** A 2D operation needs exactly two edges - finish the pick once both are selected. */
-    private readonly _canFinish = (selected: VisualShapeData[]) => {
-        const parent = (selected.at(0)?.shape as ISubEdgeShape | undefined)?.parent;
-        if (parent === undefined) return false;
-        return isPlanarParent(parent) && selected.length === 2;
-    };
+    /** Every operation needs exactly two edges - finish the pick once both are selected. */
+    private readonly _canFinish = (selected: VisualShapeData[]) => selected.length === 2;
 }

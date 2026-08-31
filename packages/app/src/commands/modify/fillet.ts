@@ -18,10 +18,6 @@ export class FilletCommand extends EdgeCornerCommand {
         this.setProperty("radius", value);
     }
 
-    protected override applyToBody(shape: IShape, edgeIndexes: number[]): Result<IShape> {
-        return shapeFactory.fillet(shape, edgeIndexes, this.radius);
-    }
-
     protected override applyToFace(face: IFace, edge1: IEdge, edge2: IEdge): Result<IShape> {
         return shapeFactory.fillet2d(face, edge1, edge2, this.radius);
     }

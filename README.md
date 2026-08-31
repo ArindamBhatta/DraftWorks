@@ -1,6 +1,6 @@
 # DraftWorks
 
-A web-based 2D CAD drafting application for civil engineering — structural drawings, architectural plans, and 2D elevations, running entirely in the browser. Similar to AutoCAD, but with a proactive UI: unit setup, dimension setup, and MV (paper/scale) setup are prompted upfront when a new drawing starts.
+A web-based 2D CAD drafting application for civil engineering — structural drawings, architectural plans, and 2D elevations, running entirely in the browser. Similar to AutoCAD, but rethought around a simpler, proactive UI and a save model that never makes you think about saving.
 
 DraftWorks pairs an OCCT (OpenCascade) geometry kernel compiled to WebAssembly with a Three.js renderer, so drafting stays precise (real B-Rep geometry, not just pixels) while running with no install and no server round-trip per edit.
 
@@ -10,6 +10,14 @@ DraftWorks pairs an OCCT (OpenCascade) geometry kernel compiled to WebAssembly w
   <!-- ![2D elevation](doc/images/elevation.png) -->
 
 
+
+## Why DraftWorks
+
+- **Local-first drawing** — your drawing lives in the browser's local storage as you work, so closing the browser doesn't lose it. Export to your computer at any time, or import an existing AutoCAD drawing and keep drafting on it right here.
+- **No more save headaches** — DraftWorks saves automatically on every change, the way Google Docs does. There's no save button to remember and no "did I save before closing?" moment.
+- **A simpler UI for nested commands** — AutoCAD command chains (e.g. `C` → `2P`/`3P` → radius or diameter) live in your muscle memory or nowhere at all. DraftWorks surfaces each step's options directly in the UI, so anyone can complete a command without having memorized the sequence — and every command is reachable the same, consistent way.
+- **Proactive setup** — unit setup and dimension setup are asked upfront, not buried in a menu. Tell DraftWorks it's a structural drawing and it sets up production-ready layers for you automatically — beam layer, column layer, beam reinforcement layer, and so on.
+- **AI-assisted drafting** — describe what you want to draw — a plot area, a structural element, a pile — and DraftWorks asks the follow-up questions it needs, then drafts the plan for you. Change your mind afterward and it redesigns the drawing to match.
 
 ## Features
 
