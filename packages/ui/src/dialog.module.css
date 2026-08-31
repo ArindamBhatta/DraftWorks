@@ -26,10 +26,13 @@ dialog::backdrop {
     flex-shrink: 0;
 }
 
+/* Capped against the viewport as well as an absolute size: a fixed 680px ceiling is
+   taller than a laptop's usable height once the browser chrome is counted, which left
+   taller dialogs running off the bottom of the screen with no way to reach the buttons. */
 .content {
     padding: 16px;
-    max-width: 1080px;
-    max-height: 680px;
+    max-width: min(1080px, 94vw);
+    max-height: min(680px, 78vh);
     flex: 1 1 auto;
     overflow: auto;
 }

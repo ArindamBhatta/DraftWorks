@@ -28,7 +28,10 @@ export abstract class TransformedCommand extends MultistepCommand {
         return this.getPrivateValue("isClone", false);
     }
     set isClone(value: boolean) {
-        this.setProperty("isClone", value);
+        // The live prompt offers this as an option whose wording depends on the
+        // current answer ("rotate a copy" / "rotate in place"), so the prompt has to
+        // be re-read whichever surface changed it - the chip, or the ribbon checkbox.
+        this.setProperty("isClone", value, () => PubSub.default.pub("refreshStepPrompt"));
     }
 
     protected abstract transfrom(p2: XYZ): Matrix4;

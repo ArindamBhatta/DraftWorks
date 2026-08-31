@@ -126,23 +126,31 @@ export abstract class CancelableCommand extends Observable implements ICancelabl
 
     private readProperties() {
         PropertyUtils.getProperties(this).forEach((x) => {
-            const key = this.cacheKeyOfProperty(x);
-            if (CancelableCommand._propertiesCache.has(key)) {
-                this.setPrivateValue(key as keyof this, CancelableCommand._propertiesCache.get(key));
+            const cacheKey = this.cacheKeyOfProperty(x);
+            if (CancelableCommand._propertiesCache.has(cacheKey)) {
+                this.setPrivateValue(x.name as keyof this, CancelableCommand._propertiesCache.get(cacheKey));
             }
         });
     }
 
     private saveProperties() {
         PropertyUtils.getProperties(this).forEach((x) => {
-            const key = this.cacheKeyOfProperty(x);
-            const prop = (this as any)[key];
-            if (typeof prop === "function") return;
-            CancelableCommand._propertiesCache.set(key, prop);
+            const value = (this as any)[x.name];
+            if (typeof value === "function") return;
+            CancelableCommand._propertiesCache.set(this.cacheKeyOfProperty(x), value);
         });
     }
 
+    /**
+     * The cache is one static map shared by every command, so the key has to name the
+     * command as well as the property. Keying on the bare property name let unrelated
+     * commands overwrite each other's remembered settings whenever they happened to
+     * agree on a name - Move's `isClone` became Mirror's, Circle's `mode` would become
+     * any other command's `mode` - which also made it impossible for two commands to
+     * hold different defaults for the same-named option.
+     */
     private cacheKeyOfProperty(property: Property) {
-        return property.name;
+        const commandKey = Object.getPrototypeOf(this)?.data?.key ?? "";
+        return `${commandKey}.${property.name}`;
     }
 }

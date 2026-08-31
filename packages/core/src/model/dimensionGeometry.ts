@@ -1,5 +1,5 @@
 import { Precision } from "../foundation/precision";
-import { DimensionSetup } from "../foundation/unitSetup";
+import { type DimensionSettings, DimensionSetup } from "../foundation/unitSetup";
 import { XYZ } from "../math";
 
 export const DimensionTypes = ["linear", "aligned", "angular", "radius", "diameter"] as const;
@@ -75,8 +75,9 @@ function linearGeometry(
     end: XYZ,
     offsetPoint: XYZ,
     frame: DimensionFrame,
+    overrides?: Partial<DimensionSettings>,
 ): DimensionGeometry | undefined {
-    const { textHeight, arrowSize, extensionOffset } = DimensionSetup.settings;
+    const { textHeight, arrowSize, extensionOffset, precision } = DimensionSetup.resolve(overrides);
     const normal = frame.normal;
     const span = end.sub(start);
     if (span.length() < MIN_EXTENT) return undefined;
@@ -119,7 +120,7 @@ function linearGeometry(
         .multiply(0.5)
         .add(textSide.multiply(textHeight * TEXT_GAP_RATIO));
 
-    return { lines, arrows, textPosition, text: DimensionSetup.formatLength(value), value };
+    return { lines, arrows, textPosition, text: DimensionSetup.formatLength(value, precision), value };
 }
 
 /**
@@ -171,10 +172,11 @@ function radiusGeometry(
     radius: number,
     offsetPoint: XYZ,
     frame: DimensionFrame,
+    overrides?: Partial<DimensionSettings>,
 ): DimensionGeometry | undefined {
     if (radius < MIN_EXTENT) return undefined;
 
-    const { arrowSize, textHeight } = DimensionSetup.settings;
+    const { arrowSize, textHeight, precision } = DimensionSetup.resolve(overrides);
     const direction = unit(offsetPoint.sub(center), frame.xAxis);
     const onArc = center.add(direction.multiply(radius));
 
@@ -192,7 +194,7 @@ function radiusGeometry(
         lines,
         arrows,
         textPosition,
-        text: `R${DimensionSetup.formatLength(radius)}`,
+        text: `R${DimensionSetup.formatLength(radius, precision)}`,
         value: radius,
     };
 }
@@ -206,10 +208,11 @@ function diameterGeometry(
     radius: number,
     offsetPoint: XYZ,
     frame: DimensionFrame,
+    overrides?: Partial<DimensionSettings>,
 ): DimensionGeometry | undefined {
     if (radius < MIN_EXTENT) return undefined;
 
-    const { arrowSize, textHeight } = DimensionSetup.settings;
+    const { arrowSize, textHeight, precision } = DimensionSetup.resolve(overrides);
     const direction = unit(offsetPoint.sub(center), frame.xAxis);
     const near = center.sub(direction.multiply(radius));
     const far = center.add(direction.multiply(radius));
@@ -227,7 +230,7 @@ function diameterGeometry(
         lines,
         arrows,
         textPosition,
-        text: `⌀${DimensionSetup.formatLength(radius * 2)}`,
+        text: `⌀${DimensionSetup.formatLength(radius * 2, precision)}`,
         value: radius * 2,
     };
 }
@@ -263,8 +266,9 @@ function angularGeometry(
     end: XYZ,
     offsetPoint: XYZ,
     frame: DimensionFrame,
+    overrides?: Partial<DimensionSettings>,
 ): DimensionGeometry | undefined {
-    const { arrowSize, textHeight } = DimensionSetup.settings;
+    const { arrowSize, textHeight, precision } = DimensionSetup.resolve(overrides);
     const normal = frame.normal;
 
     const ray1 = start.sub(vertex).normalize();
@@ -317,7 +321,7 @@ function angularGeometry(
         lines,
         arrows,
         textPosition,
-        text: `${DimensionSetup.formatDecimal(degrees)}°`,
+        text: `${DimensionSetup.formatDecimal(degrees, precision)}°`,
         value: degrees,
     };
 }
@@ -335,6 +339,12 @@ export interface DimensionInput {
     /** Radius/diameter only. */
     radius?: number;
     frame: DimensionFrame;
+    /**
+     * Lay this dimension out with these settings instead of the drawing's active ones.
+     * Only the Dimension Setup dialog's preview passes this, so it can show settings the
+     * user has typed but not confirmed. Everything else omits it and gets DIMSTYLE.
+     */
+    settings?: Partial<DimensionSettings>;
 }
 
 /**
@@ -346,14 +356,40 @@ export function buildDimensionGeometry(input: DimensionInput): DimensionGeometry
     switch (input.type) {
         case "linear":
         case "aligned":
-            return linearGeometry(input.type, input.start, input.end, input.offsetPoint, input.frame);
+            return linearGeometry(
+                input.type,
+                input.start,
+                input.end,
+                input.offsetPoint,
+                input.frame,
+                input.settings,
+            );
         case "radius":
-            return radiusGeometry(input.start, input.radius ?? 0, input.offsetPoint, input.frame);
+            return radiusGeometry(
+                input.start,
+                input.radius ?? 0,
+                input.offsetPoint,
+                input.frame,
+                input.settings,
+            );
         case "diameter":
-            return diameterGeometry(input.start, input.radius ?? 0, input.offsetPoint, input.frame);
+            return diameterGeometry(
+                input.start,
+                input.radius ?? 0,
+                input.offsetPoint,
+                input.frame,
+                input.settings,
+            );
         case "angular":
             return input.third
-                ? angularGeometry(input.start, input.end, input.third, input.offsetPoint, input.frame)
+                ? angularGeometry(
+                      input.start,
+                      input.end,
+                      input.third,
+                      input.offsetPoint,
+                      input.frame,
+                      input.settings,
+                  )
                 : undefined;
         default:
             return undefined;

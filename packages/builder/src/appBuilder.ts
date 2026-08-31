@@ -3,8 +3,11 @@
 
 import { Application, CommandService, HotkeyService, ShowPropertyEventHandler } from "@chili3d/app";
 import {
+    AutosaveService,
     Config,
     Constants,
+    DimensionSetup,
+    findMostRecentDocument,
     I18n,
     type IApplication,
     type IDataExchange,
@@ -15,6 +18,7 @@ import {
     type IWindow,
     type Locale,
     Logger,
+    UnitSetup,
 } from "@chili3d/core";
 import { DefaultDataExchange } from "./defaultDataExchange";
 
@@ -42,6 +46,11 @@ export class AppBuilder {
 
     protected initConfig() {
         Config.instance.init("config");
+        // Before anything formats a length: units and dimension style are chosen once and
+        // then expected to stay chosen, so they come back from the last session rather
+        // than resetting to the defaults and re-asking on every reload.
+        UnitSetup.restore();
+        DimensionSetup.restore();
         return this;
     }
 
@@ -65,6 +74,8 @@ export class AppBuilder {
             await this._storage.createDBIfNeeded(Constants.DBName, [
                 Constants.DocumentTable,
                 Constants.RecentTable,
+                Constants.DocumentBackupTable,
+                Constants.SyncQueueTable,
             ]);
         });
         return this;
@@ -125,13 +136,40 @@ export class AppBuilder {
 
     /**
      * There is no start-up Home screen any more - the app opens straight into the
-     * drawing editor, AutoCAD-style, so it needs a blank drawing to open into. A plugin
-     * may already have created one, hence the activeView guard. Anything the caller
-     * imports afterwards (a startup file URL, a dropped file) lands in this drawing.
+     * drawing editor, AutoCAD-style, so it needs a drawing to open into. A plugin may
+     * already have created one, hence the activeView guard. Anything the caller imports
+     * afterwards (a startup file URL, a dropped file) lands in this drawing.
+     *
+     * Reopens the drawing you were last working on rather than always starting a blank
+     * one. Autosave has been writing it to IndexedDB every couple of seconds; without
+     * this it was writing to a store nothing ever read back, which from the outside looks
+     * exactly like the drawing being lost.
      */
     protected async ensureActiveDocument(app: IApplication) {
         if (app.activeView) return;
+        if (await this.reopenLastDocument(app)) return;
+
         await app.newDocument("Drawing1");
+    }
+
+    /**
+     * Tries to restore the most recently saved drawing. Returns false - leaving the
+     * caller to open a blank one - when there is nothing to restore, or when restoring
+     * fails for any reason. A corrupt or unreadable saved drawing must degrade to an
+     * empty editor, never to an app that will not start.
+     */
+    protected async reopenLastDocument(app: IApplication): Promise<boolean> {
+        try {
+            const recent = await findMostRecentDocument(app.storage);
+            if (!recent) return false;
+
+            Logger.info(`reopening the last drawing: ${recent.name}`);
+            const document = await app.openDocument(recent.id);
+            return document !== undefined;
+        } catch (error) {
+            Logger.warn("could not reopen the last drawing, starting a blank one", error);
+            return false;
+        }
     }
 
     protected async loadDefaultPlugins(app: IApplication) {
@@ -186,6 +224,6 @@ export class AppBuilder {
     }
 
     protected getServices(): IService[] {
-        return [new CommandService(), new HotkeyService()];
+        return [new CommandService(), new HotkeyService(), new AutosaveService()];
     }
 }
