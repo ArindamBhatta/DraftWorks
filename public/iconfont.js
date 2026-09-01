@@ -764,6 +764,13 @@ window._iconfont_svg_string_3585225 = `
     <path d="M448 448v128h128v-128h-128z m32 32h64v64h-64v-64z"  >
     </path>
   </symbol>
+  <!-- used by: Stretch (modify.stretch) -->
+  <symbol id="icon-stretch" viewBox="0 0 1024 1024">
+    <path d="M176 432L336 432L336 592L176 592ZM496 80L528 80L528 176L496 176ZM496 240L528 240L528 336L496 336ZM496 400L528 400L528 496L496 496ZM496 560L528 560L528 656L496 656ZM496 720L528 720L528 816L496 816ZM496 880L528 880L528 944L496 944Z" fill="#A1A1A1" >
+    </path>
+    <path d="M592 432L752 432L752 592L592 592ZM752 482L896 482L896 542L752 542ZM896 432L1024 512L896 592Z" fill="#0493dc" >
+    </path>
+  </symbol>
   <!-- used by: Rectangle (create.rect) -->
   <symbol id="icon-rect" viewBox="0 0 1024 1024">
     <path d="M8.01814628 164.39171821h127.15591078v126.14422759H8.01814628v-126.14422762z" fill="#0084C8" >

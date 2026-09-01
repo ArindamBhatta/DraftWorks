@@ -99,6 +99,7 @@ export const I18N_KEYS = [
     "command.modify.mirror",
     "command.modify.move",
     "command.modify.copy",
+    "command.modify.stretch",
     "command.modify.properties",
     "command.modify.rotate",
     "command.modify.repairShape",
@@ -334,6 +335,11 @@ export const I18N_KEYS = [
     "prompt.copy.displacement",
     "prompt.copy.secondPoint",
     "prompt.option.arc",
+
+    //Stretch command
+    "prompt.stretch.basePoint",
+    "prompt.stretch.displacement",
+    "prompt.stretch.secondPoint",
     // Option
     "prompt.option.center",
     "prompt.option.copy",
@@ -363,7 +369,9 @@ export const I18N_KEYS = [
     "prompt.select.models",
     "prompt.select.noModelSelected",
     "prompt.select.shape",
+    "prompt.select.stretchPoints",
     "prompt.selectedCount",
+
     // Properties
     "properties.group.transform",
     "properties.header",

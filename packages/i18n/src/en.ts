@@ -100,6 +100,8 @@ export default {
         "command.modify.mirror": "Mirror",
         "command.modify.move": "Move",
         "command.modify.copy": "Copy",
+        // Stretch command
+        "command.modify.stretch": "Stretch",
         "command.modify.properties": "Properties",
         "command.modify.rotate": "Rotate",
         "command.modify.repairShape": "Repair Shape",
@@ -335,6 +337,11 @@ export default {
         "prompt.copy.basePoint": "Specify base point",
         "prompt.copy.displacement": "Specify displacement",
         "prompt.copy.secondPoint": "Specify second point",
+        // Stretch command
+        "prompt.stretch.basePoint": "Specify base point",
+        "prompt.stretch.displacement": "Specify displacement",
+        "prompt.stretch.secondPoint": "Specify second point",
+        // Options
         "prompt.option.arc": "Arc",
         "prompt.option.copy": "Keep the original and rotate a copy",
         "prompt.option.eraseSource": "Erase the source objects",
@@ -363,6 +370,7 @@ export default {
         "prompt.select.models": "Select objects",
         "prompt.select.noModelSelected": "No model selected",
         "prompt.select.shape": "Please select shape",
+        "prompt.select.stretchPoints": "Select objects to stretch by crossing-window",
         "prompt.selectedCount": "Selected",
         // Properties
         "properties.group.transform": "Transform",

@@ -8,7 +8,7 @@ import {
     SnapLengthAtPlaneHandler,
 } from "../snap";
 import { SnapStep } from "./step";
-
+// The LengthAtAxisStep and LengthAtPlaneStep classes are specialized SnapSteps that are used for snapping to a specific length along an axis or within a plane, respectively. They allow the user to select a point that defines the length, while ensuring that the selected point is not too close to the reference point (the axis or plane) to avoid precision issues.
 export class LengthAtAxisStep extends SnapStep<LengthAtAxisSnapData> {
     protected getEventHandler(document: IDocument, controller: AsyncController, data: LengthAtAxisSnapData) {
         return new SnapLengthAtAxisHandler(document, controller, data);

@@ -9,6 +9,7 @@ import type { Serialized } from "./serialize";
 import type { IVisual } from "./visual";
 
 export const DOCUMENT_FILE_EXTENSION = ".cd";
+// The DOCUMENT_FILE_EXTENSION constant defines the file extension used for saving and loading documents in the Chili3d application. This extension is used to identify files that contain serialized document data, allowing users to easily recognize and manage their project files.
 export const PLUGIN_FILE_EXTENSION = ".chiliplugin";
 
 export interface IDocument extends IPropertyChanged, IDisposable {

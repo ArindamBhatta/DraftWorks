@@ -1,6 +1,5 @@
 import type { IDocument } from "../document";
 import { type AsyncController, Precision } from "../foundation";
-import type { I18nKeys } from "../i18n";
 import type { XYZ } from "../math";
 import {
     type Dimension,
@@ -15,12 +14,12 @@ import {
 } from "../snap";
 import { SnapStep, type StepTip } from "./step";
 
-function defaultSnapedData(): PointSnapData {
+function defaultSnappedData(): PointSnapData {
     return { dimension: (Dimensions.D1 | Dimensions.D1D2D3) as Dimension };
 }
 
 export class PointStep extends SnapStep<PointSnapData> {
-    constructor(tip: StepTip, handleData: () => PointSnapData = defaultSnapedData, keepSelected = false) {
+    constructor(tip: StepTip, handleData: () => PointSnapData = defaultSnappedData, keepSelected = false) {
         super(tip, handleData, keepSelected);
     }
 

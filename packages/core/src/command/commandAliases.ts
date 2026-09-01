@@ -16,7 +16,7 @@ export const CommandAliases: Partial<Record<CommandKeys, string[]>> = {
     "create.line": ["l", "line"],
     // "r" is not AutoCAD's (there it is REDRAW, which this app has no need of), but it
     // was this app's instant shortcut for rectangle before the command line existed.
-    "create.rect": ["rec", "r", "rectang", "rectangle"],
+    "create.rect": ["rec", "r", "rectangle"],
     "create.circle": ["c", "circle"],
     "create.ellipse": ["el", "ellipse"],
     "create.arc": ["a", "arc"],
@@ -42,6 +42,9 @@ export const CommandAliases: Partial<Record<CommandKeys, string[]>> = {
     "modify.fillet": ["f", "fillet"],
     "modify.chamfer": ["cha", "chamfer"],
     "modify.explode": ["x", "explode"],
+    "modify.copy": ["co", "cp", "copy"],
+    "modify.stretch": ["s", "stretch"],
+
     // AutoCAD's four ways of saying PROPERTIES, all of which open the same palette.
     "modify.properties": ["pr", "ch", "mo", "props", "properties", "ddmodify"],
     "modify.deleteNode": ["e", "erase", "del", "delete"],

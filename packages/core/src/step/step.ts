@@ -5,6 +5,7 @@ import type { XYZ } from "../math";
 import { resolveStepOptions, type SnapData, type SnapEventHandler, type SnapResult } from "../snap";
 import type { CursorType } from "../visual";
 
+// The Step interface and SnapStep abstract class define the structure and behavior of steps in a command sequence. Each step represents a specific action or prompt that the user must complete, such as selecting a point or specifying a length. The SnapStep class provides a base implementation for steps that involve snapping to specific points or features in the drawing, handling the execution flow, event handling, and validation of user input.
 export interface IStep {
     execute(document: IDocument, controller: AsyncController): Promise<SnapResult | undefined>;
 }
