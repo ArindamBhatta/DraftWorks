@@ -91,6 +91,7 @@ export default {
         "command.modify.array": "Array",
         "command.modify.break": "Break",
         "command.modify.matchProp": "Match Properties",
+        "command.modify.join": "Join",
         "command.modify.chamfer": "Chamfer",
         "command.modify.deleteNode": "Delete Node",
         "command.modify.explode": "Explode",
@@ -103,7 +104,6 @@ export default {
         "command.modify.scale": "Scale",
         "command.modify.properties": "Properties",
         "command.modify.rotate": "Rotate",
-        "command.modify.split": "Split",
         "command.modify.trim": "Trim",
         "command.special.last": "__Last_COMMAND__",
         "command.units.setup": "Units",
@@ -327,6 +327,7 @@ export default {
         "prompt.stretch.displacement": "Specify displacement",
         "prompt.stretch.secondPoint": "Specify second point",
         // MatchProp command
+        "prompt.join.objects": "Select objects to join",
         "prompt.matchProp.source": "Select source object",
         "prompt.matchProp.destination": "Select destination object(s)",
         // Scale command
@@ -431,6 +432,9 @@ export default {
         "toast.offset.failed": "Cannot offset that object by that distance",
         "toast.read.error": "Read error",
         "toast.select.noSelected": "No selected",
+        "toast.join.failed":
+            "Those objects cannot be joined - join collinear lines, or objects that form an unbroken chain",
+        "toast.join.needTwo": "Select at least two objects to join",
         "toast.snap.notFoundValidPoint": "No valid point",
         "toast.success": "Success",
         // Transform

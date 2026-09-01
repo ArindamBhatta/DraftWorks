@@ -35,8 +35,20 @@ export class NodeSelectionHandler extends SelectionHandler {
         return this.document.selection.setSelectedNodes(models, this.toggleSelect(event));
     }
 
+    /**
+     * Whether this click adds to the selection instead of replacing it.
+     *
+     * At a command's "Select objects:" prompt every click has to add, the way it does
+     * in AutoCAD - otherwise picking the second line of an exploded rectangle throws
+     * away the first, and a multi-object command can never be given more than one
+     * object. ShapeSelectionHandler already selects this way (it passes multiMode
+     * straight through as its toggle), which is why picking several edges or vertices
+     * has always worked while picking several objects did not.
+     *
+     * Outside a multi-pick, shift is still what turns a click into an add.
+     */
     protected toggleSelect(event: PointerEvent) {
-        return event.shiftKey;
+        return this.multiMode || event.shiftKey;
     }
 
     getDetecteds(view: IView, event: PointerEvent) {

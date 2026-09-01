@@ -36,18 +36,16 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                     ["modify.move", "modify.copy", "modify.stretch"],
                     ["modify.rotate", "modify.mirror", "modify.scale"],
                     ["modify.trim", "modify.fillet", "modify.array"],
-                    ["modify.explode", "modify.chamfer", "modify.split"],
+                    ["modify.explode", "modify.chamfer", "modify.join"],
                     ["modify.matchProp"],
                 ],
             },
+            //Layer
             {
-                groupName: "ribbon.group.converter",
-                items: ["convert.toWire", ["convert.toFace"]],
+                groupName: "ribbon.group.layer",
+                items: ["layer.setup", "layer.moveToCurrent"],
             },
-            {
-                groupName: "ribbon.group.view",
-                items: ["view.pan"],
-            },
+            //Tools
             {
                 groupName: "ribbon.group.tools",
                 items: [
@@ -57,10 +55,7 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                     ["create.offset", "create.copyShape"],
                 ],
             },
-            {
-                groupName: "ribbon.group.layer",
-                items: ["layer.setup", "layer.moveToCurrent"],
-            },
+
             {
                 groupName: "ribbon.group.annotation",
                 items: [{ type: "split", items: ["create.text", "create.mtext"] }],

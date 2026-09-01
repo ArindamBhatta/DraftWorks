@@ -90,6 +90,7 @@ export const I18N_KEYS = [
     "command.modify.array",
     "command.modify.break",
     "command.modify.matchProp",
+    "command.modify.join",
     "command.modify.chamfer",
     "command.modify.deleteNode",
     "command.modify.explode",
@@ -101,7 +102,6 @@ export const I18N_KEYS = [
     "command.modify.scale",
     "command.modify.properties",
     "command.modify.rotate",
-    "command.modify.split",
     "command.modify.trim",
     "command.special.last",
     "command.units.setup",
@@ -326,6 +326,7 @@ export const I18N_KEYS = [
     "prompt.stretch.displacement",
     "prompt.stretch.secondPoint",
     // MatchProp command
+    "prompt.join.objects",
     "prompt.matchProp.source",
     "prompt.matchProp.destination",
     // Scale command
@@ -431,6 +432,8 @@ export const I18N_KEYS = [
     "toast.offset.failed",
     "toast.read.error",
     "toast.select.noSelected",
+    "toast.join.failed",
+    "toast.join.needTwo",
     "toast.snap.notFoundValidPoint",
     "toast.success",
     // Transform
