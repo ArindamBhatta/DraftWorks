@@ -44,6 +44,8 @@ export const CommandAliases: Partial<Record<CommandKeys, string[]>> = {
     "modify.explode": ["x", "explode"],
     "modify.copy": ["co", "cp", "copy"],
     "modify.stretch": ["s", "stretch"],
+    "modify.scale": ["sc", "scale"],
+    "modify.matchProp": ["ma", "matchprop"],
 
     // AutoCAD's four ways of saying PROPERTIES, all of which open the same palette.
     "modify.properties": ["pr", "ch", "mo", "props", "properties", "ddmodify"],
@@ -80,9 +82,6 @@ export const CommandAliases: Partial<Record<CommandKeys, string[]>> = {
     "layer.setup": ["la", "layer", "ddlmodes"],
     "convert.toWire": ["towire"],
     "convert.toFace": ["toface"],
-    "modify.checkShape": ["checkshape"],
-    "modify.repairShape": ["repair"],
-    "modify.simplifyShape": ["simplify"],
 };
 
 export interface CommandAliasMatch {
