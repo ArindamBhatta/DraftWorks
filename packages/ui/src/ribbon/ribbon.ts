@@ -3,69 +3,17 @@
 
 import {
     Binding,
-    type CommandKeys,
-    CommandStore,
-    I18n,
     type IApplication,
-    type ICommand,
     type IConverter,
-    type IView,
-    Localize,
-    Logger,
-    PubSub,
     Result,
     type Ribbon,
     type RibbonGroup,
     type RibbonTab,
     type RibbonTabKeys,
 } from "@chili3d/core";
-import { a, collection, createIcon, div, img, label, span, svg } from "@chili3d/element";
-import { LanguageSelector, ThemeSelector } from "./appSettings";
+import { collection } from "@chili3d/element";
 import style from "./ribbon.module.css";
 import { RibbonGroupElement } from "./ribbonGroup";
-import { SaveIndicator } from "./saveIndicator";
-
-export const QuickButton = (command: ICommand) => {
-    const data = CommandStore.getComandData(command);
-    if (!data) {
-        Logger.warn("commandData is undefined");
-        return span({ textContent: "null" });
-    }
-
-    const icon = createIcon(data.icon);
-    icon.classList.add(style.icon);
-    return span(
-        {
-            title: new Localize(`command.${data.key}`),
-            onclick: () => PubSub.default.pub("executeCommand", data.key),
-        },
-        icon,
-    );
-};
-
-class ViewActiveConverter implements IConverter<IView> {
-    constructor(
-        readonly target: IView,
-        readonly style: string,
-        readonly activeStyle: string,
-    ) {}
-
-    convert(value: IView): Result<string> {
-        return Result.ok(this.target === value ? `${this.style} ${this.activeStyle}` : this.style);
-    }
-}
-
-class ActivedRibbonTabConverter implements IConverter<RibbonTab> {
-    constructor(
-        readonly tab: RibbonTab,
-        readonly style: string,
-        readonly activeStyle: string,
-    ) {}
-
-    convert(value: RibbonTab): Result<string> {
-        return Result.ok(this.tab === value ? `${this.style} ${this.activeStyle}` : this.style);
-    }
-}
 
 class DisplayConverter<T> implements IConverter<T> {
     constructor(readonly predicate: (value: T) => boolean) {}
@@ -75,6 +23,13 @@ class DisplayConverter<T> implements IConverter<T> {
     }
 }
 
+/**
+ * The ribbon is the command groups and nothing else. The title bar that used to sit above
+ * them - app name and version, the save/export/undo/redo quick buttons, the language and
+ * theme pickers, the drawing tabs - is gone: saving is automatic, the app is
+ * English-only and dark-only, and the commands behind those buttons are all still one
+ * typed word away on the command line (`save`, `saveas`, `new`, `open`, `u`, `redo`).
+ */
 export class RibbonUI extends HTMLElement {
     constructor(
         readonly app: IApplication,
@@ -82,7 +37,7 @@ export class RibbonUI extends HTMLElement {
     ) {
         super();
         this.className = style.root;
-        this.append(this.header(), this.ribbonTabs());
+        this.append(this.ribbonTabs());
         app.mainWindow?.ribbon.onPropertyChanged(this.handleRibbonChanged);
     }
 
@@ -106,113 +61,6 @@ export class RibbonUI extends HTMLElement {
             }
         }
     };
-
-    private header() {
-        return div({ className: style.titleBar }, this.leftPanel(), this.centerPanel(), this.rightPanel());
-    }
-
-    private leftPanel() {
-        return div(
-            { className: style.left },
-            div(
-                { className: style.appIcon },
-                img({ className: style.icon, src: "favicon.svg", alt: "DraftWorks" }),
-                span({ id: "appName", textContent: `DraftWorks - v${__APP_VERSION__}` }),
-            ),
-            div(
-                { className: style.ribbonTitlePanel },
-                collection({
-                    className: style.quickCommands,
-                    sources: this.dataContent.quickCommands,
-                    template: (command: CommandKeys) => QuickButton(command as any),
-                }),
-                span({ className: style.split }),
-                this.createRibbonHeader(),
-            ),
-        );
-    }
-
-    private createRibbonHeader() {
-        return collection({
-            sources: this.dataContent.tabs,
-            template: (tab: RibbonTab) => {
-                const converter = new ActivedRibbonTabConverter(tab, style.tabHeader, style.activedTab);
-                return label({
-                    className: new Binding(this.dataContent, "activeTab", converter),
-                    textContent: new Localize(tab.tabName),
-                    style: {
-                        display: new Binding(
-                            this.dataContent,
-                            "hiddenTabs",
-                            new DisplayConverter(
-                                (hiddens: RibbonTabKeys[]) => !hiddens.includes(tab.tabName),
-                            ),
-                        ),
-                    },
-                    onclick: () => {
-                        this.dataContent.activeTab = tab;
-                    },
-                });
-            },
-        });
-    }
-
-    private centerPanel() {
-        return div(
-            { className: style.center },
-            collection({
-                className: style.views,
-                sources: this.app.views,
-                template: (view) => this.createViewItem(view),
-            }),
-            svg({
-                className: style.new,
-                icon: "icon-plus",
-                title: I18n.translate("command.doc.new"),
-                onclick: () => PubSub.default.pub("executeCommand", "doc.new"),
-            }),
-        );
-    }
-
-    private createViewItem(view: IView) {
-        return div(
-            {
-                className: new Binding(
-                    this.app,
-                    "activeView",
-                    new ViewActiveConverter(view, style.tab, style.active),
-                ),
-                onclick: () => {
-                    this.app.activeView = view;
-                },
-            },
-            div(
-                { className: style.name },
-                span({ textContent: new Binding(view.document, "name") }),
-                new SaveIndicator(view.document),
-            ),
-            svg({
-                className: style.close,
-                icon: "icon-times",
-                onclick: (e) => {
-                    e.stopPropagation();
-                    view.close();
-                },
-            }),
-        );
-    }
-
-    private rightPanel() {
-        return div(
-            { className: style.right },
-            LanguageSelector({ className: style.setting }),
-            ThemeSelector({ className: style.setting }),
-            a(
-                { href: "https://github.com/xiangechen/chili3d", target: "_blank" },
-                svg({ title: "Github", className: style.icon, icon: "icon-github" }),
-            ),
-        );
-    }
 
     private ribbonTabs() {
         return collection({

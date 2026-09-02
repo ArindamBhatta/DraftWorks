@@ -2,7 +2,6 @@
 // See LICENSE file in the project root for full license information.
 
 import {
-    type CommandKeys,
     Config,
     I18n,
     type IApplication,
@@ -20,8 +19,6 @@ import { Permanent } from "./permanent";
 import { showPropertiesPanel } from "./property";
 import { Toast } from "./toast";
 
-const quickCommands: CommandKeys[] = ["doc.save", "doc.saveToFile", "edit.undo", "edit.redo"];
-
 export class MainWindow extends HTMLElement implements IWindow {
     readonly ribbon: Ribbon;
     private _inited: boolean = false;
@@ -35,7 +32,7 @@ export class MainWindow extends HTMLElement implements IWindow {
         super();
         this.tabIndex = 0;
         this.ensureDom(dom);
-        this.ribbon = new Ribbon(quickCommands, tabs.map(RibbonTab.fromProfile));
+        this.ribbon = new Ribbon(tabs.map(RibbonTab.fromProfile));
     }
 
     protected ensureDom(dom?: HTMLElement) {

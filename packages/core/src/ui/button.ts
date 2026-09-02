@@ -25,7 +25,7 @@ export interface SplitButton {
 }
 
 /** The live controls a ribbon group can hold. */
-export type RibbonWidgetKind = "layerControl";
+export type RibbonWidgetKind = "layerControl" | "autosaveStatus";
 
 /**
  * A live control in a ribbon group rather than a button.
