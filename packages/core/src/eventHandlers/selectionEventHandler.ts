@@ -3,13 +3,20 @@
 
 import type { IDocument } from "../document";
 import type { AsyncController } from "../foundation";
-import type { IEventHandler, IView } from "../visual";
+import { type IEventHandler, type IView, type RectSelectMode, rectSelectMode } from "../visual";
 
 const MOUSE_MIDDLE = 4;
 
+/**
+ * How far the pointer has to travel before a press counts as dragging a selection
+ * rectangle rather than clicking on an object - AutoCAD's pickbox, roughly. Either
+ * axis on its own is enough: a window dragged along a wall is often only a couple of
+ * pixels tall, and requiring travel in *both* axes made those picks fall back to a
+ * single-object click.
+ */
+const RECT_DRAG_THRESHOLD = 3;
+
 const SelectionRectStyle = `
-    border: 1px solid var(--primary-color);
-    background-color: rgba(74, 158, 255, 0.3);
     position: absolute;
     pointer-events: none;
     display: none;
@@ -18,6 +25,18 @@ const SelectionRectStyle = `
     width: 0px;
     height: 0px;
 `;
+
+/**
+ * AutoCAD's colours for the two rectangles, and the reason they are worth copying
+ * exactly: the fill is the only thing telling you, mid-drag, whether you are about
+ * to take just what is enclosed or everything you touched. Blue/solid is the window,
+ * green/dashed the crossing - the dashed border repeats the same message for anyone
+ * who cannot separate the two hues.
+ */
+const SelectionRectColors: Record<RectSelectMode, { border: string; background: string }> = {
+    window: { border: "1px solid rgb(64, 128, 255)", background: "rgba(64, 128, 255, 0.22)" },
+    crossing: { border: "1px dashed rgb(60, 200, 90)", background: "rgba(60, 200, 90, 0.22)" },
+};
 
 interface SelectionRect {
     element: HTMLElement;
@@ -104,12 +123,27 @@ export abstract class SelectionHandler implements IEventHandler {
         rect.element.style.display = "block";
         const [x1, y1] = [Math.min(rect.clientX, event.clientX), Math.min(rect.clientY, event.clientY)];
         const [x2, y2] = [Math.max(rect.clientX, event.clientX), Math.max(rect.clientY, event.clientY)];
+        const colors = SelectionRectColors[rectSelectMode(rect.clientX, event.clientX)];
         Object.assign(rect.element.style, {
             left: `${x1}px`,
             top: `${y1}px`,
             width: `${x2 - x1}px`,
             height: `${y2 - y1}px`,
+            border: colors.border,
+            backgroundColor: colors.background,
         });
+    }
+
+    /**
+     * Whether the pointer has been dragged far enough for this pick to be a
+     * rectangle rather than a click on whatever is under the cursor.
+     */
+    protected isRectDrag(event: PointerEvent): boolean {
+        return (
+            this.rect !== undefined &&
+            (Math.abs(this.mouse.x - event.offsetX) > RECT_DRAG_THRESHOLD ||
+                Math.abs(this.mouse.y - event.offsetY) > RECT_DRAG_THRESHOLD)
+        );
     }
 
     pointerOut(view: IView, event: PointerEvent): void {

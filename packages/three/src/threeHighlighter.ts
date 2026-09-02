@@ -31,6 +31,18 @@ import { ThreeGeometryFactory } from "./threeGeometryFactory";
 import type { ThreeVisualContext } from "./threeVisualContext";
 import type { ThreeVisualObject } from "./threeVisualObject";
 
+/**
+ * Whether a state means "picked" rather than merely "under the cursor". Hover and
+ * selection can both be set at once - you can hover something already selected - and
+ * selection is the stronger claim, so it wins.
+ */
+function isSelectedState(state: VisualState): boolean {
+    return (
+        VisualStateUtils.hasState(state, VisualStates.edgeSelected) ||
+        VisualStateUtils.hasState(state, VisualStates.faceSelected)
+    );
+}
+
 export class GeometryState {
     private readonly _states: Map<string, [VisualState, Mesh | undefined]> = new Map();
 
@@ -70,12 +82,16 @@ export class GeometryState {
         if (this.visual instanceof ThreeGeometry) {
             if (newState === VisualStates.normal) {
                 this.visual.removeTemperaryMaterial();
+            } else if (VisualStateUtils.hasState(newState, VisualStates.edgeSelected)) {
+                // Selected before highlighted, because the cursor is still sitting on
+                // what you just clicked: letting hover win would hold the dashed
+                // selection back until you moved the mouse away, and "you did pick
+                // this" outranks "you could pick this" anyway.
+                this.visual.setVertexsMateiralTemperary(selectedVertexMaterial);
+                this.visual.setEdgesMateiralTemperary(selectedEdgeMaterial);
             } else if (VisualStateUtils.hasState(newState, VisualStates.edgeHighlight)) {
                 this.visual.setVertexsMateiralTemperary(highlightVertexMaterial);
                 this.visual.setEdgesMateiralTemperary(hilightEdgeMaterial);
-            } else if (VisualStateUtils.hasState(newState, VisualStates.edgeSelected)) {
-                this.visual.setVertexsMateiralTemperary(selectedVertexMaterial);
-                this.visual.setEdgesMateiralTemperary(selectedEdgeMaterial);
             } else if (VisualStateUtils.hasState(newState, VisualStates.faceTransparent)) {
                 this.visual.removeTemperaryMaterial();
                 this.visual.setFacesMateiralTemperary(faceTransparentMaterial);
@@ -85,7 +101,7 @@ export class GeometryState {
             }
         } else if (isHighlightable(this.visual)) {
             if (newState !== VisualStates.normal) {
-                this.visual.highlight();
+                this.visual.highlight(isSelectedState(newState));
             } else {
                 this.visual.unhighlight();
             }
@@ -164,9 +180,8 @@ export class GeometryState {
     private addSubEdgeState(type: ShapeType, key: string, i: number, newState: VisualState) {
         const geometry = this.getOrCloneEdgeGeometry(type, key, i);
         if (geometry && "material" in geometry) {
-            const material = VisualStateUtils.hasState(newState, VisualStates.edgeHighlight)
-                ? hilightEdgeMaterial
-                : selectedEdgeMaterial;
+            // Selection outranks hover here for the same reason it does in setWholeState.
+            const material = isSelectedState(newState) ? selectedEdgeMaterial : hilightEdgeMaterial;
             geometry.material = material;
             this._states.set(key, [newState, geometry]);
         }
@@ -211,6 +226,10 @@ export class GeometryState {
         const lineGeometry = new LineSegmentsGeometry();
         lineGeometry.setPositions(points);
         const segment = new LineSegments2(lineGeometry);
+        // The selected-edge material is dashed, and three's dash shader needs the
+        // distance-along-the-line attribute this computes. Without it the clone would
+        // come out solid, so a sub-shape pick would look nothing like a whole-object one.
+        segment.computeLineDistances();
         this.highlighter.container.add(segment);
         segment.applyMatrix4(this.visual.matrixWorld);
         return segment;

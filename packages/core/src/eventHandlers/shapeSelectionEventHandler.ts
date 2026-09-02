@@ -30,11 +30,9 @@ export abstract class ShapeSelectionHandler extends SelectionHandler {
     }
 
     private getDetecteds(view: IView, event: PointerEvent) {
-        if (
-            this.rect &&
-            Math.abs(this.mouse.x - event.offsetX) > 3 &&
-            Math.abs(this.mouse.y - event.offsetY) > 3
-        ) {
+        if (this.isRectDrag(event)) {
+            // Drag corners in the order they were dragged, never sorted: the direction
+            // is what tells detectShapesRect whether this is a window or a crossing.
             return view.detectShapesRect(
                 this.shapeType,
                 this.mouse.x,

@@ -53,6 +53,12 @@ export interface IView extends IPropertyChanged, IDisposable {
     htmlText(text: string, point: XYZLike, options?: HtmlTextOptions): IDisposable;
     close(): void;
     detectVisual(x: number, y: number, nodeFilter?: INodeFilter): IVisualObject[];
+    /**
+     * Objects caught by a rubber-band rectangle. The corners must be passed **in the
+     * order the user dragged them**, not sorted: `x1 <= x2` is AutoCAD's window
+     * (enclosed only), `x1 > x2` its crossing (anything touched). See
+     * `rectSelectMode` in `selectionRect.ts`.
+     */
     detectVisualRect(
         x1: number,
         y1: number,
@@ -67,6 +73,7 @@ export interface IView extends IPropertyChanged, IDisposable {
         shapeFilter?: IShapeFilter,
         nodeFilter?: INodeFilter,
     ): VisualShapeData[];
+    /** As `detectVisualRect`, for shapes and sub-shapes; the corner order carries the same meaning. */
     detectShapesRect(
         shapeType: ShapeType,
         x1: number,

@@ -5,7 +5,11 @@ import {
     BoundingBox,
     Config,
     debounce,
+    doesSegmentTouchRect,
+    doRectsOverlap,
+    emptyScreenRect,
     GeometryNode,
+    growScreenRect,
     type HtmlTextOptions,
     type IDisposable,
     type IDocument,
@@ -17,17 +21,26 @@ import {
     type ISubShape,
     type IView,
     type IVisualObject,
+    isBoxSelected,
+    isPointInRect,
+    isPointInTriangle,
+    isRectInsideRect,
+    isScreenRectValid,
     type Matrix4,
     MultiShapeNode,
     Observable,
     type Plane,
     PubSub,
     Ray,
+    type RectSelectMode,
+    rectSelectMode,
+    type ScreenRect,
     type ShapeMeshRange,
     ShapeNode,
     type ShapeType,
     ShapeTypes,
     ShapeTypeUtils,
+    screenRect,
     type ViewMode,
     type VisualNode,
     type VisualShapeData,
@@ -37,25 +50,30 @@ import {
 } from "@chili3d/core";
 import { div, span, svg } from "@chili3d/element";
 import {
+    type BufferAttribute,
+    type BufferGeometry,
     DirectionalLight,
+    type InterleavedBufferAttribute,
     type Intersection,
     Line,
     LineSegments,
     Mesh,
     Object3D,
     type OrthographicCamera,
+    Points,
     Raycaster,
     type Scene,
+    Matrix4 as ThreeMatrix4,
     Vector2,
     Vector3,
     WebGLRenderer,
 } from "three";
-import { SelectionBox } from "three/examples/jsm/interactive/SelectionBox.js";
 import { Line2 } from "three/examples/jsm/lines/Line2.js";
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
 import { CSS2DObject, CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { CameraController } from "./cameraController";
 import { Constants } from "./constants";
+import { setSelectionDashScale } from "./materials";
 import { ThreeRefSegmentAnnotation } from "./threeAnnotation";
 import { ThreeDimension } from "./threeDimension";
 import { ThreeGeometry } from "./threeGeometry";
@@ -66,6 +84,42 @@ import { ThreeText } from "./threeText";
 import style from "./threeView.module.css";
 import type { ThreeVisualContext } from "./threeVisualContext";
 import { ThreeComponentObject, ThreeMeshObject, ThreeVisualObject } from "./threeVisualObject";
+
+/**
+ * Anything the selection rectangle can catch: a visual that can hand over the
+ * three.js objects it draws. That covers the shape-backed visuals and the
+ * annotations alike, and leaves out the pure containers (groups), which draw
+ * nothing of their own.
+ */
+type RectSelectable = IVisualObject & Object3D & { wholeVisual(): Object3D[] };
+
+function isRectSelectable(visual: IVisualObject): visual is RectSelectable {
+    return visual instanceof Object3D && typeof (visual as RectSelectable).wholeVisual === "function";
+}
+
+function getGeometry(object: Object3D): BufferGeometry | undefined {
+    return (object as Partial<Mesh>).geometry;
+}
+
+/**
+ * Fat lines (`LineSegments2`/`Line2`) keep their real endpoints in these two
+ * instanced attributes. Their `position` attribute is only the quad template that
+ * gives the line its width, so reading it would test a unit box instead of the
+ * drawing - which is exactly the trap three's own `SelectionBox` fell into here.
+ */
+function fatLineAttributes(geometry: BufferGeometry) {
+    return {
+        instanceStart: geometry.getAttribute("instanceStart") as BufferAttribute | undefined,
+        instanceEnd: geometry.getAttribute("instanceEnd") as BufferAttribute | undefined,
+    };
+}
+
+// Scratch space for the per-vertex projection below: it runs over every vertex of
+// every straddling object on every pointermove, so it allocates nothing.
+const _rectMatrix = new ThreeMatrix4();
+const _rectPointA = new Vector3();
+const _rectPointB = new Vector3();
+const _rectPointC = new Vector3();
 
 export class ThreeView extends Observable implements IView {
     private _dom?: HTMLElement;
@@ -265,9 +319,9 @@ export class ThreeView extends Observable implements IView {
         if (!this._needsUpdate) return;
 
         // _needsUpdate is set on every pan/zoom/resize, so this is exactly when the
-        // grid's visible extent and the dimension label scale may have changed.
+        // grid's visible extent and anything else sized in pixels may have changed.
         this._grid.update();
-        this.updateDimensionScale();
+        this.updateScreenScales();
 
         const dir = this.camera.position.clone().sub(this.cameraController.target);
         this.dynamicLight.position.copy(dir);
@@ -278,14 +332,18 @@ export class ThreeView extends Observable implements IView {
     }
 
     /**
-     * Dimension text is sized in drawing units, so its pixel size has to follow the
-     * zoom - see ThreeDimension.updateScale, which no-ops unless the size really moved.
+     * Everything whose size is fixed in *pixels* while it lives in a world measured in
+     * drawing units has to be re-derived whenever the zoom moves: dimension text (sized
+     * in drawing units, so its pixel size follows the zoom - see
+     * ThreeDimension.updateScale, which no-ops unless the size really moved) and the
+     * selection dash (sized in pixels, so its drawing-unit length has to follow instead).
      */
-    private updateDimensionScale() {
+    private updateScreenScales() {
         const worldHeight = this.camera.top - this.camera.bottom;
         if (worldHeight <= 0) return;
 
         const pixelsPerUnit = this.height / worldHeight;
+        setSelectionDashScale(pixelsPerUnit);
         this.content.visualShapes.traverse((object) => {
             if (object instanceof ThreeDimension || object instanceof ThreeText) {
                 object.updateScale(pixelsPerUnit);
@@ -439,20 +497,7 @@ export class ThreeView extends Observable implements IView {
         my2: number,
         nodeFilter?: INodeFilter,
     ): IVisualObject[] {
-        const selectionBox = this.initSelectionBox(mx1, my1, mx2, my2);
-        const visual = new Set<IVisualObject>();
-        for (const obj of selectionBox.select()) {
-            const threeObject = obj.parent as ThreeVisualObject;
-            if (!threeObject?.visible) continue;
-
-            const node = this.getNodeFromObject(threeObject);
-            if (node === undefined) continue;
-            if (nodeFilter !== undefined && !nodeFilter.allow(node)) {
-                continue;
-            }
-            visual.add(threeObject);
-        }
-        return Array.from(visual);
+        return this.detectVisualsInRect(screenRect(mx1, my1, mx2, my2), rectSelectMode(mx1, mx2), nodeFilter);
     }
 
     private getNodeFromObject(threeObject: Object3D) {
@@ -473,15 +518,6 @@ export class ThreeView extends Observable implements IView {
         return node;
     }
 
-    private initSelectionBox(mx1: number, my1: number, mx2: number, my2: number) {
-        const selectionBox = new SelectionBox(this.camera, this._scene);
-        const start = this.screenToCameraRect(mx1, my1);
-        const end = this.screenToCameraRect(mx2, my2);
-        selectionBox.startPoint.set(start.x, start.y, 0.5);
-        selectionBox.endPoint.set(end.x, end.y, 0.5);
-        return selectionBox;
-    }
-
     detectShapesRect(
         shapeType: ShapeType,
         mx1: number,
@@ -491,18 +527,24 @@ export class ThreeView extends Observable implements IView {
         shapeFilter?: IShapeFilter,
         nodeFilter?: INodeFilter,
     ): VisualShapeData[] {
-        const minX = Math.min(mx1, mx2);
-        const maxX = Math.max(mx1, mx2);
-        const minY = Math.min(my1, my2);
-        const maxY = Math.max(my1, my2);
-
-        const visuals = this.detectVisualsInRect(minX, minY, maxX, maxY, nodeFilter);
+        const rect = screenRect(mx1, my1, mx2, my2);
+        const mode = rectSelectMode(mx1, mx2);
 
         if (ShapeTypeUtils.isWhole(shapeType)) {
-            return this.detectWholeShapesInRect(visuals, shapeFilter);
+            return this.detectWholeShapesInRect(this.threeVisualsInRect(rect, mode, nodeFilter), shapeFilter);
         }
 
-        return this.detectSubShapesInRect(shapeType, visuals, minX, minY, maxX, maxY, shapeFilter);
+        // Sub-shape picks apply the mode one sub-shape at a time, so the object-level
+        // pass has to stay a crossing whatever the drag direction: an object only half
+        // inside a window can still own edges that are wholly inside it, and a window
+        // pass here would throw the whole object away before those were ever looked at.
+        return this.detectSubShapesInRect(
+            shapeType,
+            this.threeVisualsInRect(rect, "crossing", nodeFilter),
+            rect,
+            mode,
+            shapeFilter,
+        );
     }
 
     private detectWholeShapesInRect(
@@ -543,39 +585,48 @@ export class ThreeView extends Observable implements IView {
         return result;
     }
 
+    /**
+     * Everything on screen the rubber band catches, under the given mode. Dimensions,
+     * text and the other annotations come back too - they are picked whole, like any
+     * other object, even though there is no B-Rep shape behind them.
+     */
     private detectVisualsInRect(
-        minX: number,
-        minY: number,
-        maxX: number,
-        maxY: number,
+        rect: ScreenRect,
+        mode: RectSelectMode,
         nodeFilter?: INodeFilter,
-    ): ThreeVisualObject[] {
-        const result: ThreeVisualObject[] = [];
-        this.document.visual.context.visuals().forEach((x) => {
-            if (!x.visible) return;
-            if (!(x instanceof ThreeVisualObject)) return;
+    ): IVisualObject[] {
+        const result: IVisualObject[] = [];
+        this.document.visual.context.visuals().forEach((visual) => {
+            // Objects on a locked layer stay on screen but are not pickable, the way
+            // AutoCAD's layer lock works - see ThreeVisualContext.applyLayerStyling.
+            if (!visual.visible || visual.locked) return;
+            if (!isRectSelectable(visual)) return;
 
-            const node = this.getNodeFromObject(x);
+            const node = this.getNodeFromObject(visual);
             if (node === undefined) return;
             if (nodeFilter && !nodeFilter.allow(node)) return;
 
-            const box = x.boundingBox();
-            if (!box) return;
-
-            if (this.isBoundingBoxInRect(box, x.worldTransform(), minX, minY, maxX, maxY)) {
-                result.push(x);
-            }
+            if (this.isVisualInRect(visual, rect, mode)) result.push(visual);
         });
         return result;
+    }
+
+    /** As `detectVisualsInRect`, narrowed to the visuals that carry CAD shapes. */
+    private threeVisualsInRect(
+        rect: ScreenRect,
+        mode: RectSelectMode,
+        nodeFilter?: INodeFilter,
+    ): ThreeVisualObject[] {
+        return this.detectVisualsInRect(rect, mode, nodeFilter).filter(
+            (x): x is ThreeVisualObject => x instanceof ThreeVisualObject,
+        );
     }
 
     private detectSubShapesInRect(
         shapeType: ShapeType,
         visuals: ThreeVisualObject[],
-        minX: number,
-        minY: number,
-        maxX: number,
-        maxY: number,
+        rect: ScreenRect,
+        mode: RectSelectMode,
         shapeFilter?: IShapeFilter,
     ): VisualShapeData[] {
         const result: VisualShapeData[] = [];
@@ -588,7 +639,7 @@ export class ThreeView extends Observable implements IView {
             for (const entry of entries) {
                 if (added.has(entry.shape.id)) continue;
 
-                if (!this.isShapeInRect(entry.shape, entry.transform, worldMatrix, minX, minY, maxX, maxY)) {
+                if (!this.isShapeInRect(entry.shape, entry.transform, worldMatrix, rect, mode)) {
                     continue;
                 }
 
@@ -687,53 +738,238 @@ export class ThreeView extends Observable implements IView {
         }
     }
 
-    private isBoundingBoxInRect(
-        box: BoundingBox,
-        worldMatrix: Matrix4,
-        minX: number,
-        minY: number,
-        maxX: number,
-        maxY: number,
-    ): boolean {
-        if (!BoundingBox.isValid(box)) return false;
-
-        let screenMinX = Number.POSITIVE_INFINITY;
-        let screenMinY = Number.POSITIVE_INFINITY;
-        let screenMaxX = Number.NEGATIVE_INFINITY;
-        let screenMaxY = Number.NEGATIVE_INFINITY;
-
+    /** The screen-space extent of a world-space box, as the box of its eight projected corners. */
+    private projectBoundingBox(box: BoundingBox, worldMatrix: Matrix4): ScreenRect {
+        const result = emptyScreenRect();
         const { min, max } = box;
         for (let i = 0; i < 8; i++) {
-            const ix = i & 1 ? max.x : min.x;
-            const iy = i & 2 ? max.y : min.y;
-            const iz = i & 4 ? max.z : min.z;
-            const { x, y } = this.worldToScreen(worldMatrix.ofPoint({ x: ix, y: iy, z: iz }));
-            if (x < screenMinX) screenMinX = x;
-            if (y < screenMinY) screenMinY = y;
-            if (x > screenMaxX) screenMaxX = x;
-            if (y > screenMaxY) screenMaxY = y;
+            const { x, y } = this.worldToScreen(
+                worldMatrix.ofPoint({
+                    x: i & 1 ? max.x : min.x,
+                    y: i & 2 ? max.y : min.y,
+                    z: i & 4 ? max.z : min.z,
+                }),
+            );
+            growScreenRect(result, x, y);
         }
-
-        return screenMinX <= maxX && screenMaxX >= minX && screenMinY <= maxY && screenMaxY >= minY;
+        return result;
     }
 
+    /**
+     * Window-vs-crossing for a single sub-shape, judged on its bounding box rather
+     * than its real outline. That is exact for a vertex - a point's box is the point,
+     * so both modes reduce to "is it in the rectangle", which is what STRETCH leans on
+     * when it grabs the vertices a crossing window caught - and slightly generous for
+     * a long diagonal edge, whose box is bigger than the edge itself.
+     */
     private isShapeInRect(
         shape: IShape,
         localTransform: Matrix4 | undefined,
         worldMatrix: Matrix4,
-        minX: number,
-        minY: number,
-        maxX: number,
-        maxY: number,
+        rect: ScreenRect,
+        mode: RectSelectMode,
     ): boolean {
         const box = shape.boundingBox();
-        if (!box) return false;
+        if (!box || !BoundingBox.isValid(box)) return false;
 
         const composed = localTransform ? worldMatrix.multiply(localTransform) : worldMatrix;
-        const center = BoundingBox.center(box);
-        const { x, y } = this.worldToScreen(composed.ofPoint(center));
+        return isBoxSelected(mode, this.projectBoundingBox(box, composed), rect);
+    }
 
-        return x <= maxX && x >= minX && y <= maxY && y >= minY;
+    /**
+     * The heart of window-vs-crossing (see `selectionRect.ts` for what the two modes
+     * mean).
+     *
+     * Bounding boxes settle most objects on their own: one that does not even reach the
+     * rectangle is out under either mode, and one lying wholly inside it is in. Only the
+     * objects straddling an edge of the rectangle - never many - are worth walking
+     * vertex by vertex, which is what keeps this cheap enough to run on every
+     * pointermove while the band is being dragged.
+     *
+     * The precise pass earns its keep on crossings especially: a diagonal line's
+     * bounding box is far larger than the line, so a box test alone would hand back
+     * objects the green band never actually touched.
+     */
+    private isVisualInRect(visual: RectSelectable, rect: ScreenRect, mode: RectSelectMode): boolean {
+        let tested = 0;
+        for (const object of visual.wholeVisual()) {
+            // A face hidden by 2D wireframe mode is not drawn, so it must not be
+            // selectable either - same rule the raycaster follows for a click.
+            if (!object.visible || !this.camera.layers.test(object.layers)) continue;
+
+            const box = this.projectObjectBox(object);
+            if (!box) continue;
+
+            tested++;
+            if (!doRectsOverlap(box, rect)) {
+                // Nowhere near: out of a crossing, and proof of geometry outside a window.
+                if (mode === "window") return false;
+                continue;
+            }
+            if (isRectInsideRect(box, rect)) {
+                if (mode === "crossing") return true;
+                continue;
+            }
+
+            if (mode === "crossing") {
+                if (this.doesObjectTouchRect(object, rect)) return true;
+            } else if (!this.isObjectInsideRect(object, rect)) {
+                return false;
+            }
+        }
+        return mode === "window" && tested > 0;
+    }
+
+    /** One object's own geometry bounds, projected to pixels; undefined when it draws nothing. */
+    private projectObjectBox(object: Object3D): ScreenRect | undefined {
+        const geometry = getGeometry(object);
+        if (!geometry) return undefined;
+        if (!geometry.boundingBox) geometry.computeBoundingBox();
+
+        const box = geometry.boundingBox;
+        if (!box || box.isEmpty()) return undefined;
+
+        const matrix = this.screenMatrix(object);
+        const result = emptyScreenRect();
+        for (let i = 0; i < 8; i++) {
+            _rectPointA.set(
+                i & 1 ? box.max.x : box.min.x,
+                i & 2 ? box.max.y : box.min.y,
+                i & 4 ? box.max.z : box.min.z,
+            );
+            this.toScreen(_rectPointA, matrix);
+            growScreenRect(result, _rectPointA.x, _rectPointA.y);
+        }
+        return isScreenRectValid(result) ? result : undefined;
+    }
+
+    /** Local coordinates straight to clip space, folded into one matrix so a vertex costs one multiply. */
+    private screenMatrix(object: Object3D) {
+        return _rectMatrix
+            .multiplyMatrices(this.camera.projectionMatrix, this.camera.matrixWorldInverse)
+            .multiply(object.matrixWorld);
+    }
+
+    /** Projects a point in place, from the matrix's source space to pixels. */
+    private toScreen(point: Vector3, matrix: ThreeMatrix4) {
+        point.applyMatrix4(matrix);
+        point.x = (point.x * 0.5 + 0.5) * this.width;
+        point.y = (-point.y * 0.5 + 0.5) * this.height;
+    }
+
+    private isVertexInRect(
+        attribute: BufferAttribute | InterleavedBufferAttribute,
+        index: number,
+        matrix: ThreeMatrix4,
+        rect: ScreenRect,
+    ): boolean {
+        _rectPointA.fromBufferAttribute(attribute, index);
+        this.toScreen(_rectPointA, matrix);
+        return isPointInRect(rect, _rectPointA.x, _rectPointA.y);
+    }
+
+    /** The window test: every vertex the object draws has to land inside the rectangle. */
+    private isObjectInsideRect(object: Object3D, rect: ScreenRect): boolean {
+        const geometry = getGeometry(object);
+        if (!geometry) return true;
+
+        const matrix = this.screenMatrix(object);
+        const { instanceStart, instanceEnd } = fatLineAttributes(geometry);
+        if (instanceStart && instanceEnd) {
+            for (let i = 0; i < instanceStart.count; i++) {
+                if (!this.isVertexInRect(instanceStart, i, matrix, rect)) return false;
+                if (!this.isVertexInRect(instanceEnd, i, matrix, rect)) return false;
+            }
+            return true;
+        }
+
+        const position = geometry.getAttribute("position");
+        if (!position) return true;
+        for (let i = 0; i < position.count; i++) {
+            if (!this.isVertexInRect(position, i, matrix, rect)) return false;
+        }
+        return true;
+    }
+
+    /** The crossing test: does any line the object draws meet the rectangle. */
+    private doesObjectTouchRect(object: Object3D, rect: ScreenRect): boolean {
+        const geometry = getGeometry(object);
+        if (!geometry) return false;
+
+        const matrix = this.screenMatrix(object);
+        const { instanceStart, instanceEnd } = fatLineAttributes(geometry);
+        if (instanceStart && instanceEnd) {
+            for (let i = 0; i < instanceStart.count; i++) {
+                _rectPointA.fromBufferAttribute(instanceStart, i);
+                _rectPointB.fromBufferAttribute(instanceEnd, i);
+                this.toScreen(_rectPointA, matrix);
+                this.toScreen(_rectPointB, matrix);
+                if (doesSegmentTouchRect(rect, _rectPointA.x, _rectPointA.y, _rectPointB.x, _rectPointB.y)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        const position = geometry.getAttribute("position");
+        if (!position) return false;
+
+        if (object instanceof Points) {
+            for (let i = 0; i < position.count; i++) {
+                if (this.isVertexInRect(position, i, matrix, rect)) return true;
+            }
+            return false;
+        }
+
+        return this.doesMeshTouchRect(geometry, position, matrix, rect);
+    }
+
+    /**
+     * A triangle mesh is caught when the band crosses one of its triangle edges, or
+     * when the band is standing entirely on the fill - the second case being how a
+     * small crossing box dropped in the middle of a hatch still selects it, as it does
+     * in AutoCAD. Faces the view is not drawing never reach here (see `isVisualInRect`),
+     * so an unfilled outline in wireframe mode is not silently selectable through its
+     * hollow interior.
+     */
+    private doesMeshTouchRect(
+        geometry: BufferGeometry,
+        position: BufferAttribute | InterleavedBufferAttribute,
+        matrix: ThreeMatrix4,
+        rect: ScreenRect,
+    ): boolean {
+        const index = geometry.index;
+        const count = index ? index.count : position.count;
+
+        for (let i = 0; i + 2 < count; i += 3) {
+            const a = index ? index.getX(i) : i;
+            const b = index ? index.getX(i + 1) : i + 1;
+            const c = index ? index.getX(i + 2) : i + 2;
+
+            _rectPointA.fromBufferAttribute(position, a);
+            _rectPointB.fromBufferAttribute(position, b);
+            _rectPointC.fromBufferAttribute(position, c);
+            this.toScreen(_rectPointA, matrix);
+            this.toScreen(_rectPointB, matrix);
+            this.toScreen(_rectPointC, matrix);
+
+            const ax = _rectPointA.x;
+            const ay = _rectPointA.y;
+            const bx = _rectPointB.x;
+            const by = _rectPointB.y;
+            const cx = _rectPointC.x;
+            const cy = _rectPointC.y;
+
+            if (
+                doesSegmentTouchRect(rect, ax, ay, bx, by) ||
+                doesSegmentTouchRect(rect, bx, by, cx, cy) ||
+                doesSegmentTouchRect(rect, cx, cy, ax, ay) ||
+                isPointInTriangle(rect.minX, rect.minY, ax, ay, bx, by, cx, cy)
+            ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     detectShapes(

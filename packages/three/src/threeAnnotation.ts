@@ -8,6 +8,7 @@ import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
 import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js";
 import { Constants } from "./constants";
 import type { IHighlightable } from "./highlightable";
+import { selectedEdgeMaterial } from "./materials";
 import { ThreeHelper } from "./threeHelper";
 import type { ThreeVisualContext } from "./threeVisualContext";
 
@@ -36,8 +37,8 @@ export class ThreeRefSegmentAnnotation extends Object3D implements IVisualObject
         this._mesh = this.newLineSegments();
         this.add(this._mesh);
     }
-    highlight(): void {
-        this._mesh.material = highlightMaterial;
+    highlight(selected?: boolean): void {
+        this._mesh.material = selected ? selectedEdgeMaterial : highlightMaterial;
     }
 
     unhighlight(): void {
@@ -57,6 +58,8 @@ export class ThreeRefSegmentAnnotation extends Object3D implements IVisualObject
         buff.computeBoundingBox();
         const line = new LineSegments2(buff, material);
         line.layers.set(Constants.Layers.Wireframe);
+        // Needed by the dashed selection material; harmless while the line is drawn solid.
+        line.computeLineDistances();
         return line;
     }
 

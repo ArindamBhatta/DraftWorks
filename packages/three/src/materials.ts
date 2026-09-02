@@ -135,6 +135,21 @@ export const hilightDashedEdgeMaterial = new LineMaterial({
     gapSize: 100,
 });
 
+/**
+ * The selection dash, in **pixels**. AutoCAD shows a selected object as a dashed
+ * line, and that is the cue this copies: colour alone says "this line is blue",
+ * which a drawing full of blue lines on a blue layer cannot answer, whereas a dash
+ * cutting across an object's own linetype is unmistakable and survives being
+ * printed, screenshotted, or looked at by someone who cannot separate the hues.
+ *
+ * Pixels rather than drawing units because this is cursor feedback, not a drafting
+ * linetype (contrast `LineDashPatterns` above, which is deliberately in drawing
+ * units so LTSCALE can govern it): the pattern has to read the same however far in
+ * you are zoomed. `setSelectionDashScale` is what holds it there.
+ */
+const SELECTION_DASH_PIXELS = 10;
+const SELECTION_GAP_PIXELS = 6;
+
 export const selectedEdgeMaterial = new LineMaterial({
     linewidth: 3,
     color: ThreeHelper.fromColor(VisualConfig.selectedEdgeColor),
@@ -142,7 +157,25 @@ export const selectedEdgeMaterial = new LineMaterial({
     polygonOffset: true,
     polygonOffsetFactor: -4,
     polygonOffsetUnits: -4,
+    dashed: true,
+    dashSize: SELECTION_DASH_PIXELS,
+    gapSize: SELECTION_GAP_PIXELS,
+    dashScale: 1,
 });
+
+/**
+ * Pins the selection dash to a fixed on-screen size, given the view's current
+ * pixels-per-drawing-unit.
+ *
+ * three measures a dash along the line in drawing units and then multiplies by
+ * `dashScale`, so feeding it the zoom makes `dashSize`/`gapSize` above read as
+ * pixels. Without this a selected object goes solid when you zoom out and turns
+ * into one long dash when you zoom in - which is exactly when you most need to see
+ * what you have got hold of. Called from the view's render tick.
+ */
+export function setSelectionDashScale(pixelsPerUnit: number) {
+    if (pixelsPerUnit > 0) selectedEdgeMaterial.dashScale = pixelsPerUnit;
+}
 
 // Selection and highlight faces are cursor feedback, not surfaces, so they are drawn
 // unlit (Basic rather than Lambert). Shading them multiplied the configured colour

@@ -39,6 +39,8 @@ import {
     hilightEdgeMaterial,
     lockFaceMaterial,
     lockLineMaterial,
+    selectedEdgeMaterial,
+    selectedFaceColoredMaterial,
 } from "./materials";
 import { ThreeGeometryFactory } from "./threeGeometryFactory";
 import { ThreeHelper } from "./threeHelper";
@@ -151,13 +153,13 @@ export class ThreeMeshObject extends ThreeVisualObject implements IHighlightable
         meshNode.onPropertyChanged(this.handleGeometryPropertyChanged);
     }
 
-    highlight() {
+    highlight(selected?: boolean) {
         if (this._mesh instanceof Mesh) {
-            this._mesh.material = highlightFaceMaterial;
+            this._mesh.material = selected ? selectedFaceColoredMaterial : highlightFaceMaterial;
         }
 
         if (this._mesh instanceof LineSegments2) {
-            this._mesh.material = hilightEdgeMaterial;
+            this._mesh.material = selected ? selectedEdgeMaterial : hilightEdgeMaterial;
         }
     }
 
@@ -239,6 +241,8 @@ export class ThreeMeshObject extends ThreeVisualObject implements IHighlightable
         buff.computeBoundingBox();
         const line = new LineSegments2(buff, material);
         line.layers.set(Constants.Layers.Wireframe);
+        // Needed by the dashed selection material; harmless while the line is drawn solid.
+        line.computeLineDistances();
         return line;
     }
 
@@ -411,7 +415,7 @@ export class ThreeComponentObject extends ThreeVisualObject implements IHighligh
         return this.componentNode.component.boundingBox;
     }
 
-    highlight(): void {
+    highlight(selected?: boolean): void {
         if (!this._boundbox) {
             const box = this.componentNode.component.boundingBox;
             if (!box) {
@@ -421,9 +425,12 @@ export class ThreeComponentObject extends ThreeVisualObject implements IHighligh
             const geometry = new LineSegmentsGeometry();
             geometry.setPositions(BoundingBox.wireframe(box).position);
             this._boundbox = new LineSegments2(geometry, hilightEdgeMaterial);
+            // Needed by the dashed selection material below.
+            this._boundbox.computeLineDistances();
             this.add(this._boundbox);
         }
 
+        this._boundbox.material = selected ? selectedEdgeMaterial : hilightEdgeMaterial;
         this._boundbox.visible = true;
     }
 

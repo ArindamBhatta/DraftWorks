@@ -15,6 +15,7 @@ import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeome
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { Constants } from "./constants";
 import type { IHighlightable } from "./highlightable";
+import { selectedEdgeMaterial } from "./materials";
 import { ThreeHelper } from "./threeHelper";
 import type { ThreeVisualContext } from "./threeVisualContext";
 
@@ -90,6 +91,9 @@ export class ThreeDimension extends Object3D implements IVisualObject, IHighligh
             lines.computeBoundingBox();
             this._lines.geometry.dispose();
             this._lines.geometry = lines;
+            // Needed by the dashed selection material; the line work is rebuilt from
+            // scratch here, so the distances have to be recomputed with it.
+            this._lines.computeLineDistances();
         }
 
         const arrows = new BufferGeometry();
@@ -115,13 +119,20 @@ export class ThreeDimension extends Object3D implements IVisualObject, IHighligh
         this._labelElement.style.fontSize = `${clamped}px`;
     }
 
-    highlight(): void {
+    /**
+     * A picked dimension gets the same dashed line work as any other selected object;
+     * merely hovering one only recolours it. The arrows and label have no line work to
+     * dash, so they carry the highlight colour in both cases.
+     */
+    highlight(selected?: boolean): void {
+        this._lines.material = selected ? selectedEdgeMaterial : this._lineMaterial;
         this._lineMaterial.color.set(HIGHLIGHT_COLOR);
         this._arrowMaterial.color.set(HIGHLIGHT_COLOR);
         this._labelElement.style.color = "#00ffff";
     }
 
     unhighlight(): void {
+        this._lines.material = this._lineMaterial;
         this._lineMaterial.color.set(NORMAL_COLOR);
         this._arrowMaterial.color.set(NORMAL_COLOR);
         this._labelElement.style.color = "#ffff00";
