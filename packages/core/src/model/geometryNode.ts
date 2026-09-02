@@ -50,14 +50,15 @@ export abstract class GeometryNode extends VisualNode {
         this.setProperty("materialId", value);
     }
 
-    // AutoCAD's per-object Linetype override (an object is always drawn with one linetype
-    // - there is no "ByLayer" indirection here, since layers in this app do not carry a
-    // linetype of their own to fall back to). Display-only: it never touches the mesh, so
-    // switching it needs no retessellation, just a different edge material downstream.
+    // AutoCAD's per-object Linetype. The default is ByLayer - the object follows whatever
+    // its layer is set to - and any other value is an override that wins over the layer;
+    // ThreeVisualContext.resolveLineType is where the two meet. Display-only: it never
+    // touches the mesh, so switching it needs no retessellation, just a different edge
+    // material downstream.
     @serialize()
     @property("common.lineType", { type: "lineType" })
     get lineType(): LineType {
-        return this.getPrivateValue("lineType", "solid" as LineType);
+        return this.getPrivateValue("lineType", "byLayer" as LineType);
     }
     set lineType(value: LineType) {
         this.setProperty("lineType", value);

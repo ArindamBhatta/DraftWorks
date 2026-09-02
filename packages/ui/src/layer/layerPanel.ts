@@ -3,10 +3,14 @@
 
 import {
     I18n,
+    type I18nKeys,
     type IDocument,
     type IView,
+    LAYER_LINE_WEIGHTS,
     type Layer,
+    type LineType,
     Localize,
+    MAX_LAYER_TRANSPARENCY,
     PubSub,
     Transaction,
     VisualNode,
@@ -15,9 +19,16 @@ import { div, input, span, svg } from "@chili3d/element";
 import style from "./layerPanel.module.css";
 
 /**
- * AutoCAD's Layer Properties Manager: each row is on/off, lock, colour swatch, name,
- * object count, and clicking the row makes that layer current. Opened by the LAYER
- * command (LA) as a floating palette - see layerFloatPanel.ts.
+ * AutoCAD's Layer Properties Manager. Each row carries the full column set - status,
+ * on/off, freeze, lock, colour, linetype, lineweight, transparency and plot - and
+ * clicking the row makes that layer current. Opened by the LAYER command (LA) as a
+ * floating palette - see layerFloatPanel.ts.
+ *
+ * Every column is a glyph rather than a label, so a row stays readable at a glance and
+ * the panel stays narrow. That leaves the three columns which are values rather than
+ * states - linetype, lineweight, transparency - without anywhere to put a menu, so they
+ * are drawn as a preview of what they do (the actual dash pattern, the actual thickness,
+ * the actual fade) and cycle through the available settings on click.
  */
 export class LayerPanel extends HTMLElement {
     private _document: IDocument | undefined;
@@ -113,6 +124,7 @@ export class LayerPanel extends HTMLElement {
     };
 
     private layerRow(layer: Layer, isCurrent: boolean) {
+        const count = this.objectCount(layer);
         const nameBox = input({
             className: style.name,
             value: layer.name,
@@ -134,26 +146,124 @@ export class LayerPanel extends HTMLElement {
                 title: I18n.translate("layer.setCurrentTip"),
                 onclick: () => this.setCurrent(layer),
             },
-            svg({
-                icon: layer.visible ? "icon-eye" : "icon-ban",
-                title: new Localize("layer.toggleOn"),
-                onclick: (e) => {
-                    e.stopPropagation();
-                    layer.visible = !layer.visible;
-                },
-            }),
-            svg({
-                icon: layer.locked ? "icon-lock" : "icon-unlock",
-                title: new Localize("layer.toggleLock"),
-                onclick: (e) => {
-                    e.stopPropagation();
-                    layer.locked = !layer.locked;
-                },
-            }),
+            this.statusGlyph(layer, isCurrent, count),
+            this.toggle(layer, "visible", "layer.toggleOn", "icon-eye", "icon-ban"),
+            this.toggle(layer, "frozen", "layer.toggleFreeze", "icon-freeze", "icon-thaw"),
+            this.toggle(layer, "locked", "layer.toggleLock", "icon-lock", "icon-unlock"),
             this.colorSwatch(layer),
+            this.lineTypePreview(layer),
+            this.lineWeightPreview(layer),
+            this.transparencyPreview(layer),
+            this.toggle(layer, "printable", "layer.togglePlot", "icon-plot", "icon-noplot"),
             nameBox,
-            span({ className: style.count, textContent: String(this.objectCount(layer)) }),
+            span({ className: style.count, textContent: String(count) }),
         );
+    }
+
+    /**
+     * A boolean column. The `on` icon is shown when the property is true, except for
+     * lock and freeze where "true" is the closed/frozen state - so the caller passes
+     * whichever pair reads correctly for that column.
+     */
+    private toggle(
+        layer: Layer,
+        property: "visible" | "frozen" | "locked" | "printable",
+        title: I18nKeys,
+        whenTrue: string,
+        whenFalse: string,
+    ) {
+        return svg({
+            icon: layer[property] ? whenTrue : whenFalse,
+            className: style.toggle,
+            title: new Localize(title),
+            onclick: (e) => {
+                e.stopPropagation();
+                layer[property] = !layer[property];
+            },
+        });
+    }
+
+    /**
+     * AutoCAD's Status column: which layer is current, which have objects on them, and
+     * which are empty - the cue for what is safe to delete.
+     */
+    private statusGlyph(layer: Layer, isCurrent: boolean, count: number) {
+        if (isCurrent) {
+            return svg({
+                icon: "icon-check",
+                className: `${style.toggle} ${style.statusCurrent}`,
+                title: new Localize("layer.status.current"),
+            });
+        }
+        return svg({
+            icon: "icon-layer-group",
+            className: `${style.toggle} ${count > 0 ? style.statusInUse : style.statusEmpty}`,
+            title: new Localize(count > 0 ? "layer.status.inUse" : "layer.status.empty"),
+        });
+    }
+
+    /**
+     * A line drawn to show what a setting does. A tooltip on an SVG is a <title> child,
+     * not a title attribute - the attribute is inert here.
+     */
+    private linePreview(width: number, dashArray: string, tip: I18nKeys, onClick: () => void) {
+        const ns = "http://www.w3.org/2000/svg";
+        const preview = document.createElementNS(ns, "svg");
+        preview.setAttribute("viewBox", "0 0 24 12");
+        preview.classList.add(style.preview);
+
+        const line = document.createElementNS(ns, "line");
+        line.setAttribute("x1", "1");
+        line.setAttribute("y1", "6");
+        line.setAttribute("x2", "23");
+        line.setAttribute("y2", "6");
+        line.setAttribute("stroke", "currentColor");
+        line.setAttribute("stroke-width", String(width));
+        if (dashArray) line.setAttribute("stroke-dasharray", dashArray);
+
+        const title = document.createElementNS(ns, "title");
+        title.textContent = I18n.translate(tip);
+
+        preview.append(title, line);
+        preview.onclick = (e) => {
+            e.stopPropagation();
+            onClick();
+        };
+        return preview;
+    }
+
+    /** The linetype drawn as itself: a short line in that dash pattern. */
+    private lineTypePreview(layer: Layer) {
+        const order: LineType[] = ["solid", "dash", "hidden", "dot"];
+        const dashes: Record<string, string> = { solid: "", dash: "6 4", hidden: "3 3", dot: "1 3" };
+
+        return this.linePreview(1.5, dashes[layer.lineType] ?? "", "layer.lineType", () => {
+            layer.lineType = order[(order.indexOf(layer.lineType) + 1) % order.length];
+        });
+    }
+
+    /** The lineweight drawn as itself: a line of that thickness. */
+    private lineWeightPreview(layer: Layer) {
+        return this.linePreview(layer.lineWeight, "", "layer.lineWeight", () => {
+            const index = LAYER_LINE_WEIGHTS.indexOf(layer.lineWeight);
+            layer.lineWeight = LAYER_LINE_WEIGHTS[(index + 1) % LAYER_LINE_WEIGHTS.length];
+        });
+    }
+
+    /** Transparency drawn as itself: the layer colour faded by that much. */
+    private transparencyPreview(layer: Layer) {
+        const step = 30;
+        const swatch = div({
+            className: style.transparency,
+            title: I18n.translate("layer.transparency"),
+            onclick: (e) => {
+                e.stopPropagation();
+                const next = layer.transparency + step;
+                layer.transparency = next > MAX_LAYER_TRANSPARENCY ? 0 : next;
+            },
+        });
+        swatch.style.opacity = String(1 - layer.transparency / 100);
+        return swatch;
     }
 
     private colorSwatch(layer: Layer) {

@@ -17,6 +17,7 @@ import { PropertyBase } from "./propertyBase";
 
 /** In AutoCAD's own dropdown order: Continuous first, then the dashed patterns. */
 const LINE_TYPES: { value: LineType; display: I18nKeys }[] = [
+    { value: "byLayer", display: "lineType.byLayer" },
     { value: "solid", display: "lineType.solid" },
     { value: "dash", display: "lineType.dash" },
     { value: "hidden", display: "lineType.hidden" },

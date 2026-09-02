@@ -1,6 +1,7 @@
 import type { IDocument } from "../document";
 import { HistoryObservable, Id } from "../foundation";
 import { serializable, serialize } from "../serialize";
+import type { LineType } from "../shape";
 
 /** The layer every drawing starts with. AutoCAD's layer 0 - it cannot be deleted. */
 export const DEFAULT_LAYER_NAME = "0";
@@ -23,7 +24,17 @@ export interface LayerOptions {
     visible?: boolean;
     locked?: boolean;
     printable?: boolean;
+    frozen?: boolean;
+    lineType?: LineType;
+    lineWeight?: number;
+    transparency?: number;
 }
+
+/** AutoCAD's lineweight steps, thinnest first, in the pixel widths this renderer draws. */
+export const LAYER_LINE_WEIGHTS = [1, 2, 3, 4, 6];
+
+/** AutoCAD caps transparency at 90% - a fully invisible layer would just be Off. */
+export const MAX_LAYER_TRANSPARENCY = 90;
 
 /**
  * An AutoCAD layer: a named group that owns the colour its objects draw in and whether
@@ -72,12 +83,55 @@ export class Layer extends HistoryObservable {
         this.setProperty("locked", value);
     }
 
+    /** AutoCAD's Plot/No Plot: a no-plot layer still draws on screen but never prints. */
     @serialize()
     get printable(): boolean {
         return this.getPrivateValue("printable", true);
     }
     set printable(value: boolean) {
         this.setProperty("printable", value);
+    }
+
+    /**
+     * AutoCAD's Freeze/Thaw. Frozen layers are hidden, like Off - the difference in
+     * AutoCAD is that frozen geometry is also skipped during regeneration, which is why
+     * freezing is the one you reach for on a huge drawing. This renderer has no
+     * regeneration pass to skip, so the two look the same on screen and are kept apart
+     * because drawings (and users) carry the distinction.
+     */
+    @serialize()
+    get frozen(): boolean {
+        return this.getPrivateValue("frozen", false);
+    }
+    set frozen(value: boolean) {
+        this.setProperty("frozen", value);
+    }
+
+    /** The linetype objects on this layer draw with, unless they override it themselves. */
+    @serialize()
+    get lineType(): LineType {
+        return this.getPrivateValue("lineType", "solid" as LineType);
+    }
+    set lineType(value: LineType) {
+        this.setProperty("lineType", value);
+    }
+
+    /** AutoCAD's Lineweight, as the pixel width this renderer draws edges at. */
+    @serialize()
+    get lineWeight(): number {
+        return this.getPrivateValue("lineWeight", 1);
+    }
+    set lineWeight(value: number) {
+        this.setProperty("lineWeight", value);
+    }
+
+    /** Percent see-through: 0 is opaque, 90 the most AutoCAD allows. */
+    @serialize()
+    get transparency(): number {
+        return this.getPrivateValue("transparency", 0);
+    }
+    set transparency(value: number) {
+        this.setProperty("transparency", Math.min(Math.max(value, 0), MAX_LAYER_TRANSPARENCY));
     }
 
     get isDefault(): boolean {
@@ -98,5 +152,9 @@ export class Layer extends HistoryObservable {
         if (options.visible !== undefined) this.setPrivateValue("visible", options.visible);
         if (options.locked !== undefined) this.setPrivateValue("locked", options.locked);
         if (options.printable !== undefined) this.setPrivateValue("printable", options.printable);
+        if (options.frozen !== undefined) this.setPrivateValue("frozen", options.frozen);
+        if (options.lineType !== undefined) this.setPrivateValue("lineType", options.lineType);
+        if (options.lineWeight !== undefined) this.setPrivateValue("lineWeight", options.lineWeight);
+        if (options.transparency !== undefined) this.setPrivateValue("transparency", options.transparency);
     }
 }

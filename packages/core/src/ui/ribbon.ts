@@ -2,7 +2,7 @@ import type { CommandKeys } from "../command";
 import { ObservableCollection } from "../foundation/collection";
 import { Observable } from "../foundation/observer";
 import type { I18nKeys } from "../i18n";
-import type { PulldownButton, PushButton, SplitButton } from "./button";
+import type { PulldownButton, PushButton, RibbonWidget, SplitButton } from "./button";
 
 export type RibbonTabKeys = {
     [P in I18nKeys]: P extends `ribbon.tab.${infer _}` ? P : never;
@@ -17,7 +17,8 @@ export type RibbonCommand =
     | ObservableCollection<CommandKeys>
     | PushButton
     | PulldownButton
-    | SplitButton;
+    | SplitButton
+    | RibbonWidget;
 
 export type RibbonGroupProfile = {
     groupName: RibbonGroupKeys;

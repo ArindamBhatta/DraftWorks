@@ -43,7 +43,9 @@ export const DefaultRibbon: RibbonTabProfile[] = [
             //Layer
             {
                 groupName: "ribbon.group.layer",
-                items: ["layer.setup", "layer.moveToCurrent"],
+                // AutoCAD's Layers panel: the layer tools on top, the layer combo
+                // underneath, which is where the current layer is actually read and set.
+                items: [["layer.setup", "layer.moveToCurrent"], { type: "widget", widget: "layerControl" }],
             },
             //Tools
             {

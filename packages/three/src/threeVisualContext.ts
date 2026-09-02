@@ -17,6 +17,7 @@ import {
     type IVisualObject,
     isDisposable,
     type Layer,
+    type LineType,
     type Material,
     type Matrix4,
     MeshDataUtils,
@@ -99,8 +100,9 @@ export class ThreeVisualContext implements IVisualContext {
     };
 
     private readonly onLayerPropertyChanged = (property: keyof Layer) => {
-        // Name and printability change nothing on screen.
-        if (property === "color" || property === "visible" || property === "locked") {
+        // Name changes nothing on screen, and neither does Plot/No Plot - that one is
+        // about paper, so the drawing is deliberately left looking exactly the same.
+        if (property !== "name" && property !== "printable") {
             this.refreshLayerStyling();
         }
     };
@@ -121,12 +123,21 @@ export class ThreeVisualContext implements IVisualContext {
         if (!(node instanceof VisualNode)) return;
 
         const layer = this.modelManager.layerOf(node);
-        visualObject.visible = node.visible && node.parentVisible && layer.visible;
+        // Off and Frozen both hide; see Layer.frozen for why they are still separate.
+        visualObject.visible = node.visible && node.parentVisible && layer.visible && !layer.frozen;
         visualObject.locked = layer.locked;
         if (visualObject instanceof ThreeGeometry) {
             visualObject.setLayerColor(layer.color);
-            visualObject.setLineType(node instanceof GeometryNode ? node.lineType : "solid");
+            visualObject.setLineType(this.resolveLineType(node, layer));
+            visualObject.setLineWeight(layer.lineWeight);
+            visualObject.setTransparency(layer.transparency);
         }
+    }
+
+    /** An object drawn ByLayer takes the layer's linetype; otherwise its own wins. */
+    private resolveLineType(node: VisualNode, layer: Layer): LineType {
+        if (!(node instanceof GeometryNode)) return "solid";
+        return node.lineType === "byLayer" ? layer.lineType : node.lineType;
     }
 
     /** Whether the node's layer currently allows it to be shown at all. */

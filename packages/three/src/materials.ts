@@ -68,19 +68,31 @@ const layerEdgeMaterials = new Map<string, LineMaterial>();
  * drawing's default edge colour" (LAYER_COLOR_BY_THEME); solid + that sentinel is the
  * single shared, theme-aware `defaultEdgeMaterial`.
  */
-export function layerEdgeMaterial(color: number, lineType: LineType = "solid"): LineMaterial {
-    if (color < 0 && lineType === "solid") return defaultEdgeMaterial;
+export function layerEdgeMaterial(
+    color: number,
+    lineType: LineType = "solid",
+    lineWeight = 1,
+    transparency = 0,
+): LineMaterial {
+    if (color < 0 && lineType === "solid" && lineWeight === 1 && transparency === 0) {
+        return defaultEdgeMaterial;
+    }
 
-    const key = `${color}:${lineType}`;
+    const key = `${color}:${lineType}:${lineWeight}:${transparency}`;
     let material = layerEdgeMaterials.get(key);
     if (!material) {
+        const opacity = 1 - transparency / 100;
         material = new LineMaterial({
-            linewidth: 1,
+            linewidth: lineWeight,
             color: color < 0 ? VisualConfig.defaultEdgeColor : color,
             side: DoubleSide,
             polygonOffset: true,
             polygonOffsetFactor: -2,
             polygonOffsetUnits: -2,
+            // `transparent` has to be set up front: three compiles it into the shader,
+            // so flipping it on a live material would not take effect.
+            transparent: opacity < 1,
+            opacity,
         });
         applyLineType(material, lineType);
         layerEdgeMaterials.set(key, material);

@@ -89,10 +89,15 @@ export function svg(props: HTMLProps<HTMLElement> & { icon: string }) {
     child.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", `#${props.icon}`);
     const svg = document.createElementNS(ns, "svg");
     svg.append(child);
-    const className = String(props.className);
+    // An SVG's className is a read-only SVGAnimatedString, so it is applied through
+    // classList rather than by setProperties like every other prop. classList.add takes
+    // one token at a time and throws on whitespace, so a normal space-separated
+    // "a b" className has to be split - and an absent one skipped, rather than adding
+    // the string "undefined" as a class.
+    const classNames = props.className ? String(props.className).split(/\s+/).filter(Boolean) : [];
     delete props.className;
     setProperties(svg, props);
-    svg.classList.add(className);
+    if (classNames.length > 0) svg.classList.add(...classNames);
     if (props.title) {
         addTitle(props, svg);
     }

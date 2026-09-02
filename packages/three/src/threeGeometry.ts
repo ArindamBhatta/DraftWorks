@@ -138,6 +138,8 @@ export class ThreeGeometry extends ThreeVisualObject implements IVisualGeometry 
     private _baseEdgeMaterial: LineMaterial = defaultEdgeMaterial;
     private _layerColor: number = -1;
     private _lineType: LineType = "solid";
+    private _lineWeight = 1;
+    private _transparency = 0;
 
     /** Applies the colour of the layer this node belongs to. */
     setLayerColor(color: number) {
@@ -145,14 +147,31 @@ export class ThreeGeometry extends ThreeVisualObject implements IVisualGeometry 
         this.refreshBaseEdgeMaterial();
     }
 
-    /** Applies this node's own Linetype (Continuous/Dashed/Hidden/Dot). */
+    /** Applies the Linetype this node resolved to (Continuous/Dashed/Hidden/Dot). */
     setLineType(lineType: LineType) {
         this._lineType = lineType;
         this.refreshBaseEdgeMaterial();
     }
 
+    /** The layer's Lineweight, as a pixel width. */
+    setLineWeight(lineWeight: number) {
+        this._lineWeight = lineWeight;
+        this.refreshBaseEdgeMaterial();
+    }
+
+    /** The layer's Transparency, 0 (opaque) to 90 percent. */
+    setTransparency(transparency: number) {
+        this._transparency = transparency;
+        this.refreshBaseEdgeMaterial();
+    }
+
     private refreshBaseEdgeMaterial() {
-        const material = layerEdgeMaterial(this._layerColor, this._lineType);
+        const material = layerEdgeMaterial(
+            this._layerColor,
+            this._lineType,
+            this._lineWeight,
+            this._transparency,
+        );
         if (this._baseEdgeMaterial === material) return;
 
         const wasBase = this._edges?.material === this._baseEdgeMaterial;

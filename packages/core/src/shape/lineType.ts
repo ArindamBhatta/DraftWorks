@@ -10,4 +10,10 @@
  * `EdgeMeshData.lineType` in [meshData.ts](./meshData.ts), where the renderer uses it to choose the
  * dash pattern for that edge's line segments.
  */
-export type LineType = "solid" | "dash" | "hidden" | "dot";
+/**
+ * "byLayer" defers to whatever the object's layer is set to, which is AutoCAD's
+ * default for every object: set the layer's linetype and everything on it follows,
+ * unless a particular object has been given a linetype of its own. It is resolved
+ * against the layer before it ever reaches the renderer.
+ */
+export type LineType = "byLayer" | "solid" | "dash" | "hidden" | "dot";

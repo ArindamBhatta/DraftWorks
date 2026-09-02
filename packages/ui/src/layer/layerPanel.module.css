@@ -142,3 +142,55 @@
         display: none;
     }
 }
+
+/* Every column below is a glyph, not a label - see LayerPanel's class comment. */
+.toggle {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    cursor: pointer;
+    color: var(--foreground-color);
+
+    &:hover {
+        opacity: 0.7;
+    }
+}
+
+/* Status is a readout, not a control, so it does not invite a click. */
+.statusCurrent {
+    cursor: default;
+    color: var(--primary-color);
+}
+
+.statusInUse {
+    cursor: default;
+}
+
+/* An empty layer is the one that is safe to delete - faded so it reads as "nothing here". */
+.statusEmpty {
+    cursor: default;
+    opacity: 0.35;
+}
+
+/* Linetype and lineweight draw themselves: the pattern and the thickness are the icon. */
+.preview {
+    width: 24px;
+    height: 12px;
+    flex: 0 0 auto;
+    cursor: pointer;
+    color: var(--foreground-color);
+
+    &:hover {
+        opacity: 0.7;
+    }
+}
+
+.transparency {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid var(--border-color);
+    background-color: currentColor;
+    flex: 0 0 auto;
+    cursor: pointer;
+}

@@ -840,6 +840,36 @@ window._iconfont_svg_string_3585225 = `
     <path d="M467.2 713.92c-26.752-14.72-44.8-42.304-44.8-73.92 0-47.104 40.128-85.312 89.6-85.312 49.472 0 89.6 38.208 89.6 85.312 0 31.616-18.048 59.136-44.8 73.92v115.968a44.8 44.8 0 0 1-89.6 0v-115.968zM243.2 384h448V256c0-94.272-80.256-170.688-179.2-170.688-98.944 0-179.2 76.416-179.2 170.688H243.2c0-141.44 120.32-256 268.8-256 148.48 0 268.8 114.56 268.8 256v128H960v640H64V384h179.2zM153.6 469.312v469.376h716.8V469.312H153.6z"  >
     </path>
   </symbol>
+  <!-- used by: Layer Properties Manager: thawed-layer state (toggles with icon-freeze) -->
+  <symbol id="icon-thaw" viewBox="0 0 1024 1024">
+    <path d="M512 320a192 192 0 1 0 0 384 192 192 0 0 0 0-384zm0 64a128 128 0 1 1 0 256 128 128 0 0 1 0-256z" fill="#F5A623" >
+    </path>
+    <path d="M480 32h64v160h-64ZM480 832h64v160h-64ZM832 480h160v64H832ZM32 480h160v64H32ZM736.8 242.4l45.3 45.3-113.1 113.1-45.3-45.3ZM355.3 623.9l45.3 45.3-113.1 113.1-45.3-45.3ZM782.1 736.8l-45.3 45.3-113.1-113.1 45.3-45.3ZM400.6 355.3l-45.3 45.3-113.1-113.1 45.3-45.3Z" fill="#F5A623" >
+    </path>
+  </symbol>
+  <!-- used by: Layer Properties Manager: frozen-layer state (toggles with icon-thaw) -->
+  <symbol id="icon-freeze" viewBox="0 0 1024 1024">
+    <path d="M480 32h64v960h-64ZM88.6 246.4l32-55.4 831.4 480-32 55.4ZM120.6 832.9l-32-55.4 831.4-480 32 55.4Z" fill="#4A9BE8" >
+    </path>
+    <path d="M512 128l-96 96 45.3 45.3L512 218.5l50.7 50.8L608 224zM512 896l-96-96 45.3-45.3L512 805.5l50.7-50.8L608 800z" fill="#4A9BE8" >
+    </path>
+  </symbol>
+  <!-- used by: Layer Properties Manager: plotted-layer state (toggles with icon-noplot) -->
+  <symbol id="icon-plot" viewBox="0 0 1024 1024">
+    <path d="M288 96h448v192H288ZM160 352h704a64 64 0 0 1 64 64v256a64 64 0 0 1-64 64h-96V576H256v160h-96a64 64 0 0 1-64-64V416a64 64 0 0 1 64-64zm64 96a48 48 0 1 0 0 96 48 48 0 0 0 0-96z" fill="#A1A1A1" >
+    </path>
+    <path d="M320 640h384v288H320Z" fill="#0493dc" >
+    </path>
+  </symbol>
+  <!-- used by: Layer Properties Manager: no-plot-layer state (toggles with icon-plot) -->
+  <symbol id="icon-noplot" viewBox="0 0 1024 1024">
+    <path d="M288 96h448v192H288ZM160 352h704a64 64 0 0 1 64 64v256a64 64 0 0 1-64 64h-96V576H256v160h-96a64 64 0 0 1-64-64V416a64 64 0 0 1 64-64zm64 96a48 48 0 1 0 0 96 48 48 0 0 0 0-96z" fill="#A1A1A1" >
+    </path>
+    <path d="M320 640h384v288H320Z" fill="#A1A1A1" >
+    </path>
+    <path d="M150.6 105.4l768 768-45.2 45.2-768-768z" fill="#d81e06" >
+    </path>
+  </symbol>
   <!-- used by: Layer panel: layer is locked (toggles with icon-unlock) -->
   <symbol id="icon-lock" viewBox="0 0 1024 1024">
     <path d="M153.6 469.312v469.376h716.8V469.312H153.6zM64 384h896v640H64V384z m403.2 329.92c-26.752-14.72-44.8-42.304-44.8-73.92 0-47.104 40.128-85.312 89.6-85.312 49.472 0 89.6 38.208 89.6 85.312 0 31.616-18.048 59.136-44.8 73.92v115.968a44.8 44.8 0 0 1-89.6 0v-115.968zM332.8 384h358.4V256c0-94.272-80.256-170.688-179.2-170.688-98.944 0-179.2 76.416-179.2 170.688v128zM512 0c148.48 0 268.8 114.56 268.8 256v128H243.2V256c0-141.44 120.32-256 268.8-256z"  >

@@ -9,8 +9,10 @@ import {
     Result,
     type RibbonCommand,
     type RibbonGroup,
+    type RibbonWidgetKind,
 } from "@chili3d/core";
 import { collection, div, label } from "@chili3d/element";
+import { LayerControl } from "../layer/layerControl";
 import { createDropdownItem, DropdownController } from "./dropdownController";
 import { RibbonPushButton } from "./ribbonButton";
 import style from "./ribbonGroup.module.css";
@@ -34,9 +36,17 @@ export function createRibbonButton(item: RibbonCommand): HTMLElement {
         return new RibbonPulldownButton(item, "large");
     } else if (item.type === "split") {
         return new RibbonSplitButton(item, "large");
+    } else if (item.type === "widget") {
+        return createRibbonWidget(item.widget);
     } else {
         throw new Error("unknown ribbon button type");
     }
+}
+
+/** The live controls a ribbon group can hold, by name - see RibbonWidget. */
+function createRibbonWidget(widget: RibbonWidgetKind): HTMLElement {
+    if (widget === "layerControl") return new LayerControl();
+    throw new Error(`unknown ribbon widget: ${widget}`);
 }
 
 class DisplayConverter implements IConverter<number> {
