@@ -8,6 +8,10 @@ import packages from "./package.json" with { type: "json" };
 // them, importing anything that reaches foundation/logger.ts throws at module load.
 export default defineConfig({
     testEnvironment: "happy-dom",
+    // Scoped to our own sources. The default glob walks the whole repository, which
+    // sweeps up the test suites of the dependencies checked out under cpp/build - emsdk
+    // and libredwg both ship their own - and reports their failures as ours.
+    include: ["{packages,plugins}/**/*.test.ts"],
     source: {
         define: {
             __APP_VERSION__: JSON.stringify(packages.version),

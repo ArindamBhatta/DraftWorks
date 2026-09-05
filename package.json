@@ -7,7 +7,9 @@
     "type": "module",
     "scripts": {
         "build": "rspack build && node scripts/build-plugins.mjs",
-        "build:wasm": "cd cpp && cmake --preset release && cmake --build --preset release",
+        "build:wasm": "npm run build:wasm:occ && npm run build:wasm:dwg",
+        "build:wasm:occ": "cd cpp && cmake --preset release && cmake --build --preset release",
+        "build:wasm:dwg": "cd cpp/dwg && cmake --preset release && cmake --build --preset release",
         "build:types": "node scripts/generate_types.mjs",
         "check": "biome check --write",
         "dev": "rspack dev",

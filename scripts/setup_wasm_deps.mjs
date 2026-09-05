@@ -15,6 +15,10 @@ const EMSDK_DIR = path.resolve(BUILD_DIR, EMSDK_DIR_NAME);
 const OCCT_DIR_NAME = "occt";
 const OCCT_DIR = path.resolve(BUILD_DIR, OCCT_DIR_NAME);
 
+const LIBREDWG_DIR_NAME = "libredwg";
+const LIBREDWG_DIR = path.resolve(BUILD_DIR, LIBREDWG_DIR_NAME);
+const LIBREDWG_VERSION = "0.13.3";
+
 /**
  * Due to a WebXR error, we need to use --skipLibCheck
  */
@@ -28,6 +32,32 @@ async function fixEmscripten() {
     fs.writeFileSync(file, contents, "utf8");
 
     console.log(`Fixed emscripten.py`);
+}
+
+/**
+ * LibreDWG stamps its version into a 999 comment at the top of every DXF it writes, and
+ * derives that version with `git describe`. Run from a build directory inside this repo,
+ * that describes DraftWorks rather than LibreDWG, so every converted drawing gets
+ * labelled with an unrelated commit hash - misleading to anyone later reading the file to
+ * work out what produced it.
+ *
+ * LibreDWG does read a .version file in preference to git, but it tests for it with a
+ * relative path, which CMake resolves against the build directory rather than the source
+ * tree, so the file alone is never found. Anchoring that test to the source directory
+ * makes the pin take effect.
+ */
+async function pinLibreDwgVersion() {
+    fs.writeFileSync(path.resolve(LIBREDWG_DIR, ".version"), LIBREDWG_VERSION, "utf8");
+
+    const file = path.resolve(LIBREDWG_DIR, "CMakeLists.txt");
+    let contents = fs.readFileSync(file, "utf8");
+    contents = contents.replace(
+        `if (EXISTS ".version")\n  file(READ .version NL_PACKAGE_VERSION)`,
+        `if (EXISTS "\${CMAKE_CURRENT_SOURCE_DIR}/.version")\n  file(READ "\${CMAKE_CURRENT_SOURCE_DIR}/.version" NL_PACKAGE_VERSION)`,
+    );
+    fs.writeFileSync(file, contents, "utf8");
+
+    console.log(`Pinned libredwg version to ${LIBREDWG_VERSION}`);
 }
 
 const libs = [
@@ -49,6 +79,14 @@ const libs = [
         tag: "V8_0_0",
         dir: OCCT_DIR,
         actions: [],
+        commands: [],
+    },
+    {
+        name: "libredwg",
+        url: "https://github.com/LibreDWG/libredwg.git",
+        tag: "0.13.3",
+        dir: LIBREDWG_DIR,
+        actions: [pinLibreDwgVersion],
         commands: [],
     },
 ];
