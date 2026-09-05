@@ -147,13 +147,23 @@ export class Tree extends HTMLElement {
     }
 
     private addAllNodes(document: IDocument, parent: HTMLElement, node: INode) {
-        const element = this.createHTMLElement(document, node);
-        this.nodeMap.set(node, element);
-        parent.appendChild(element);
+        // Iterative along siblings: an imported drawing is one folder holding every
+        // entity, and recursing per sibling overflowed the stack before the tree could
+        // be built. Only descent into children uses the stack, bounded by nesting depth.
+        const stack: { node: INode; parent: HTMLElement }[] = [{ node, parent }];
 
-        const firstChild = (node as INodeLinkedList).firstChild;
-        if (firstChild) this.addAllNodes(document, element, firstChild);
-        if (node.nextSibling) this.addAllNodes(document, parent, node.nextSibling);
+        while (stack.length > 0) {
+            const current = stack.pop()!;
+            const element = this.createHTMLElement(document, current.node);
+            this.nodeMap.set(current.node, element);
+            current.parent.appendChild(element);
+
+            if (current.node.nextSibling) {
+                stack.push({ node: current.node.nextSibling, parent: current.parent });
+            }
+            const firstChild = (current.node as INodeLinkedList).firstChild;
+            if (firstChild) stack.push({ node: firstChild, parent: element });
+        }
     }
 
     private createHTMLElement(document: IDocument, node: INode): TreeItem {

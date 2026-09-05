@@ -57,15 +57,19 @@ export class ToolBar extends HTMLElement {
     }
 
     private setNodeExpand(tree: Tree, list: INode, expand: boolean) {
-        const item = tree.treeItem(list);
-        if (item instanceof TreeGroup) {
-            item.isExpanded = expand;
-        }
-        if (NodeUtils.isLinkedListNode(list) && list.firstChild) {
-            this.setNodeExpand(tree, list.firstChild, expand);
-        }
-        if (list.nextSibling) {
-            this.setNodeExpand(tree, list.nextSibling, expand);
+        // Iterative along siblings - see the note in Tree.addAllNodes. Expand/collapse all
+        // runs over every node in the document, so an imported drawing overflowed here too.
+        const stack: INode[] = [list];
+
+        while (stack.length > 0) {
+            const node = stack.pop()!;
+            const item = tree.treeItem(node);
+            if (item instanceof TreeGroup) {
+                item.isExpanded = expand;
+            }
+
+            if (node.nextSibling) stack.push(node.nextSibling);
+            if (NodeUtils.isLinkedListNode(node) && node.firstChild) stack.push(node.firstChild);
         }
     }
 }

@@ -243,54 +243,41 @@ export class NodeUtils {
     }
 
     static findNode(parent: INodeLinkedList, predicate: (value: INode) => boolean) {
-        function findNodeRecursive(
-            node: INode | undefined,
-            predicate: (value: INode) => boolean,
-        ): INode | undefined {
-            if (!node) {
-                return undefined;
-            }
+        // Iterative for the same reason as findNodes: a recursive walk spends a stack
+        // frame per sibling, and an imported drawing is one folder of many entities.
+        // Visit order is unchanged, so the first match found is the same node as before.
+        const stack: INode[] = [];
+        if (parent.firstChild) stack.push(parent.firstChild);
 
-            if (predicate(node)) {
-                return node;
-            }
+        while (stack.length > 0) {
+            const node = stack.pop()!;
 
-            if (NodeUtils.isLinkedListNode(node)) {
-                const found = findNodeRecursive(node.firstChild, predicate);
-                if (found) {
-                    return found;
-                }
-            }
+            if (predicate(node)) return node;
 
-            return findNodeRecursive(node.nextSibling, predicate);
+            if (node.nextSibling) stack.push(node.nextSibling);
+            if (NodeUtils.isLinkedListNode(node) && node.firstChild) stack.push(node.firstChild);
         }
-
-        return findNodeRecursive(parent.firstChild, predicate);
+        return undefined;
     }
 
     static findNodes(parent: INodeLinkedList, predicate?: (value: INode) => boolean) {
-        function findNodesRecursive(
-            result: INode[],
-            node: INode | undefined,
-            predicate?: (value: INode) => boolean,
-        ) {
-            if (!node) return;
+        // Iterative for the same reason as serializeNodeToArray: sibling chains are as
+        // long as a folder has children, and a recursive walk overflows on an imported
+        // drawing. Pre-order is preserved, so the result order is unchanged.
+        const result: INode[] = [];
+        const stack: INode[] = [];
+        if (parent.firstChild) stack.push(parent.firstChild);
+
+        while (stack.length > 0) {
+            const node = stack.pop()!;
 
             if (!predicate || predicate(node)) {
                 result.push(node);
             }
 
-            if (NodeUtils.isLinkedListNode(node)) {
-                findNodesRecursive(result, node.firstChild, predicate);
-            }
-
-            if (node.nextSibling) {
-                findNodesRecursive(result, node.nextSibling, predicate);
-            }
+            if (node.nextSibling) stack.push(node.nextSibling);
+            if (NodeUtils.isLinkedListNode(node) && node.firstChild) stack.push(node.firstChild);
         }
-
-        const result: INode[] = [];
-        findNodesRecursive(result, parent.firstChild, predicate);
         return result;
     }
 
@@ -301,15 +288,29 @@ export class NodeUtils {
     }
 
     private static serializeNodeToArray(nodes: Serialized[], node: INode, parentId: string | undefined) {
-        const serialized: any = Serializer.serializeObject(node);
-        if (parentId) serialized["parentId"] = parentId;
-        nodes.push(serialized);
+        // Iterative rather than recursive because siblings form a flat linked list of
+        // unbounded length: an imported drawing puts every entity in one folder, so
+        // recursing along `nextSibling` cost one stack frame per entity and overflowed on
+        // any real drawing. Descending into `firstChild` is the only axis kept on the
+        // stack, and that is bounded by nesting depth.
+        //
+        // Pre-order is preserved exactly - a node, then its subtree, then its next sibling
+        // - because `deserializeNode` requires every parent to appear before its children.
+        // Pushing the sibling before the child makes the child pop first.
+        const stack: { node: INode; parentId: string | undefined }[] = [{ node, parentId }];
 
-        if (NodeUtils.isLinkedListNode(node) && node.firstChild) {
-            NodeUtils.serializeNodeToArray(nodes, node.firstChild, node.id);
-        }
-        if (node.nextSibling) {
-            NodeUtils.serializeNodeToArray(nodes, node.nextSibling, parentId);
+        while (stack.length > 0) {
+            const current = stack.pop()!;
+            const serialized: any = Serializer.serializeObject(current.node);
+            if (current.parentId) serialized["parentId"] = current.parentId;
+            nodes.push(serialized);
+
+            if (current.node.nextSibling) {
+                stack.push({ node: current.node.nextSibling, parentId: current.parentId });
+            }
+            if (NodeUtils.isLinkedListNode(current.node) && current.node.firstChild) {
+                stack.push({ node: current.node.firstChild, parentId: current.node.id });
+            }
         }
         return nodes;
     }
