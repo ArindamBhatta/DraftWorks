@@ -121,6 +121,30 @@ const _rectPointA = new Vector3();
 const _rectPointB = new Vector3();
 const _rectPointC = new Vector3();
 
+const warnedGeometries = new WeakSet<object>();
+
+/**
+ * Rejects objects that would make three's raycaster throw rather than miss.
+ *
+ * Fat lines (LineSegments2/Line2) are raycast by dereferencing the geometry's
+ * `instanceStart` attribute with no check of its own, so one object whose geometry was
+ * never given positions throws out of `intersectObjects` - and because that call covers
+ * the whole scene at once, the failure is total: hover, selection and snapping stop for
+ * every object, not just the broken one. A drawing is far more useful missing one
+ * entity's pick target than with picking dead everywhere, so the offender is dropped and
+ * named once rather than allowed to take the scene down.
+ */
+function isRaycastable(object: Object3D): boolean {
+    if (!(object instanceof LineSegments2)) return true;
+    if (object.geometry?.attributes["instanceStart"] !== undefined) return true;
+
+    if (!warnedGeometries.has(object)) {
+        warnedGeometries.add(object);
+        console.warn("Skipping unpickable line object: its geometry has no positions", object);
+    }
+    return false;
+}
+
 export class ThreeView extends Observable implements IView {
     private _dom?: HTMLElement;
     private _needsUpdate: boolean = false;
@@ -1167,7 +1191,7 @@ export class ThreeView extends Observable implements IView {
                 visuals.push(...x.wholeVisual());
             }
         });
-        visuals = visuals.filter((x) => x !== undefined && x !== null);
+        visuals = visuals.filter((x) => x !== undefined && x !== null && isRaycastable(x));
         return this.initRaycaster(mx, my).intersectObjects(visuals, false);
     }
 
@@ -1184,7 +1208,7 @@ export class ThreeView extends Observable implements IView {
                 shapes.push(...x.subShapeVisual(shapeType));
             }
         });
-        shapes = shapes.filter((x) => x !== undefined && x !== null);
+        shapes = shapes.filter((x) => x !== undefined && x !== null && isRaycastable(x));
         return shapes;
     }
 

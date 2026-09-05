@@ -23,6 +23,24 @@ const NORMAL_COLOR = 0xffff00;
 const HIGHLIGHT_COLOR = 0x00ffff;
 
 /**
+ * A LineSegmentsGeometry gains its `instanceStart`/`instanceEnd` attributes only when
+ * `setPositions` runs. Constructing one and leaving it bare is what three's line raycast
+ * cannot survive: `raycastScreenSpace` reads `instanceStart.count` unguarded, so a bare
+ * geometry throws on the next pointer move - and because that happens inside
+ * `intersectObjects`, it takes down hit detection for every other object in the scene,
+ * not just the dimension.
+ *
+ * An empty array is safe and is the point of this helper: both attributes get created
+ * with a count of zero, which raycasting and rendering handle fine.
+ */
+export function lineGeometry(positions: ArrayLike<number>): LineSegmentsGeometry {
+    const geometry = new LineSegmentsGeometry();
+    geometry.setPositions(positions instanceof Float32Array ? positions : Array.from(positions));
+    geometry.computeBoundingBox();
+    return geometry;
+}
+
+/**
  * Renders one DimensionAnnotation: the extension/dimension lines as a line set, the
  * arrowheads as filled triangles, and the measurement as an HTML label.
  *
@@ -52,7 +70,7 @@ export class ThreeDimension extends Object3D implements IVisualObject, IHighligh
         this._lineMaterial = new LineMaterial({ linewidth: 1, color: NORMAL_COLOR, side: DoubleSide });
         this._arrowMaterial = new MeshBasicMaterial({ color: NORMAL_COLOR, side: DoubleSide });
 
-        this._lines = new LineSegments2(new LineSegmentsGeometry(), this._lineMaterial);
+        this._lines = new LineSegments2(lineGeometry([]), this._lineMaterial);
         this._lines.layers.set(Constants.Layers.Wireframe);
 
         this._arrows = new Mesh(new BufferGeometry(), this._arrowMaterial);
@@ -78,32 +96,31 @@ export class ThreeDimension extends Object3D implements IVisualObject, IHighligh
     /** Regenerates the line work from the annotation's picked points. */
     rebuild() {
         const geometry = this.annotation.geometry();
-        if (!geometry) {
-            this.visible = false;
-            return;
-        }
-        this.visible = true;
 
-        // LineSegmentsGeometry throws on an empty position array, so guard it.
-        if (geometry.lines.length > 0) {
-            const lines = new LineSegmentsGeometry();
-            lines.setPositions(geometry.lines);
-            lines.computeBoundingBox();
-            this._lines.geometry.dispose();
-            this._lines.geometry = lines;
-            // Needed by the dashed selection material; the line work is rebuilt from
-            // scratch here, so the distances have to be recomputed with it.
-            this._lines.computeLineDistances();
-        }
+        // Degenerate input - coincident points, a collinear third point, a near-zero
+        // radius - yields no geometry at all. Such a dimension has to be emptied, not
+        // merely hidden: three raycasts objects regardless of `visible`, so leaving the
+        // previous line work in place would keep an invisible dimension pickable.
+        this.visible = geometry !== undefined;
+
+        this._lines.geometry.dispose();
+        this._lines.geometry = lineGeometry(geometry?.lines ?? []);
+        // Needed by the dashed selection material; the line work is rebuilt from scratch
+        // here, so the distances have to be recomputed with it. Safe on an emptied
+        // geometry - `lineGeometry` always creates the instance attributes, at count zero.
+        this._lines.computeLineDistances();
 
         const arrows = new BufferGeometry();
-        arrows.setAttribute("position", new BufferAttribute(new Float32Array(geometry.arrows), 3));
+        arrows.setAttribute("position", new BufferAttribute(new Float32Array(geometry?.arrows ?? []), 3));
         arrows.computeBoundingSphere();
         this._arrows.geometry.dispose();
         this._arrows.geometry = arrows;
 
-        this._labelElement.textContent = geometry.text;
-        this._label.position.set(geometry.textPosition.x, geometry.textPosition.y, geometry.textPosition.z);
+        this._labelElement.textContent = geometry?.text ?? "";
+        if (geometry) {
+            const { x, y, z } = geometry.textPosition;
+            this._label.position.set(x, y, z);
+        }
     }
 
     /**
