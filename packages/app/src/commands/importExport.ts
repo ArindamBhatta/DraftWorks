@@ -43,7 +43,7 @@ export class Export extends CancelableCommand {
         combobox: new Combobox<string>(),
     })
     public get format() {
-        return this.getPrivateValue("format", ".step");
+        return this.getPrivateValue("format", ".dxf");
     }
     public set format(value: string) {
         this.setProperty("format", value);
@@ -72,16 +72,8 @@ export class Export extends CancelableCommand {
                 const data = await this.application.dataExchange.export(this.format, nodes);
                 if (!data) return;
 
-                let suffix = this.format;
-
-                if (suffix === ".stl binary") {
-                    suffix = ".stl";
-                } else if (suffix === ".ply binary") {
-                    suffix = ".ply";
-                }
-
                 PubSub.default.pub("showToast", "toast.downloading");
-                download(data, `${nodes[0].name}${suffix}`);
+                download(data, `${nodes[0].name}${this.format}`);
             },
             "toast.excuting{0}",
             I18n.translate("command.file.export"),
