@@ -2,24 +2,27 @@
 // See LICENSE file in the project root for full license information.
 
 import { type ICameraController, Observable, type ViewMode, type XYZLike } from "@chili3d/core";
-import { Box3, Camera, OrthographicCamera, Raycaster, Sphere, Vector3 } from "three";
+import { Box3, Camera, MathUtils, type Object3D, OrthographicCamera, Sphere, Vector3 } from "three";
 import { Constants } from "./constants";
 import type { ThreeGeometry } from "./threeGeometry";
 import { ThreeHelper } from "./threeHelper";
 import type { ThreeView } from "./threeView";
 import type { ThreeVisualContext } from "./threeVisualContext";
 
-const DEG_TO_RAD = Math.PI / 180.0;
-const ZOOM_SPEED_FACTOR = 0.1;
-const PAN_SPEED_FACTOR = 0.002;
-// Half-angle of the frustum the orthographic view is sized from. There is no
-// perspective camera any more (this is a 2D drafting app - the view is locked to a
-// plan projection), so this is purely the constant that converts camera distance into
-// the orthographic frustum height; it is not a lens.
-const FRUSTUM_FOV = 50;
-const CAMERA_NEAR = 0.1;
-const CAMERA_FAR = 1e6;
-const MIN_CARME_TO_TARGET = 50;
+// Multiplicative zoom step. In and out are exact reciprocals, so a zoom in followed by
+// a zoom out lands back on the magnification you started from.
+const ZOOM_STEP = 1.1;
+// Guard rails on the frustum, not on the camera's distance: an orthographic camera
+// magnifies by frustum size alone, so these are the actual zoom limits. They only exist
+// to keep the projection from collapsing or overflowing - both are far outside the range
+// any real drawing needs.
+const MIN_FRUSTUM_HALF_HEIGHT = 1e-3;
+const MAX_FRUSTUM_HALF_HEIGHT = 1e9;
+// Half the height of the view before anything has been fitted, in drawing units.
+const DEFAULT_FRUSTUM_HALF_HEIGHT = 500;
+// Slack left around the content by fitContent, so a fitted drawing doesn't touch the
+// viewport edges.
+const FIT_MARGIN = 1.1;
 const SHAPE_EMPTY_SIZE = 800;
 
 /**
@@ -30,6 +33,7 @@ const SHAPE_EMPTY_SIZE = 800;
  */
 const CAMERA_UP = new Vector3(0, 1, 0);
 const CAMERA_OFFSET = new Vector3(0, 0, 1000);
+const DEFAULT_STANDOFF = CAMERA_OFFSET.length();
 
 Camera.DEFAULT_UP = CAMERA_UP.clone();
 
@@ -37,6 +41,12 @@ Camera.DEFAULT_UP = CAMERA_UP.clone();
  * Orthographic-only camera. The old free-orbit controls (perspective camera,
  * startRotate/rotate, rotate-center tracking) are gone: a 2D drafting view only ever
  * pans, zooms and fits, so the projection stays a fixed plan view.
+ *
+ * Magnification lives in `_frustumHalfHeight`, *not* in the camera's distance from the
+ * drawing. An orthographic projection is scale-invariant along its view axis, so the
+ * standoff only decides what stays inside the depth range; driving the zoom with it (as
+ * this used to, via a fake field of view) meant zooming in walked the camera towards the
+ * drawing plane until it clipped through and the drawing vanished.
  */
 export class CameraController extends Observable implements ICameraController {
     private _width: number = 100;
@@ -44,6 +54,9 @@ export class CameraController extends Observable implements ICameraController {
     private _target: Vector3 = new Vector3();
     private _position: Vector3 = CAMERA_OFFSET.clone();
     private _camera: OrthographicCamera;
+    private _frustumHalfHeight: number = DEFAULT_FRUSTUM_HALF_HEIGHT;
+    /** Distance from the camera to the target plane; kept constant by zoom and pan. */
+    private _standoff: number = DEFAULT_STANDOFF;
 
     get target() {
         return this._target;
@@ -71,21 +84,16 @@ export class CameraController extends Observable implements ICameraController {
 
     constructor(readonly view: ThreeView) {
         super();
-        this._camera = this.createCamera(CAMERA_NEAR, CAMERA_FAR);
+        this._camera = this.createCamera();
         // Place the camera up front rather than waiting for the first fit/pan/zoom, so
         // the very first frame already looks down the drawing plane's normal.
+        this.updateOrthographicCamera(this._camera);
+        this.updateCameraNearFar();
         this.updateCameraPosionTarget();
     }
 
-    private createCamera(near: number, far: number) {
-        const camera = new OrthographicCamera(
-            -this._width / 2,
-            this._width / 2,
-            this._height / 2,
-            -this._height / 2,
-            near,
-            far,
-        );
+    private createCamera() {
+        const camera = new OrthographicCamera();
         // Set on the instance rather than relying on Camera.DEFAULT_UP having been
         // assigned before this module's first camera is built. It also has to stay
         // non-parallel to the view direction: pan() takes direction x up, so a parallel
@@ -114,11 +122,11 @@ export class CameraController extends Observable implements ICameraController {
     }
 
     pan(dx: number, dy: number): void {
-        const ratio = PAN_SPEED_FACTOR * this._target.distanceTo(this._position);
-        const direction = this._target.clone().sub(this._position).normalize();
-        const hor = direction.clone().cross(this.camera.up).normalize();
-        const ver = hor.clone().cross(direction).normalize();
-        const vector = hor.multiplyScalar(-dx).add(ver.multiplyScalar(dy)).multiplyScalar(ratio);
+        // One screen pixel is exactly this many drawing units, so the drawing keeps up
+        // with the cursor instead of sliding out from under it.
+        const unitsPerPixel = (2 * this._frustumHalfHeight) / this._height;
+        const { right, up } = this.screenAxes();
+        const vector = right.multiplyScalar(-dx).add(up.multiplyScalar(dy)).multiplyScalar(unitsPerPixel);
         this._target.add(vector);
         this._position.add(vector);
 
@@ -128,6 +136,10 @@ export class CameraController extends Observable implements ICameraController {
     updateCameraPosionTarget() {
         this._camera.position.copy(this._position);
         this._camera.lookAt(this._target);
+        // Keep the world matrix in step with the pose right away: screenToWorld and the
+        // renderer both read it, and a pan followed by a zoom inside one frame would
+        // otherwise anchor the zoom on the pre-pan camera.
+        this._camera.updateMatrixWorld(true);
         this._camera.updateProjectionMatrix();
     }
 
@@ -135,115 +147,135 @@ export class CameraController extends Observable implements ICameraController {
         this._width = width;
         this._height = height;
         this.updateOrthographicCamera(this.camera);
+        this.updateCameraNearFar();
         this.camera.updateProjectionMatrix();
     }
 
     private updateOrthographicCamera(camera: OrthographicCamera) {
         const aspect = this._width / this._height;
-        const length = this._position.distanceTo(this._target);
-        const frustumHalfHeight = length * Math.tan((FRUSTUM_FOV * DEG_TO_RAD) / 2);
-        camera.left = -frustumHalfHeight * aspect;
-        camera.right = frustumHalfHeight * aspect;
-        camera.top = frustumHalfHeight;
-        camera.bottom = -frustumHalfHeight;
+        const halfWidth = this._frustumHalfHeight * aspect;
+        camera.left = -halfWidth;
+        camera.right = halfWidth;
+        camera.top = this._frustumHalfHeight;
+        camera.bottom = -this._frustumHalfHeight;
     }
 
     fitContent(): void {
         const context = this.view.document.visual.context as ThreeVisualContext;
-        const sphere = this.getBoundingSphere(context);
-        let fieldOfView = FRUSTUM_FOV / 2.0;
-        if (this._width < this._height) {
-            fieldOfView = (fieldOfView * this._width) / this._height;
-        }
+        const content = this.sphereOf(context.visualShapes);
+        const focus = this.focusSphere(context, content);
+        const aspect = this._width / this._height;
 
-        const distance = Math.abs(sphere.radius / Math.sin(fieldOfView * DEG_TO_RAD));
-        const direction = this._target.clone().sub(this._position).normalize();
-        this._target.copy(sphere.center);
-        this._position.copy(this._target.clone().sub(direction.clone().multiplyScalar(distance)));
+        // Sized off the height, then widened when the viewport is taller than it is
+        // wide, so the content fits across the narrow axis either way.
+        this._frustumHalfHeight = this.clampFrustum((focus.radius * FIT_MARGIN) / Math.min(1, aspect));
+        // The whole drawing - not just what is being fitted - has to stay in front of
+        // the camera, since the standoff is then held fixed through every zoom and pan.
+        this._standoff = Math.max(DEFAULT_STANDOFF, content.radius * 2);
+        const { forward } = this.screenAxes();
+        this._target.copy(focus.center);
+        this._position.copy(this._target.clone().sub(forward.multiplyScalar(this._standoff)));
 
         this.updateOrthographicCamera(this._camera);
         this.updateCameraNearFar();
         this.updateCameraPosionTarget();
     }
 
-    private getBoundingSphere(context: ThreeVisualContext) {
+    /** What a fit should frame: the current selection, or the whole drawing. */
+    private focusSphere(context: ThreeVisualContext, content: Sphere) {
         const shapes = this.view.document.selection.getSelectedVisualNodes();
-
-        const box = new Box3();
         if (shapes.length === 0) {
-            box.setFromObject(context.visualShapes);
-        } else {
-            for (const shape of shapes) {
-                const threeGeometry = context.getVisual(shape) as ThreeGeometry;
-                const boundingBox = new Box3().setFromObject(threeGeometry);
-                if (boundingBox) {
-                    box.union(boundingBox);
-                }
-            }
+            return content;
         }
 
-        const sphere = new Sphere();
-        box.getBoundingSphere(sphere);
+        const box = new Box3();
+        for (const shape of shapes) {
+            const threeGeometry = context.getVisual(shape) as ThreeGeometry;
+            box.union(new Box3().setFromObject(threeGeometry));
+        }
+        return this.sphereOfBox(box);
+    }
+
+    private sphereOf(object: Object3D) {
+        return this.sphereOfBox(new Box3().setFromObject(object));
+    }
+
+    private sphereOfBox(box: Box3) {
+        const sphere = box.getBoundingSphere(new Sphere());
         if (sphere.radius < 0) {
+            // An empty box hands back radius -1; frame a default-sized patch of the
+            // drawing plane instead of collapsing the view.
             sphere.radius = SHAPE_EMPTY_SIZE;
         }
         return sphere;
     }
 
     zoom(x: number, y: number, delta: number): void {
-        const vector = this._target.clone().sub(this._position);
+        // The world point under the cursor, taken before the frustum changes - it is the
+        // one point the zoom has to leave standing still.
+        const anchor = this.screenToTargetPlane(x, y);
+        const { forward } = this.screenAxes();
 
-        const zoomFactor = this.caclueZoomFactor(x, y, vector);
-        const scale = delta > 0 ? zoomFactor : -zoomFactor;
-        const mouse = this.mouseToWorld(x, y);
-        const targetMoveVector = this._target.clone().sub(mouse).multiplyScalar(scale);
-        this._target.add(targetMoveVector);
-        this._position.copy(this._target.clone().sub(vector.clone().multiplyScalar(1 + scale)));
-        if (vector.length() < MIN_CARME_TO_TARGET) {
-            this._target = this._position
-                .clone()
-                .add(vector.clone().normalize().multiplyScalar(MIN_CARME_TO_TARGET));
-        }
+        const previous = this._frustumHalfHeight;
+        this._frustumHalfHeight = this.clampFrustum(delta > 0 ? previous * ZOOM_STEP : previous / ZOOM_STEP);
+        // Close the target on the anchor by exactly the fraction the frustum shrank.
+        // Reading the ratio back off the clamped value keeps the two honest: at a zoom
+        // limit the scale is 1, so the view neither magnifies nor slides.
+        const scale = this._frustumHalfHeight / previous;
+        this._target.copy(anchor.add(this._target.clone().sub(anchor).multiplyScalar(scale)));
+        // The standoff never changes, so no amount of zooming in can sink the camera
+        // through the drawing plane.
+        this._position.copy(this._target.clone().sub(forward.multiplyScalar(this._standoff)));
 
         this.updateOrthographicCamera(this._camera);
         this.updateCameraNearFar();
         this.updateCameraPosionTarget();
     }
 
-    private caclueZoomFactor(x: number, y: number, direction: Vector3) {
-        const raycaster = new Raycaster();
-        raycaster.setFromCamera(this.view.screenToCameraRect(x, y), this.camera);
-        const intersect = raycaster.intersectObjects(this.view.content.visualShapes.children).at(0)?.point;
-        let zoomFactor = ZOOM_SPEED_FACTOR;
-        if (intersect) {
-            zoomFactor = (ZOOM_SPEED_FACTOR * this._position.distanceTo(intersect)) / direction.length();
-        }
-        return zoomFactor;
+    private clampFrustum(halfHeight: number) {
+        return MathUtils.clamp(halfHeight, MIN_FRUSTUM_HALF_HEIGHT, MAX_FRUSTUM_HALF_HEIGHT);
+    }
+
+    /** Camera-space axes in world terms: `right` and `up` span the screen. */
+    private screenAxes() {
+        const forward = this._target.clone().sub(this._position).normalize();
+        const right = forward.clone().cross(this._camera.up).normalize();
+        const up = right.clone().cross(forward).normalize();
+        return { forward, right, up };
     }
 
     private updateCameraNearFar() {
-        const distance = this._position.distanceTo(this._target);
-
-        const nearPlane = Math.max(0.01, Math.min(distance / 1000, distance / 10));
-        const farPlane = Math.max(1000, distance * 100);
-
-        this.camera.near = nearPlane;
-        this.camera.far = farPlane;
+        // Depth range is a function of the standoff and the zoom only - never of the
+        // magnification's history - so it stays put while zooming. The extra depth keeps
+        // whatever sits behind the drawing (the grid parks itself a slice of the view
+        // height back) inside the far plane at any zoom level.
+        const depth = Math.max(this._standoff, this._frustumHalfHeight * 4);
+        this.camera.near = Math.max(0.01, this._standoff / 1000);
+        this.camera.far = this._standoff + depth;
     }
 
     lookAt(eye: XYZLike, target: XYZLike, up: XYZLike): void {
         this._position.set(eye.x, eye.y, eye.z);
         this._target.set(target.x, target.y, target.z);
         this.camera.up.set(up.x, up.y, up.z);
+        this._standoff = Math.max(this._position.distanceTo(this._target), DEFAULT_STANDOFF);
+        this.updateCameraNearFar();
         this.updateCameraPosionTarget();
     }
 
-    private mouseToWorld(mx: number, my: number) {
-        const x = (2.0 * mx) / this._width - 1;
-        const y = (-2.0 * my) / this._height + 1;
-        const dist = this._position.distanceTo(this._target);
-        const z = (this._camera.far + this._camera.near - 2 * dist) / (this._camera.near - this._camera.far);
-
-        return new Vector3(x, y, z).unproject(this._camera);
+    /**
+     * Screen point to the world point under it, on the plane through the target. In an
+     * orthographic view that plane is the only one that matters: every other depth
+     * projects to the same place on screen.
+     */
+    private screenToTargetPlane(mx: number, my: number) {
+        const { right, up } = this.screenAxes();
+        const ndcX = (2 * mx) / this._width - 1;
+        const ndcY = 1 - (2 * my) / this._height;
+        const aspect = this._width / this._height;
+        return this._target
+            .clone()
+            .add(right.multiplyScalar(ndcX * this._frustumHalfHeight * aspect))
+            .add(up.multiplyScalar(ndcY * this._frustumHalfHeight));
     }
 }

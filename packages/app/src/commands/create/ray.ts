@@ -18,10 +18,10 @@ import { CreateCommand } from "../createCommand";
 // the resulting edge is stretched to RAY_LENGTH past the through-point so it
 // reads as "infinite" in one direction, the way AutoCAD's RAY command behaves.
 // The geometry kernel has no true infinite-edge primitive (see bodys/ray.ts),
-// so this is a practical stand-in: comfortably inside the camera's far plane
-// (CAMERA_FAR = 1e6 in cameraController.ts) so it's never clipped, while
-// staying far short of it so it doesn't distort zoom-to-fit/grid sizing for
-// ordinary drawings.
+// so this is a practical stand-in: long enough to run off the edge of the
+// viewport at any sensible zoom, while staying short enough not to distort
+// zoom-to-fit/grid sizing for ordinary drawings (fitContent frames the whole
+// drawing, ray included - see cameraController.ts).
 const RAY_LENGTH = 100_000;
 
 @command({
