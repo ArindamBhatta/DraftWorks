@@ -4,8 +4,8 @@
 import type { I18nKeys } from "../i18n";
 
 /**
- * What the save indicator beside the drawing name is currently saying, modelled on the
- * one Google Drive puts beside a document title.
+ * What the ribbon's Autosave control is currently saying, modelled on the indicator
+ * Google Drive puts beside a document title.
  *
  * `idle` is the state a drawing opens in: nothing has been edited, so there is nothing
  * to claim about it and the indicator renders blank. Saying "All changes saved" about a
@@ -37,4 +37,27 @@ const LABELS: Record<AutosaveState, I18nKeys | undefined> = {
 /** The i18n key for a state, or undefined when the indicator should render nothing. */
 export function autosaveStateLabel(state: AutosaveState): I18nKeys | undefined {
     return LABELS[state];
+}
+
+/**
+ * The one-word form, for the ribbon's Autosave control - a ribbon item is a ~100px
+ * column, which "Offline — changes saved locally" does not fit. The long label above is
+ * still what the control puts in its tooltip, so the short word is never the only thing
+ * the user can find out.
+ *
+ * `idle` has a word here where the long form has none: the ribbon control is what tells
+ * a user this app autosaves at all, so it has to say something before the first edit.
+ */
+const SHORT_LABELS: Record<AutosaveState, I18nKeys> = {
+    idle: "autosave.short.on",
+    pending: "autosave.short.pending",
+    saving: "autosave.short.saving",
+    saved: "autosave.short.saved",
+    offline: "autosave.short.offline",
+    error: "autosave.short.error",
+};
+
+/** The one-word i18n key for a state. Always defined - see SHORT_LABELS. */
+export function autosaveStateShortLabel(state: AutosaveState): I18nKeys {
+    return SHORT_LABELS[state];
 }

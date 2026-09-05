@@ -1,0 +1,46 @@
+/* Sized like a large ribbon button (see ribbonButton.module.css .normal) so it lines up
+   with Import and Export beside it - but with no hover or press state, because there is
+   nothing here to click. */
+.control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 4px;
+    margin: 0 4px;
+    min-width: 42px;
+    max-width: 100px;
+    min-height: 48px;
+    user-select: none;
+    cursor: default;
+}
+
+.icon {
+    width: 30px;
+    height: 30px;
+    margin-bottom: 4px;
+    opacity: 0.85;
+}
+
+.title {
+    color: var(--foreground-color);
+    font-size: 12px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* The live half - deliberately quieter than the label above it, because the label is
+   what the user is looking for and the state is what they glance at afterwards. */
+.state {
+    color: var(--foreground-color);
+    font-size: 11px;
+    text-align: center;
+    white-space: nowrap;
+    opacity: 0.7;
+}
+
+/* Only the state that costs the user something is allowed to raise its voice. */
+.control[data-state="error"] .state {
+    color: var(--error-color, #d93025);
+    opacity: 1;
+}

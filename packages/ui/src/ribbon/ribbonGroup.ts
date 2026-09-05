@@ -13,6 +13,7 @@ import {
 } from "@chili3d/core";
 import { collection, div, label } from "@chili3d/element";
 import { LayerControl } from "../layer/layerControl";
+import { AutosaveControl } from "./autosaveControl";
 import { createDropdownItem, DropdownController } from "./dropdownController";
 import { RibbonPushButton } from "./ribbonButton";
 import style from "./ribbonGroup.module.css";
@@ -46,6 +47,7 @@ export function createRibbonButton(item: RibbonCommand): HTMLElement {
 /** The live controls a ribbon group can hold, by name - see RibbonWidget. */
 function createRibbonWidget(widget: RibbonWidgetKind): HTMLElement {
     if (widget === "layerControl") return new LayerControl();
+    if (widget === "autosaveStatus") return new AutosaveControl();
     throw new Error(`unknown ribbon widget: ${widget}`);
 }
 

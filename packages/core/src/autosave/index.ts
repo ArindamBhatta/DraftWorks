@@ -5,7 +5,8 @@
  * AUTOSAVE - Debounced Background Persistence
  *
  * Saves the open drawing to IndexedDB a couple of seconds after the user stops editing,
- * and shows what it is doing beside the drawing name the way Google Drive does.
+ * and reports what it is doing through the ribbon's Autosave control - which is also how
+ * the user finds out the app autosaves at all, there being no Save button.
  *
  * The pieces:
  * - autosaveService:   subscribes to `documentDirty`, one scheduler per open drawing

@@ -82,13 +82,11 @@ export class RibbonTab extends Observable {
 }
 
 export class Ribbon extends Observable {
-    readonly quickCommands = new ObservableCollection<CommandKeys>();
     readonly tabs = new ObservableCollection<RibbonTab>();
     private preTab: RibbonTabKeys = "ribbon.tab.model";
 
-    constructor(quickCommands: CommandKeys[], tabs: RibbonTab[]) {
+    constructor(tabs: RibbonTab[]) {
         super();
-        this.quickCommands.push(...quickCommands);
         this.tabs.push(...tabs);
         this.setPrivateValue("activeTab", tabs[0]);
     }

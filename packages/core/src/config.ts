@@ -182,9 +182,11 @@ export class Config extends Observable {
         this.setProperty("language", value);
     }
 
+    // Dark is the only theme the app offers - the picker that used to sit in the ribbon
+    // title bar is gone, so nothing in the UI moves this off the default.
     @serialize()
     get themeMode() {
-        return this.getPrivateValue("themeMode", "system");
+        return this.getPrivateValue("themeMode", "dark");
     }
     set themeMode(value: "light" | "dark" | "system") {
         this.setProperty("themeMode", value, () => this.applyTheme(value));

@@ -72,12 +72,11 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                 ],
             },
             {
-                groupName: "ribbon.group.measure",
-                items: [["measure.length", "measure.angle", "measure.select"]],
-            },
-            {
                 groupName: "ribbon.group.importExport",
-                items: ["file.import", "file.export"],
+                // The Autosave readout rides along here because this is the file group
+                // and there is no Save button any more - saving is automatic, and this is
+                // where a user goes looking for it before they believe that.
+                items: ["file.import", "file.export", { type: "widget", widget: "autosaveStatus" }],
             },
         ],
     },
