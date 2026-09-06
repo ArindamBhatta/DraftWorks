@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 import {
     AsyncController,
     Binding,
@@ -13,7 +10,7 @@ import {
     type IDocument,
     type IStep,
     Localize,
-    MultistepCommand,
+    MultiStepCommand,
     Observable,
     PointStep,
     PubSub,
@@ -50,7 +47,7 @@ class GroupDefinition extends Observable {
     key: "create.group",
     icon: "icon-group",
 })
-export class GroupCommand extends MultistepCommand {
+export class GroupCommand extends MultiStepCommand {
     protected override getSteps(): IStep[] {
         return [new GetOrSelectNodeStep("prompt.select.shape", { multiple: true })];
     }

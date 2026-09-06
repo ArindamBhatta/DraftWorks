@@ -11,7 +11,7 @@ import {
     type IEdge,
     type IShape,
     type IStep,
-    MultistepCommand,
+    MultiStepCommand,
     Precision,
     PubSub,
     ShapeNode,
@@ -21,8 +21,8 @@ import {
     type VisualNode,
     type XYZ,
 } from "@chili3d/core";
-import { LineNode } from "../../bodys/line";
-import { WireNode } from "../../bodys/wire";
+import { LineNode } from "../../draw/line";
+import { WireNode } from "../../draw/wire";
 
 /**
  * The type of the curve underneath an edge's.
@@ -96,7 +96,7 @@ export function collinearSpan(points: XYZ[]): { start: XYZ; end: XYZ } | undefin
     key: "modify.join",
     icon: "icon-join",
 })
-export class Join extends MultistepCommand {
+export class Join extends MultiStepCommand {
     protected override getSteps(): IStep[] {
         return [
             new GetOrSelectNodeStep("prompt.join.objects", {

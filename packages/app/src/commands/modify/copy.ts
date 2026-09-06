@@ -1,13 +1,4 @@
-import {
-    command,
-    Dimensions,
-    type IStep,
-    type Matrix4,
-    type PointSnapData,
-    PointStep,
-    type StepOption,
-    type XYZ,
-} from "@chili3d/core";
+import { command, Dimensions, type Matrix4, type PointSnapData, PointStep, type XYZ } from "@chili3d/core";
 import { TransformedCommand } from "./transformedCommand";
 
 @command({

@@ -8,7 +8,7 @@ import {
     type DimensionFrame,
     type DimensionType,
     MeshDataUtils,
-    MultistepCommand,
+    MultiStepCommand,
     type ShapeMeshData,
     Transaction,
     VisualConfig,
@@ -24,7 +24,7 @@ import {
  * (layout, arrowheads, formatting) comes from buildDimensionGeometry, so the preview
  * and the committed object can never disagree.
  */
-export abstract class DimensionCommandBase extends MultistepCommand {
+export abstract class DimensionCommandBase extends MultiStepCommand {
     /**
      * A getter rather than a field so a command can decide the kind from what was
      * picked - see ObjectDimension, which dimensions a circle radially and a line

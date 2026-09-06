@@ -1,5 +1,4 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
+//ink on the paper. arc itself  just four numbers: center, start, angle, normal. This is what gets saved into your file,
 
 import {
     type I18nKeys,

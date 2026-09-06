@@ -1,10 +1,7 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 import {
     command,
     EditableShapeNode,
-    MultistepCommand,
+    MultiStepCommand,
     PubSub,
     SelectShapeStep,
     type ShapeType,
@@ -17,7 +14,7 @@ import {
     key: "create.copyShape",
     icon: "icon-subShape",
 })
-export class CopySubShapeCommand extends MultistepCommand {
+export class CopySubShapeCommand extends MultiStepCommand {
     protected override executeMainTask() {
         Transaction.execute(this.document, `excute ${Object.getPrototypeOf(this).data.name}`, () => {
             this.stepDatas[0].shapes.forEach((x) => {

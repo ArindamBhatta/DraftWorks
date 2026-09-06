@@ -55,7 +55,7 @@ export const CommandAliases: Partial<Record<CommandKeys, string[]>> = {
     "create.group": ["g", "group"],
     "create.folder": ["fo", "folder"],
 
-    // Annotation and measurement
+    // Annotation and dimensions
     "dimension.object": ["dim", "dimension"],
     "dimension.linear": ["dli", "dimlinear"],
     "dimension.aligned": ["dal", "dimaligned"],
@@ -63,9 +63,6 @@ export const CommandAliases: Partial<Record<CommandKeys, string[]>> = {
     "dimension.diameter": ["ddi", "dimdiameter"],
     "dimension.angular": ["dan", "dimangular"],
     "dimension.setup": ["d", "dimstyle", "dimsetup"],
-    "measure.length": ["di", "dist", "distance"],
-    "measure.angle": ["ang", "angle"],
-    "measure.select": ["li", "list"],
 
     // Document, view and settings
     "doc.new": ["new"],

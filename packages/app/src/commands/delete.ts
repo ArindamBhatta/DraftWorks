@@ -1,12 +1,9 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 import {
     command,
     GetOrSelectNodeStep,
     type INode,
     type IStep,
-    MultistepCommand,
+    MultiStepCommand,
     PubSub,
     Transaction,
 } from "@chili3d/core";
@@ -15,7 +12,7 @@ import {
     key: "modify.deleteNode",
     icon: "icon-delete",
 })
-export class Delete extends MultistepCommand {
+export class Delete extends MultiStepCommand {
     protected override executeMainTask(): void {
         const nodes: INode[] | undefined = this.stepDatas[0].nodes;
         if (!nodes || nodes.length === 0) {

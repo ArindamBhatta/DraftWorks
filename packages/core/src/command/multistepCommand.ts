@@ -8,7 +8,7 @@ import type { IStep } from "../step";
 import type { IView, VisualState } from "../visual";
 import { CancelableCommand } from "./command";
 
-export abstract class MultistepCommand extends CancelableCommand {
+export abstract class MultiStepCommand extends CancelableCommand {
     protected stepDatas: SnapResult[] = [];
 
     protected canExcute(): Promise<boolean> {
@@ -96,7 +96,7 @@ export abstract class MultistepCommand extends CancelableCommand {
         return view.workplane.translateTo(origin);
     }
 
-    protected transformdFirstShape(step: SnapResult, shouldDispose = true) {
+    protected transormdFirstShape(step: SnapResult, shouldDispose = true) {
         const shape = step.shapes[0].shape.transformedMul(step.shapes[0].transform);
         if (shouldDispose) this.disposeStack.add(shape);
         return shape;

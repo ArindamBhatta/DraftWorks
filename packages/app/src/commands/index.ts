@@ -11,7 +11,6 @@ export * from "./drawingSetupFlow";
 export * from "./folder";
 export * from "./importExport";
 export * from "./layer";
-export * from "./measure";
 export * from "./modify";
 export * from "./properties";
 export * from "./redo";

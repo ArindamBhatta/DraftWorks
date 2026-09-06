@@ -20,7 +20,7 @@ import {
     MathUtils,
     Matrix4,
     MeshNode,
-    MultistepCommand,
+    MultiStepCommand,
     Plane,
     PlaneAngle,
     PointOnAxisStep,
@@ -42,7 +42,7 @@ import {
     key: "modify.array",
     icon: "icon-array",
 })
-export class ArrayCommand extends MultistepCommand {
+export class ArrayCommand extends MultiStepCommand {
     private _planeAngle: PlaneAngle | undefined;
     private _meshId: number | undefined = undefined;
     protected models?: VisualNode[];

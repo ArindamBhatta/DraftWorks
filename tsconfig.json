@@ -5,6 +5,7 @@
         "moduleResolution": "bundler",
         "resolveJsonModule": true,
         "rootDir": ".",
+        "outDir": "dist",
 
         "strict": true,
         "allowJs": true,
@@ -17,5 +18,5 @@
         "plugins": [{ "name": "typescript-plugin-css-modules" }]
     },
     "include": ["packages", "plugins/*/src"],
-    "exclude": ["packages/chili-wasm/lib"]
+    "exclude": ["packages/wasm/lib"]
 }

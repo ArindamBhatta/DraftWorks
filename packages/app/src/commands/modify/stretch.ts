@@ -8,7 +8,7 @@ import {
     type IStep,
     type ISubVertexShape,
     Matrix4,
-    MultistepCommand,
+    MultiStepCommand,
     type PointSnapData,
     PointStep,
     SelectShapeStep,
@@ -52,7 +52,7 @@ import {
     key: "modify.stretch",
     icon: "icon-stretch",
 })
-export class Stretch extends MultistepCommand {
+export class Stretch extends MultiStepCommand {
     /** True once the user has answered the base-point prompt with `D`. */
     #displacementMode = false;
 

@@ -5,7 +5,7 @@ import {
     type IEdge,
     type IStep,
     type ITrimmedCurve,
-    MultistepCommand,
+    MultiStepCommand,
     PointOnCurveStep,
     SelectShapeStep,
     type ShapeNode,
@@ -18,7 +18,7 @@ import {
     key: "modify.break",
     icon: "icon-break",
 })
-export class Break extends MultistepCommand {
+export class Break extends MultiStepCommand {
     protected override executeMainTask() {
         Transaction.execute(this.document, `excute ${Object.getPrototypeOf(this).data.name}`, () => {
             const shape = this.stepDatas[0].shapes[0].shape as IEdge;

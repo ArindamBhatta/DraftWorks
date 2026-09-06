@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 import {
     EditableShapeNode,
     I18n,
@@ -9,7 +6,7 @@ import {
     type IShape,
     type IShapeFilter,
     type ISubEdgeShape,
-    MultistepCommand,
+    MultiStepCommand,
     PubSub,
     Result,
     SelectShapeStep,
@@ -91,7 +88,7 @@ function spliceCornerEdges(allEdges: IEdge[], corner: OrderedCorner, triple: IEd
  * bodies - and differ only in the actual shape operation, provided by the
  * `applyTo*` methods.
  */
-export abstract class EdgeCornerCommand extends MultistepCommand {
+export abstract class EdgeCornerCommand extends MultiStepCommand {
     /** Apply the operation to the selected edges of a solid or compound. */
     protected abstract applyToBody(shape: IShape, edgeIndexes: number[]): Result<IShape>;
 

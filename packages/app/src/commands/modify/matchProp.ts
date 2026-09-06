@@ -5,7 +5,7 @@ import {
     command,
     GeometryNode,
     type IStep,
-    MultistepCommand,
+    MultiStepCommand,
     SelectNodeStep,
     Transaction,
     type VisualNode,
@@ -41,7 +41,7 @@ import {
     key: "modify.matchProp",
     icon: "icon-matchProp",
 })
-export class MatchProp extends MultistepCommand {
+export class MatchProp extends MultiStepCommand {
     protected override getSteps(): IStep[] {
         return [
             new SelectNodeStep("prompt.matchProp.source"),

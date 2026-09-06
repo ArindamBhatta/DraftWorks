@@ -1,9 +1,4 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
-import { type GeometryNode, MultistepCommand, property, Transaction } from "@chili3d/core";
-
-const count = 1;
+import { type GeometryNode, MultiStepCommand, property, Transaction } from "@chili3d/core";
 
 // CreateCommand is the base for every "draw a shape" command (Box, Circle, Line, ...).
 // It wraps body construction (geometryNode()) and tree insertion (addNode()) in a
@@ -12,10 +7,10 @@ const count = 1;
 // a constructed-but-unattached body or an attached-but-unconstructed node depending
 // on where the operation was interrupted. geometryNode() is the one abstract seam
 // each concrete create-command implements: it turns the interactive step data
-// (points/lengths the user clicked/typed, collected by MultistepCommand) into a
+// (points/lengths the user clicked/typed, collected by MultiStepCommand) into a
 // body instance - see create/box.ts and create/circle.ts for concrete examples, and
 // core/src/model/shapeNode.ts (ParameterShapeNode) for what happens to that body next.
-export abstract class CreateCommand extends MultistepCommand {
+export abstract class CreateCommand extends MultiStepCommand {
     protected override executeMainTask() {
         Transaction.execute(this.document, `excute ${Object.getPrototypeOf(this).data.name}`, () => {
             const node = this.geometryNode();
@@ -27,7 +22,7 @@ export abstract class CreateCommand extends MultistepCommand {
     protected abstract geometryNode(): GeometryNode;
 }
 
-export abstract class CreateNodeCommand extends MultistepCommand {
+export abstract class CreateNodeCommand extends MultiStepCommand {
     protected override executeMainTask() {
         Transaction.execute(this.document, `excute ${Object.getPrototypeOf(this).data.name}`, () => {
             this.document.modelManager.addNode(this.getNode());

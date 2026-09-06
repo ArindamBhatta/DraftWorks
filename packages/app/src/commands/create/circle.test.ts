@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // circumcircle() is the one piece of new math the 3P circle mode depends on - it has
 // to agree with the textbook circumcenter answer, has to reject collinear/coincident
 // points (the case the third point's validator relies on to block a bad pick), and

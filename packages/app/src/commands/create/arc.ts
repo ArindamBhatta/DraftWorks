@@ -1,5 +1,4 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
+// Only Alive when Drawing. it's ask where the center?, then how big, then how much angle? (or how many points?) then done.
 
 import {
     AngleStep,

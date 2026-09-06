@@ -10,7 +10,7 @@ import {
     type IShape,
     type IStep,
     MultiShapeNode,
-    MultistepCommand,
+    MultiStepCommand,
     ShapeNode,
     ShapeTypeUtils,
     Transaction,
@@ -20,7 +20,7 @@ import {
     key: "modify.explode",
     icon: "icon-explode",
 })
-export class Explode extends MultistepCommand {
+export class Explode extends MultiStepCommand {
     protected override getSteps(): IStep[] {
         return [new GetOrSelectNodeStep("prompt.select.shape", { multiple: true })];
     }

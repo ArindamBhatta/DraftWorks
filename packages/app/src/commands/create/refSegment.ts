@@ -1,11 +1,8 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 import {
     command,
     Dimensions,
     type IStep,
-    MultistepCommand,
+    MultiStepCommand,
     type PointSnapData,
     PointStep,
     Precision,
@@ -23,7 +20,7 @@ import {
     key: "create.refSegment",
     icon: "icon-line",
 })
-export class RefSegment extends MultistepCommand {
+export class RefSegment extends MultiStepCommand {
     protected override executeMainTask(): void {
         Transaction.execute(this.document, "create RefSegmentAnnotation", () => {
             const annotation = new RefSegmentAnnotation({
