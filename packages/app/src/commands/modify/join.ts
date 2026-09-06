@@ -21,8 +21,8 @@ import {
     type VisualNode,
     type XYZ,
 } from "@chili3d/core";
-import { LineNode } from "../../draw/line";
-import { WireNode } from "../../draw/wire";
+import { LineNode } from "../../bodys/line";
+import { WireNode } from "../../bodys/wire";
 
 /**
  * The type of the curve underneath an edge's.

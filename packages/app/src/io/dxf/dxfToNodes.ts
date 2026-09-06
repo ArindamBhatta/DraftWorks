@@ -29,13 +29,13 @@ import {
     TextAnnotation,
     XYZ,
 } from "@chili3d/core";
-import { ArcNode } from "../../draw/arc";
-import { CircleNode } from "../../draw/circle";
-import { EllipseNode } from "../../draw/ellipse";
-import { LineNode } from "../../draw/line";
-import { PointNode } from "../../draw/point";
-import { PolygonNode } from "../../draw/polygon";
-import { WireNode } from "../../draw/wire";
+import { ArcNode } from "../../bodys/arc";
+import { CircleNode } from "../../bodys/circle";
+import { EllipseNode } from "../../bodys/ellipse";
+import { LineNode } from "../../bodys/line";
+import { PointNode } from "../../bodys/point";
+import { PolygonNode } from "../../bodys/polygon";
+import { WireNode } from "../../bodys/wire";
 import { bulgeArc, sampleCount, sampleSpline } from "./dxfGeometry";
 import {
     DXF_TO_LINE_TYPE,
