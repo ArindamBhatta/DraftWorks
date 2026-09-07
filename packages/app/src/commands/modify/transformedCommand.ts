@@ -66,6 +66,19 @@ export abstract class TransformedCommand extends MultiStepCommand {
     protected override async canExcute(): Promise<boolean> {
         if (!(await this.ensureSelectedModels())) return false;
 
+        this.refreshPositions();
+        return true;
+    }
+
+    /**
+     * Re-reads the wireframe the preview is drawn from, in world coordinates.
+     *
+     * Read on demand rather than captured once, because a command that applies its
+     * transform more than once in a single invocation - MOVE's Multiple mode - has to
+     * preview the next move from where the objects are now, not from where they
+     * started. Capturing it once left the ghost trailing a whole move behind.
+     */
+    protected refreshPositions() {
         this.positions = this.models!.flatMap((model) => {
             if (model instanceof MeshNode) {
                 return model.mesh.position ? model.transform.ofPoints(model.mesh.position) : [];
@@ -76,7 +89,6 @@ export abstract class TransformedCommand extends MultiStepCommand {
             }
             return [];
         });
-        return true;
     }
 
     protected getTempLineData(start: XYZ, end: XYZ) {

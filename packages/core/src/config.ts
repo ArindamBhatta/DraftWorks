@@ -88,6 +88,21 @@ export class VisualItemConfig extends Observable {
 
 export const VisualConfig = new VisualItemConfig();
 
+/**
+ * AutoCAD's TRIMEXTENDMODE, and the reason it is one variable rather than a setting on
+ * each command: TRIM and EXTEND ask the same question - "what am I cutting/reaching to?"
+ * - and a drafter who has decided how they want to be asked has decided it for both.
+ *
+ * Quick skips the boundary prompt and treats every object in the drawing as a boundary,
+ * so TR/EX is two keystrokes and then clicking. Standard is the classic behaviour: name
+ * the cutting or boundary edges first, Enter, and only those act. Enter with nothing
+ * picked at that prompt is AutoCAD's <Select All>, which is what makes "TR Enter Enter"
+ * the old muscle memory for "trim against everything".
+ */
+export const TrimExtendModes = ["quick", "standard"] as const;
+
+export type TrimExtendMode = (typeof TrimExtendModes)[number];
+
 export class Config extends Observable {
     static readonly #instance = new Config();
 
@@ -195,6 +210,19 @@ export class Config extends Observable {
     }
     set trustedDomains(value: string[]) {
         this.setProperty("trustedDomains", value);
+    }
+
+    /**
+     * AutoCAD's TRIMEXTENDMODE - see TrimExtendModes. Quick by default, as it has been
+     * in AutoCAD since 2021: it is the mode that makes the common case (trim this line
+     * back to whatever it crosses) a click rather than a selection set.
+     */
+    @serialize()
+    get trimExtendMode(): TrimExtendMode {
+        return this.getPrivateValue("trimExtendMode", "quick");
+    }
+    set trimExtendMode(value: TrimExtendMode) {
+        this.setProperty("trimExtendMode", value);
     }
 
     #storageKey: string = "config";

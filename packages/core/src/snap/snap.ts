@@ -85,6 +85,16 @@ export interface SnapData {
     }[];
     /** Alternatives offered at this prompt - typed by key, or clicked in the status bar. */
     options?: StepOptions;
+    /**
+     * What bare Enter means here - AutoCAD's `<...>` default, as in MOVE's "Specify
+     * second point or <use first point as displacement>". Return the point to finish
+     * the pick with; return undefined to leave Enter its usual meaning of backing out
+     * of the prompt, which is what every prompt without a default still does.
+     *
+     * The returned point is committed as picked, so it skips snapping and validation
+     * for the same reason typed coordinates do: it was not aimed at, it was named.
+     */
+    onEnter?: () => XYZ | undefined;
     beforeExecute?: () => void;
     afterExecute?: () => void;
     onKeyDown?: (key: KeyboardEvent, update: () => void) => void;

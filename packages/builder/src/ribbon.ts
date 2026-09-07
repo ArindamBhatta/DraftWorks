@@ -35,9 +35,9 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                 items: [
                     ["modify.move", "modify.copy", "modify.stretch"],
                     ["modify.rotate", "modify.mirror", "modify.scale"],
-                    ["modify.trim", "modify.fillet", "modify.array"],
-                    ["modify.explode", "modify.chamfer", "modify.join"],
-                    ["modify.matchProp"],
+                    ["modify.trim", "modify.extend", "modify.fillet"],
+                    ["modify.array", "modify.explode", "modify.chamfer"],
+                    ["modify.join", "modify.matchProp"],
                 ],
             },
             //Layer

@@ -370,14 +370,31 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
             event.preventDefault();
             PubSub.default.pub("focusDynamicInput", "");
         } else if (event.key === "Enter" || event.key === " ") {
-            // should cancel when enter or space keydown, and should not trigger HotKeyService
+            // Space is Enter at a prompt, as it is in AutoCAD. Neither must reach
+            // HotKeyService.
             event.preventDefault();
             event.stopImmediatePropagation();
-            this._snaped = undefined;
-            this.handleCancel();
+            this.takeEnterDefault(view);
         } else {
             this.handleTypedInput(view, event);
         }
+    }
+
+    /**
+     * Enter either takes the prompt's `<...>` default or backs out of the prompt.
+     * Only a prompt that declares an onEnter has a default, so every other prompt
+     * keeps Enter's original meaning of "no answer" (see SnapData.onEnter).
+     */
+    private takeEnterDefault(view: IView) {
+        const point = this.data.onEnter?.();
+        if (!point) {
+            this._snaped = undefined;
+            this.handleCancel();
+            return;
+        }
+
+        this._snaped = { view, point, shapes: [], type: "input" };
+        this.handleSuccess();
     }
 
     private handleTypedInput(view: IView, event: KeyboardEvent) {

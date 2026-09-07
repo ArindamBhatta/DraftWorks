@@ -37,6 +37,7 @@ export const CommandAliases: Partial<Record<CommandKeys, string[]>> = {
     "modify.mirror": ["mi", "mirror"],
     "modify.array": ["ar", "array"],
     "modify.trim": ["tr", "trim"],
+    "modify.extend": ["ex", "extend"],
     "modify.break": ["br", "break"],
     "modify.fillet": ["f", "fillet"],
     "modify.chamfer": ["cha", "chamfer"],

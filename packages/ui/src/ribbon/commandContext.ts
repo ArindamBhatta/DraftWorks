@@ -44,6 +44,12 @@ export class CommandContext extends HTMLElement implements IDisposable {
      * with while the command had already moved on: two views, two answers.
      */
     private readonly comboboxes = new Map<string | number | symbol, [Combobox<any>, HTMLSelectElement]>();
+    /**
+     * The settings currently on show. A property can come and go while the command
+     * runs - see setVisible and its dependencies - so this is kept rather than counted
+     * once, and it is what decides whether the panel appears at all.
+     */
+    private readonly visibleProperties = new Set<string | number | symbol>();
     private readonly container = div({ className: style.container });
     private selectionControlContainer?: HTMLDivElement;
     private closeIcon?: HTMLElement;
@@ -81,6 +87,25 @@ export class CommandContext extends HTMLElement implements IDisposable {
             );
             this.container.append(this.closeIcon);
         }
+        this.updateVisibility();
+    }
+
+    /**
+     * Shows the panel only when it has something to offer, and takes it away again
+     * when it does not.
+     *
+     * The command's own name and its cancel button do not count as content. A panel
+     * carrying nothing else is a box floating over the drawing to tell the user the
+     * name of the command they just typed - which the status bar and the command line
+     * are already saying, in the two places they are looking. MOVE and PAN are exactly
+     * that: they take picks, not settings, and both already exit on Escape. So they get
+     * the drawing back, and the panel appears for the commands that genuinely have a
+     * setting to offer - or, for any command, while it is waiting on a selection and
+     * the panel is showing the count and the confirm button.
+     */
+    private updateVisibility() {
+        const hasContent = this.visibleProperties.size > 0 || this.selectionControlContainer !== undefined;
+        this.style.display = hasContent ? "" : "none";
     }
 
     private readonly showSelectionControl = (controller: AsyncController) => {
@@ -107,6 +132,7 @@ export class CommandContext extends HTMLElement implements IDisposable {
             ),
         );
         this.container.append(this.selectionControlContainer);
+        this.updateVisibility();
     };
 
     private countDom() {
@@ -134,6 +160,7 @@ export class CommandContext extends HTMLElement implements IDisposable {
         if (this.closeIcon) this.closeIcon.style.display = "";
         this.selectionCountCleanups.forEach((fn) => fn());
         this.selectionCountCleanups = [];
+        this.updateVisibility();
     };
 
     connectedCallback(): void {
@@ -156,6 +183,7 @@ export class CommandContext extends HTMLElement implements IDisposable {
     dispose() {
         this.propMap.clear();
         this.comboboxes.clear();
+        this.visibleProperties.clear();
         this.disconnectedCallback();
     }
 
@@ -165,6 +193,9 @@ export class CommandContext extends HTMLElement implements IDisposable {
             for (const [prop, control] of items) {
                 this.setVisible(control, prop);
             }
+            // A dependency may have just hidden the last setting on show, or revealed
+            // the first one, so the panel itself has to be reconsidered.
+            this.updateVisibility();
         }
         this.syncCombobox(property);
     };
@@ -218,6 +249,11 @@ export class CommandContext extends HTMLElement implements IDisposable {
             }
         }
         control.style.display = visible ? "inherit" : "none";
+        if (visible) {
+            this.visibleProperties.add(property.name);
+        } else {
+            this.visibleProperties.delete(property.name);
+        }
     }
 
     private findGroup(groupMap: Map<I18nKeys, HTMLDivElement>, prop: Property) {
