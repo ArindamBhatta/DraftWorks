@@ -15,7 +15,9 @@ import {
     type SnapLengthAtPlaneData,
     type XYZ,
 } from "@chili3d/core";
+
 import { ArcNode } from "../../bodys/arc";
+
 import { CreateCommand } from "../createCommand";
 
 @command({
@@ -24,7 +26,7 @@ import { CreateCommand } from "../createCommand";
 })
 export class Arc extends CreateCommand {
     private _planeAngle: PlaneAngle | undefined;
-
+    // pick center, pick radius, pick angle. It draws rubber-band previews.
     getSteps(): IStep[] {
         return [
             new PointStep("prompt.pickCircleCenter"),
@@ -93,11 +95,12 @@ export class Arc extends CreateCommand {
         return (p: XYZ) =>
             p.distanceTo(center) >= Precision.Distance && !p.sub(center).isParallelTo(plane.normal);
     }
-
+    // is the single abstract seam declared in [createCommand]
     protected override geometryNode(): GeometryNode {
         const [p0, p1] = [this.stepDatas[0].point!, this.stepDatas[1].point!];
         const plane = this.stepDatas[1].plane ?? this.findPlane(this.stepDatas[1].view, p0, p1);
         this._planeAngle?.movePoint(this.stepDatas[2].point!);
+
         return new ArcNode({
             document: this.document,
             normal: plane.normal,

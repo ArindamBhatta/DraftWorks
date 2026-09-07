@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 import {
     type IHighlighter,
     isDisposable,
@@ -13,10 +10,15 @@ import {
     VisualStates,
     VisualStateUtils,
 } from "@chili3d/core";
+
 import { Group, Mesh, Points } from "three";
+
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
+
 import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js";
+
 import { isHighlightable } from "./highlightable";
+
 import {
     faceTransparentMaterial,
     highlightFaceMaterial,
@@ -26,6 +28,7 @@ import {
     selectedFaceColoredMaterial,
     selectedVertexMaterial,
 } from "./materials";
+
 import { ThreeGeometry } from "./threeGeometry";
 import { ThreeGeometryFactory } from "./threeGeometryFactory";
 import type { ThreeVisualContext } from "./threeVisualContext";

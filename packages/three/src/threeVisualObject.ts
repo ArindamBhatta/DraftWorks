@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 import {
     BoundingBox,
     type ComponentNode,
@@ -16,6 +13,7 @@ import {
     ShapeTypeUtils,
     type VisualNode,
 } from "@chili3d/core";
+
 import {
     BufferAttribute,
     BufferGeometry,
@@ -26,6 +24,7 @@ import {
     Object3D,
     type Points,
 } from "three";
+
 import { Line2 } from "three/examples/jsm/lines/Line2.js";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";

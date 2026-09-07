@@ -9,6 +9,7 @@ import type { IShapeConverter, IShapeFactory, IShapeProvider } from "./shape";
 import type { IWindow } from "./ui/window";
 import type { IView, IVisualFactory } from "./visual";
 
+// IApplication interface represents the main application instance.
 export interface IApplication extends IPropertyChanged {
     readonly mainWindow?: IWindow;
     readonly dataExchange: IDataExchange;
@@ -29,6 +30,7 @@ export interface IApplication extends IPropertyChanged {
 }
 
 let currentApplication: IApplication;
+
 export function getCurrentApplication() {
     if (!currentApplication) {
         throw new Error(

@@ -1,12 +1,15 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 import { type ICameraController, Observable, type ViewMode, type XYZLike } from "@chili3d/core";
+
 import { Box3, Camera, MathUtils, type Object3D, OrthographicCamera, Sphere, Vector3 } from "three";
+
 import { Constants } from "./constants";
+
 import type { ThreeGeometry } from "./threeGeometry";
+
 import { ThreeHelper } from "./threeHelper";
+
 import type { ThreeView } from "./threeView";
+
 import type { ThreeVisualContext } from "./threeVisualContext";
 
 // Multiplicative zoom step. In and out are exact reciprocals, so a zoom in followed by
