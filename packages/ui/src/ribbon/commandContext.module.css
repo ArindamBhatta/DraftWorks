@@ -204,3 +204,14 @@
         height: 20px;
     }
 }
+
+/*
+ * A setting the running command has stopped accepting answers to - see Property's
+ * `disabledWhen`. Faded rather than removed, because the value it is still showing is
+ * the answer the user is most likely looking for at that moment.
+ */
+.disabled {
+    opacity: 0.45;
+    cursor: default;
+    pointer-events: none;
+}

@@ -7,6 +7,7 @@ import {
     CancelableCommand,
     Combobox,
     Config,
+    type CursorType,
     EditableShapeNode,
     type GeometryNode,
     I18n,
@@ -15,17 +16,24 @@ import {
     type IDisposable,
     type IDocument,
     type IEdge,
+    type IEventHandler,
     type IShape,
     type IShapeFilter,
     type IView,
     type IVisualObject,
     isVisualGeometry,
     Matrix4,
+    matchStepOption,
     Precision,
+    PubSub,
+    promptForValue,
     property,
+    Result,
     type ShapeNode,
     ShapeSelectionHandler,
     ShapeTypes,
+    type StepOption,
+    SubshapeSelectionHandler,
     Transaction,
     type TrimExtendMode,
     VisualConfig,
@@ -44,14 +52,58 @@ export const TrimExtendModeLabels = {
     standard: "option.command.trimExtendMode.standard",
 } as const satisfies Record<TrimExtendMode, I18nKeys>;
 
-/** The prompt lines a trimming command asks in its own words. */
+/**
+ * The mode an option label names, going back the way TrimExtendModeLabels came.
+ *
+ * The dropdown deals in labels and the setting deals in modes, so this is the join
+ * between them - and a silent one if it ever stops matching: a label that no longer maps
+ * makes the setter a no-op, which looks exactly like a dropdown that will not move.
+ *
+ * Exported for testing.
+ */
+export function trimExtendModeOf(label: I18nKeys): TrimExtendMode | undefined {
+    return (Object.keys(TrimExtendModeLabels) as TrimExtendMode[]).find(
+        (mode) => TrimExtendModeLabels[mode] === label,
+    );
+}
+
+/**
+ * Reads the answer to "[Quick/Standard]" the AutoCAD way: `Q`/`Quick`, `S`/`Standard`
+ * however capitalised, or an empty line for the answer the prompt is already showing in
+ * its `<...>`. Anything else is rejected and the question asked again.
+ *
+ * Exported for testing.
+ */
+export function parseTrimExtendMode(text: string, remembered: I18nKeys): I18nKeys | undefined {
+    const trimmed = text.trim();
+    if (trimmed === "") return remembered;
+    if (/^q(uick)?$/i.test(trimmed)) return TrimExtendModeLabels.quick;
+    if (/^s(tandard)?$/i.test(trimmed)) return TrimExtendModeLabels.standard;
+    return undefined;
+}
+
+/**
+ * The prompt lines a trimming command asks in its own words.
+ *
+ * The pick loop has two of them because the two modes are two different jobs wearing the
+ * same command name: in Quick mode every object in the drawing cuts, in Standard mode only
+ * the edges just named do. A prompt that read the same either way would leave the one
+ * thing the user needs to know - what is going to happen when they click - to be inferred
+ * from whether a question was asked a moment ago.
+ */
 export interface TrimExtendPrompts {
     /** Names the undo step - one step for the whole run, however many edges it touched. */
     label: I18nKeys;
     /** Standard mode's first question: "Select cutting edges" / "Select boundary edges". */
     boundaries: I18nKeys;
-    /** The pick loop's question: "Select object to trim" / "... to extend". */
-    target: I18nKeys;
+    /** The pick loop's question in Quick mode, where the whole drawing is the boundary. */
+    quickTarget: I18nKeys;
+    /** The pick loop's question in Standard mode, where only the named edges are. */
+    standardTarget: I18nKeys;
+    /** "Enter a trim mode option [Quick/Standard]" - the status-bar line. */
+    mode: I18nKeys;
+    /** The same question with room for the remembered answer's `<...>`. */
+    modeDefault: I18nKeys;
 }
 
 export class EdgeFilter implements IShapeFilter {
@@ -230,12 +282,64 @@ interface BoundaryEdges {
 }
 
 /**
+ * Runs the prompt option a keystroke names, if it names one.
+ *
+ * The status bar renders the same options as buttons, so this is the typed half of a
+ * pipeline that already has a clicked half - see Statusbar.showStepOptions. Selection
+ * prompts get it here rather than from SnapEventHandler, which is where every other kind
+ * of prompt gets it: a pick that is choosing objects has no typing box of its own, and
+ * without this the `[O]` in the status bar would be clickable but not typeable, which is
+ * the sort of half-working affordance that teaches people to stop trying.
+ */
+function handleOptionKey(options: StepOption[], event: KeyboardEvent): boolean {
+    const option = matchStepOption(options, event.key);
+    if (!option) return false;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    option.onSelect();
+    return true;
+}
+
+/** The multi-pick that names the cutting or boundary edges, with the prompt's options live. */
+class PickBoundaryHandler extends SubshapeSelectionHandler {
+    constructor(
+        document: IDocument,
+        controller: AsyncController,
+        private readonly options: StepOption[],
+    ) {
+        super(document, ShapeTypes.shape, true, controller, new EdgeFilter());
+    }
+
+    override keyDown(view: IView, event: KeyboardEvent): void {
+        if (handleOptionKey(this.options, event)) return;
+        super.keyDown(view, event);
+    }
+}
+
+/** How a pick should look and what else it will answer to. */
+export interface PickEdgeOptions {
+    /** What clicking `target` would do, worked out fresh on every hover. */
+    plan: (target: VisualShapeData, keep: (disposable: IDisposable) => void) => EdgePlan | undefined;
+    /** The colour of the stretch the click is about - see VisualConfig.trimPreviewColor. */
+    previewColor: number;
+    /** Alternatives offered at this prompt: typed here, clicked in the status bar. */
+    options: StepOption[];
+}
+
+/**
  * Picks one edge and shows, under the cursor, what clicking it would do.
  *
- * The highlight is the point of the class: TRIM draws the piece about to disappear and
- * EXTEND the piece about to appear, both in the highlight colour, so the click is
- * committing to something already on screen rather than to a guess. Both come from the
- * same `affected` range - see EdgeChange - which is why one handler serves both commands.
+ * The preview is the point of the class. TRIM draws the piece about to disappear in red
+ * and EXTEND the piece about to appear in green, right on top of the edge they describe,
+ * so a click is committing to something already on screen rather than to a guess about
+ * which side of a crossing the cursor counted as. Both come from the same `affected`
+ * range - see EdgeChange - which is why one handler serves both commands.
+ *
+ * An edge the command can do nothing with gets the ordinary hover highlight instead. That
+ * distinction is the whole answer to "why did nothing happen when I clicked": blue says
+ * the edge was found but there is nothing here to do, and no highlight at all says the
+ * cursor never found an edge in the first place.
  */
 export class PickEdgeHandler extends ShapeSelectionHandler {
     #selected: EdgePlan | undefined;
@@ -250,12 +354,14 @@ export class PickEdgeHandler extends ShapeSelectionHandler {
     constructor(
         document: IDocument,
         controller: AsyncController,
-        private readonly makePlan: (
-            target: VisualShapeData,
-            keep: (disposable: IDisposable) => void,
-        ) => EdgePlan | undefined,
+        private readonly pick: PickEdgeOptions,
     ) {
         super(document, ShapeTypes.shape, false, controller, new EdgeFilter());
+    }
+
+    override keyDown(view: IView, event: KeyboardEvent): void {
+        if (handleOptionKey(this.pick.options, event)) return;
+        super.keyDown(view, event);
     }
 
     private readonly keep = (disposable: IDisposable) => {
@@ -266,8 +372,13 @@ export class PickEdgeHandler extends ShapeSelectionHandler {
         this.cleanHighlights();
         if (detecteds.length !== 1 || detecteds[0].shape.shapeType !== ShapeTypes.edge) return;
 
-        const plan = this.makePlan(detecteds[0], this.keep);
-        if (!plan || plan.affected.end - plan.affected.start < Precision.Float) return;
+        const plan = this.pick.plan(detecteds[0], this.keep);
+        if (!plan || plan.affected.end - plan.affected.start < Precision.Float) {
+            // Nothing to trim back to, or nothing to reach out to. Say so with the plain
+            // hover highlight rather than with silence, which reads as a broken command.
+            super.highlightDetecteds(view, detecteds);
+            return;
+        }
 
         const curve = plan.basis.trim(plan.affected.start, plan.affected.end);
         this.keep(curve);
@@ -275,14 +386,17 @@ export class PickEdgeHandler extends ShapeSelectionHandler {
         this.keep(preview);
 
         const mesh = preview.mesh.edges!;
-        mesh.color = VisualConfig.highlightEdgeColor;
-        mesh.lineWidth = 3;
+        mesh.color = this.pick.previewColor;
+        mesh.lineWidth = VisualConfig.trimExtendPreviewLineWidth;
         this.#highlightMesh = view.document.visual.highlighter.highlightMesh(mesh);
         this.#highlight = plan;
         view.update();
     }
 
     protected override cleanHighlights(): void {
+        // Both kinds have to go: the plain hover highlight the base class puts on an edge
+        // there is nothing to do with, and this class's own red or green preview.
+        super.cleanHighlights();
         if (this.#highlightMesh !== undefined) {
             this.document.visual.highlighter.removeHighlightMesh(this.#highlightMesh);
             this.#highlightMesh = undefined;
@@ -339,6 +453,9 @@ export abstract class TrimExtendCommand extends CancelableCommand {
      */
     protected abstract get boundariesCrossTarget(): boolean;
 
+    /** The colour of the stretch a click is about - red for gone, green for arriving. */
+    protected abstract get previewColor(): number;
+
     protected abstract planEdge(context: EdgeContext): EdgeChange | undefined;
 
     /**
@@ -348,18 +465,33 @@ export abstract class TrimExtendCommand extends CancelableCommand {
      * per-command property cache still saves and restores a copy of its own around every
      * run; that copy is written to a private field this getter never looks at, which is
      * what stops the two commands from drifting apart.
+     *
+     * It greys out once the run commits to a mode - see `modeLocked`.
      */
     @property("option.command.trimExtendMode", {
         combobox: Combobox.from<I18nKeys>([TrimExtendModeLabels.quick, TrimExtendModeLabels.standard]),
+        disabledWhen: [{ property: "modeLocked", value: true }],
     })
     get trimExtendMode(): I18nKeys {
         return TrimExtendModeLabels[Config.instance.trimExtendMode];
     }
     set trimExtendMode(value: I18nKeys) {
-        const mode = (Object.keys(TrimExtendModeLabels) as TrimExtendMode[]).find(
-            (key) => TrimExtendModeLabels[key] === value,
-        );
-        if (mode === undefined || mode === Config.instance.trimExtendMode) return;
+        const mode = trimExtendModeOf(value);
+        if (this.#locked || mode === undefined || mode === Config.instance.trimExtendMode) return;
+
+        this.applyMode(mode);
+        // Reaching for the dropdown is choosing the mode for this run, which is the same
+        // commitment the `[O]` question ends with - so it is the last change this run
+        // will take, and the run begins again under it. Restarting is what keeps the
+        // dropdown, the prompt and what the command is actually doing describing one
+        // state instead of three.
+        this.lockMode();
+        this.restart();
+    }
+
+    /** Writes the setting and tells the panel, without the restart the setter also does. */
+    private applyMode(mode: TrimExtendMode) {
+        if (mode === Config.instance.trimExtendMode) return;
 
         const oldValue = this.trimExtendMode;
         Config.instance.trimExtendMode = mode;
@@ -367,15 +499,41 @@ export abstract class TrimExtendCommand extends CancelableCommand {
     }
 
     /**
-     * The mode this run is working in, read once at the start.
+     * Whether this run has committed to a mode.
      *
-     * Re-reading it per pick would let the dropdown change the answer to a question
-     * already asked: a Standard run that has taken its cutting edges would start trimming
-     * against everything instead the moment the dropdown moved, with the boundaries the
-     * user named still sitting on screen. The dropdown takes effect on the next run, as
-     * changing a system variable mid-command does in AutoCAD.
+     * A run works in one mode from beginning to end. The two are not variations on one
+     * job: Standard cuts against the edges you named a moment ago and Quick cuts against
+     * everything, so an answer given under one of them means something else under the
+     * other. Letting the mode move mid-run would silently re-read work already done -
+     * cutting edges named and then ignored, or a boundary set that was never asked for -
+     * and leave the user to notice from the results.
+     *
+     * So the mode is settled before the run does anything and fixed the moment it does:
+     * answering the `[O]` question locks it, and so does the first real work, whether that
+     * is naming the cutting edges or trimming the first edge. From then on the dropdown
+     * greys out and `[O]` stops being offered, both of them still showing which mode the
+     * run is in. Starting the command again is how you get the other one.
      */
+    get modeLocked() {
+        return this.#locked;
+    }
+
+    #locked = false;
+
+    private lockMode() {
+        if (this.#locked) return;
+
+        this.#locked = true;
+        // Greys the dropdown - see the property's disabledWhen. `[O]` goes on its own,
+        // because modeOptions stops offering it.
+        this.emitPropertyChanged("modeLocked", false);
+    }
+
+    /** The mode this run is working in, read once at the start and then locked. */
     #mode: TrimExtendMode = "quick";
+
+    /** Set by `O`, so the mode question is asked once this prompt has been torn down. */
+    #askMode = false;
 
     /** The named boundaries, in world space, or undefined while <Select All> is in force. */
     #picked: BoundaryEdges | undefined;
@@ -387,7 +545,77 @@ export abstract class TrimExtendCommand extends CancelableCommand {
      */
     #all: BoundaryEdges | undefined;
 
+    /** The pick loop's question, in the words of the mode this run is working in. */
+    private get targetPrompt(): I18nKeys {
+        return this.#mode === "quick" ? this.prompts.quickTarget : this.prompts.standardTarget;
+    }
+
+    /**
+     * AutoCAD's `[mOde]`, offered until the run commits to a mode and then not at all.
+     *
+     * It is the same setting as the dropdown on the command panel, reached from the other
+     * end: the status bar shows it as a clickable `O` and the pick handlers answer to the
+     * key, so whichever one the user reaches for, the other follows. Without it the mode
+     * could only be changed from the ribbon, which is the wrong place to be looking when
+     * the question you are answering is on the status bar.
+     *
+     * It disappears once `modeLocked` - at that point the dropdown, greyed, is the thing
+     * still saying which mode the run is in, and the answer is no longer up for changing.
+     */
+    private modeOptions(): StepOption[] {
+        if (this.#locked) return [];
+
+        return [
+            {
+                key: "O",
+                display: "prompt.option.trimExtendMode",
+                onSelect: () => {
+                    // The question needs the input box and this prompt still holds it, so
+                    // it is asked on the way back in rather than from here.
+                    this.#askMode = true;
+                    this.restart();
+                },
+            },
+        ];
+    }
+
+    /**
+     * AutoCAD's "Enter a trim mode option [Quick/Standard] <Quick>". Returns false when
+     * the user backs out, which ends the command the way Escape at any other prompt does.
+     *
+     * Answering it settles the mode for the whole run: the Enter that closes this prompt
+     * is the last chance to change it.
+     */
+    private async askModeQuestion(): Promise<boolean> {
+        this.controller = new AsyncController();
+        const answer = await promptForValue({
+            controller: this.controller,
+            statusTip: this.prompts.mode,
+            message: I18n.translate(this.prompts.modeDefault, I18n.translate(this.trimExtendMode)),
+            parse: (text) => {
+                const mode = parseTrimExtendMode(text, this.trimExtendMode);
+                return mode ? Result.ok(mode) : Result.err<I18nKeys>("error.trimExtend.invalidMode");
+            },
+        });
+        if (answer === undefined) return false;
+
+        // applyMode rather than the setter, which would restart a run that is already
+        // restarting - this is being asked from inside the restart the `O` set off. The
+        // dropdown still follows, because applyMode is what tells the panel.
+        const mode = trimExtendModeOf(answer);
+        if (mode !== undefined) this.applyMode(mode);
+        return true;
+    }
+
     protected override async executeAsync(): Promise<void> {
+        if (this.#askMode) {
+            this.#askMode = false;
+            if (!(await this.askModeQuestion())) return;
+            // Answered, so the run has its mode: `[O]` stops being offered and the
+            // dropdown greys before the first real question is asked.
+            this.lockMode();
+        }
+
         this.#mode = Config.instance.trimExtendMode;
         this.#picked = undefined;
         this.#all = undefined;
@@ -419,12 +647,22 @@ export abstract class TrimExtendCommand extends CancelableCommand {
         if (this.#mode === "quick") return true;
 
         this.controller = new AsyncController();
-        const picked = await this.document.picker.pickShape(this.prompts.boundaries, this.controller, {
-            shapeType: ShapeTypes.shape,
-            shapeFilter: new EdgeFilter(),
-            multi: true,
+        const options = this.modeOptions();
+        const handler = new PickBoundaryHandler(this.document, this.controller, options);
+        // The bare pickbox, without the crosshair: this prompt is choosing objects, not
+        // aiming at a point, and AutoCAD's "Select cutting edges:" looks the same way.
+        await this.pickWithOptions(handler, this.prompts.boundaries, this.controller, {
+            showControl: true,
+            cursor: "select.objects",
+            options,
         });
+        const picked = this.document.selection.getSelectedShapes();
+        handler.dispose();
         if (this.controller.result?.status !== "success") return false;
+
+        // Naming the cutting edges is the run committing to Standard: they were chosen to
+        // cut, and there is no reading them as anything else under Quick.
+        this.lockMode();
 
         // Read now rather than per pick: these are the boundaries as they were named,
         // and a later pick that replaces one of those nodes does not move the line the
@@ -442,20 +680,47 @@ export abstract class TrimExtendCommand extends CancelableCommand {
         while (!this.isCompleted) {
             this.#all = undefined;
             this.controller = new AsyncController();
-            const handler = new PickEdgeHandler(this.document, this.controller, this.planFor);
-            await this.document.picker.pickAsync(
-                handler,
-                this.prompts.target,
-                this.controller,
-                false,
-                "select.default",
-            );
+            const options = this.modeOptions();
+            const handler = new PickEdgeHandler(this.document, this.controller, {
+                plan: this.planFor,
+                previewColor: this.previewColor,
+                options,
+            });
+            await this.pickWithOptions(handler, this.targetPrompt, this.controller, {
+                showControl: false,
+                cursor: "select.default",
+                options,
+            });
             if (this.controller.result?.status !== "success" || !handler.selected) {
                 handler.dispose();
                 break;
             }
             this.applyPlan(handler.selected);
+            // An edge has changed under this mode, so the run is now committed to it -
+            // the Quick-mode counterpart of naming the cutting edges.
+            this.lockMode();
             handler.dispose();
+        }
+    }
+
+    /**
+     * A pick that also puts its alternatives on the status bar.
+     *
+     * SnapStep does this for point prompts; a selection prompt goes straight to the
+     * picker, which knows about the tip but not the options, so they are published
+     * around it here and taken down again whichever way the pick ends.
+     */
+    private async pickWithOptions(
+        handler: IEventHandler,
+        prompt: I18nKeys,
+        controller: AsyncController,
+        pick: { showControl: boolean; cursor: CursorType; options: StepOption[] },
+    ) {
+        PubSub.default.pub("showStepOptions", pick.options);
+        try {
+            await this.document.picker.pickAsync(handler, prompt, controller, pick.showControl, pick.cursor);
+        } finally {
+            PubSub.default.pub("clearStepOptions");
         }
     }
 

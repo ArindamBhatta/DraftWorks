@@ -179,6 +179,7 @@ export const I18N_KEYS = [
     "error.input.cannotInputANumber",
     "error.offset.invalidDistance",
     "error.placement.invalidMode",
+    "error.trimExtend.invalidMode",
     "error.text.empty",
     "error.text.invalidAngle",
     "error.text.invalidHeight",
@@ -350,6 +351,11 @@ export const I18N_KEYS = [
     "prompt.copy.secondPoint",
     "prompt.copy.mode",
     "prompt.copy.mode{0}",
+    // Trim and Extend commands
+    "prompt.trim.mode",
+    "prompt.trim.mode{0}",
+    "prompt.extend.mode",
+    "prompt.extend.mode{0}",
     "prompt.option.arc",
 
     //Stretch command
@@ -379,6 +385,7 @@ export const I18N_KEYS = [
     "prompt.option.diameter",
     "prompt.option.displacement",
     "prompt.option.mode",
+    "prompt.option.trimExtendMode",
     "prompt.option.radius",
     "prompt.option.threePoint",
     "prompt.option.undo",
@@ -401,8 +408,10 @@ export const I18N_KEYS = [
     "prompt.select.stretchPoints",
     "prompt.select.cuttingEdges",
     "prompt.select.boundaryEdges",
-    "prompt.select.objectToTrim",
-    "prompt.select.objectToExtend",
+    "prompt.select.objectToTrim.quick",
+    "prompt.select.objectToTrim.standard",
+    "prompt.select.objectToExtend.quick",
+    "prompt.select.objectToExtend.standard",
     "prompt.selectedCount",
 
     // Properties

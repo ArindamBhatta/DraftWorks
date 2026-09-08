@@ -1,7 +1,15 @@
 // Part of the Chili3d Project, under the AGPL-3.0 License.
 // See LICENSE file in the project root for full license information.
 
-import { command, GeometryUtils, type ICurve, type IDisposable, type IEdge, Precision } from "@chili3d/core";
+import {
+    command,
+    GeometryUtils,
+    type ICurve,
+    type IDisposable,
+    type IEdge,
+    Precision,
+    VisualConfig,
+} from "@chili3d/core";
 import {
     type EdgeChange,
     type EdgeContext,
@@ -73,7 +81,10 @@ export class Extend extends TrimExtendCommand {
         return {
             label: "command.modify.extend",
             boundaries: "prompt.select.boundaryEdges",
-            target: "prompt.select.objectToExtend",
+            quickTarget: "prompt.select.objectToExtend.quick",
+            standardTarget: "prompt.select.objectToExtend.standard",
+            mode: "prompt.extend.mode",
+            modeDefault: "prompt.extend.mode{0}",
         };
     }
 
@@ -81,6 +92,12 @@ export class Extend extends TrimExtendCommand {
     // narrower than the whole drawing will do for EXTEND's <Select All>.
     protected override get boundariesCrossTarget(): boolean {
         return false;
+    }
+
+    // Green, the app's colour for geometry that is not there yet: the stretch under the
+    // cursor is the one the click will bring into being.
+    protected override get previewColor(): number {
+        return VisualConfig.extendPreviewColor;
     }
 
     protected override planEdge({

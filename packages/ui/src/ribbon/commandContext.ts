@@ -192,6 +192,7 @@ export class CommandContext extends HTMLElement implements IDisposable {
             const items = this.propMap.get(property)!;
             for (const [prop, control] of items) {
                 this.setVisible(control, prop);
+                this.setDisabled(control, prop);
             }
             // A dependency may have just hidden the last setting on show, or revealed
             // the first one, so the panel itself has to be reconsidered.
@@ -224,18 +225,37 @@ export class CommandContext extends HTMLElement implements IDisposable {
             const group = this.findGroup(groupMap, property);
             const item = this.createItem(this.command, property);
             this.setVisible(item, property);
+            this.setDisabled(item, property);
             this.cacheDependencies(item, property);
             group.append(item);
         });
     }
 
     private cacheDependencies(item: HTMLElement, g: Property) {
-        if (g.dependencies) {
-            for (const d of g.dependencies) {
-                const items = this.propMap.get(d.property);
-                this.propMap.set(d.property, [...(items ?? []), [g, item]]);
-            }
+        // Both kinds of condition are watched the same way: whichever property they name
+        // is what has to change for the control to be reconsidered.
+        for (const d of [...(g.dependencies ?? []), ...(g.disabledWhen ?? [])]) {
+            const items = this.propMap.get(d.property);
+            this.propMap.set(d.property, [...(items ?? []), [g, item]]);
         }
+    }
+
+    /**
+     * Greys out a setting the command has stopped accepting answers to.
+     *
+     * The control stays where it was and keeps showing its value - see Property's
+     * `disabledWhen` for why that is the point - so this only has to take away the ways
+     * in: pointer events for the mouse, and the form control's own `disabled` for the
+     * keyboard and for screen readers.
+     */
+    private setDisabled(control: HTMLElement, property: Property) {
+        if (!property.disabledWhen) return;
+
+        const disabled = property.disabledWhen.every((d) => (this.command as any)[d.property] === d.value);
+        control.classList.toggle(style.disabled, disabled);
+        control.querySelectorAll("select, input, button").forEach((element) => {
+            (element as HTMLSelectElement | HTMLInputElement | HTMLButtonElement).disabled = disabled;
+        });
     }
 
     private setVisible(control: HTMLElement, property: Property) {

@@ -1,7 +1,7 @@
 // Part of the Chili3d Project, under the AGPL-3.0 License.
 // See LICENSE file in the project root for full license information.
 
-import { command, GeometryUtils } from "@chili3d/core";
+import { command, GeometryUtils, VisualConfig } from "@chili3d/core";
 import {
     type EdgeChange,
     type EdgeContext,
@@ -26,7 +26,10 @@ export class Trim extends TrimExtendCommand {
         return {
             label: "command.modify.trim",
             boundaries: "prompt.select.cuttingEdges",
-            target: "prompt.select.objectToTrim",
+            quickTarget: "prompt.select.objectToTrim.quick",
+            standardTarget: "prompt.select.objectToTrim.standard",
+            mode: "prompt.trim.mode",
+            modeDefault: "prompt.trim.mode{0}",
         };
     }
 
@@ -34,6 +37,11 @@ export class Trim extends TrimExtendCommand {
     // at what the edge's own extent touches.
     protected override get boundariesCrossTarget(): boolean {
         return true;
+    }
+
+    // Red: the stretch under the cursor is the one that will stop existing.
+    protected override get previewColor(): number {
+        return VisualConfig.trimPreviewColor;
     }
 
     protected override planEdge({ edge, span, picked, boundaries }: EdgeContext): EdgeChange | undefined {

@@ -7,8 +7,15 @@
 // functions work in curve parameters, so a line running 0..10 with crossings at 3 and 7
 // is the whole of the geometry a test needs.
 
+import { TrimExtendModes } from "@chili3d/core";
 import { expect, test } from "@rstest/core";
-import { extendChange, trimChange } from "./trimExtendCommand";
+import {
+    extendChange,
+    parseTrimExtendMode,
+    TrimExtendModeLabels,
+    trimChange,
+    trimExtendModeOf,
+} from "./trimExtendCommand";
 
 // A line from 0 to 10 crossed at 3 and 7, as trimChange wants it: crossings and the
 // edge's own two ends, sorted.
@@ -89,4 +96,44 @@ test("extending an arc backwards crosses zero rather than going the long way", (
 
 test("a closed circle has no end left to extend", () => {
     expect(extendChange({ start: 0, end: circle }, 1, [2], circle)).toBeUndefined();
+});
+
+test("every mode the setting can hold has a label, and every label maps back", () => {
+    // The dropdown and the status bar's [O] both write labels; TRIMEXTENDMODE stores
+    // modes. A mode with no label would drop off the dropdown, and a label that no
+    // longer maps back would make the setter a silent no-op - a dropdown that will not
+    // move, with nothing anywhere to say why.
+    for (const mode of TrimExtendModes) {
+        const label = TrimExtendModeLabels[mode];
+        expect(label).toBeDefined();
+        expect(trimExtendModeOf(label)).toBe(mode);
+    }
+});
+
+test("a label from some other command names no mode at all", () => {
+    expect(trimExtendModeOf("option.command.placementMode.single")).toBeUndefined();
+});
+
+test("the mode answer is read however it is capitalised or abbreviated", () => {
+    for (const text of ["q", "Q", "quick", " Quick "]) {
+        expect(parseTrimExtendMode(text, TrimExtendModeLabels.standard)).toBe(TrimExtendModeLabels.quick);
+    }
+    for (const text of ["s", "S", "standard", " Standard "]) {
+        expect(parseTrimExtendMode(text, TrimExtendModeLabels.quick)).toBe(TrimExtendModeLabels.standard);
+    }
+});
+
+test("an empty answer takes the mode the prompt is already showing", () => {
+    // AutoCAD's <...>: Enter alone at "[Quick/Standard] <Standard>" means Standard, and
+    // it is the only way the answer can come back unchanged.
+    expect(parseTrimExtendMode("", TrimExtendModeLabels.standard)).toBe(TrimExtendModeLabels.standard);
+    expect(parseTrimExtendMode("  ", TrimExtendModeLabels.quick)).toBe(TrimExtendModeLabels.quick);
+});
+
+test("an answer that is neither mode is rejected rather than guessed at", () => {
+    // Undefined re-asks the question. Falling back to a default here would lock the run
+    // into a mode the user did not type, which is the one thing the lock must not do.
+    for (const text of ["x", "qq", "stand", "1"]) {
+        expect(parseTrimExtendMode(text, TrimExtendModeLabels.quick)).toBeUndefined();
+    }
 });

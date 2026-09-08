@@ -15,6 +15,21 @@ export interface Property {
         property: string | number | symbol;
         value: any;
     }[];
+    /**
+     * When every one of these matches, the setting stays on the panel but cannot be
+     * changed.
+     *
+     * The difference from `dependencies` is what the user is told. A setting that does
+     * not apply right now should go away; a setting that applies and has been decided
+     * should stay, greyed, still saying what was decided. TRIM's mode is the second kind:
+     * once a run has started cutting there is no changing it halfway, but "which mode am
+     * I in" is exactly what the user is still asking - and a control that vanished at the
+     * first click would answer it by leaving the question nowhere on screen.
+     */
+    disabledWhen?: {
+        property: string | number | symbol;
+        value: any;
+    }[];
     combobox?: Combobox<any>;
 }
 
