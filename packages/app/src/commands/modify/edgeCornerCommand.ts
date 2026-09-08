@@ -70,15 +70,15 @@ function orderCornerEdges(
     return { edge1, edge2, index1, index2 };
 }
 
-/** Splice the corner triple into the wire edges in place of the two old edges. */
-function spliceCornerEdges(allEdges: IEdge[], corner: OrderedCorner, triple: IEdge[]): IEdge[] {
-    const [trimmed1, cornerEdge, trimmed2] = triple;
+/** Splice the corner's new edges into the wire in place of the two old ones. */
+function spliceCornerEdges(allEdges: IEdge[], corner: OrderedCorner, pieces: IEdge[]): IEdge[] {
     const { index1, index2 } = corner;
     if (index1 === allEdges.length - 1) {
-        // closed-wire wrap: the corner spans the last and the first edge
-        return [trimmed2, ...allEdges.slice(1, -1), trimmed1, cornerEdge];
+        // closed-wire wrap: the corner spans the last and the first edge, so the piece
+        // that ends the run comes back round to the front
+        return [pieces[pieces.length - 1], ...allEdges.slice(1, -1), ...pieces.slice(0, -1)];
     }
-    return [...allEdges.slice(0, index1), trimmed1, cornerEdge, trimmed2, ...allEdges.slice(index2 + 1)];
+    return [...allEdges.slice(0, index1), ...pieces, ...allEdges.slice(index2 + 1)];
 }
 
 /**
@@ -95,7 +95,12 @@ export abstract class EdgeCornerCommand extends MultiStepCommand {
     /** Apply the operation to the corner between two edges of a face. */
     protected abstract applyToFace(face: IFace, edge1: IEdge, edge2: IEdge): Result<IShape>;
 
-    /** Trim two adjacent edges and return [trimmed1, cornerEdge, trimmed2]. */
+    /**
+     * Reshape the corner between two adjacent edges, as the run of edges it becomes,
+     * ordered along the wire flow: the two trimmed edges with the corner edge between
+     * them, or just the two when the corner they now share is a sharp one and there is
+     * nothing to put between them - see FilletCommand at radius 0.
+     */
     protected abstract applyToEdgePair(edge1: IEdge, edge2: IEdge): Result<IEdge[]>;
 
     protected override executeMainTask() {
@@ -171,10 +176,10 @@ export abstract class EdgeCornerCommand extends MultiStepCommand {
         const corner = orderCornerEdges(allEdges, sub1, sub2);
         if (corner === undefined) return Result.err("Edges must belong to the wire.");
 
-        const triple = this.applyToEdgePair(corner.edge1, corner.edge2);
-        if (!triple.isOk) return triple.parse();
+        const pieces = this.applyToEdgePair(corner.edge1, corner.edge2);
+        if (!pieces.isOk) return pieces.parse();
 
-        return shapeFactory.wire(spliceCornerEdges(allEdges, corner, triple.value));
+        return shapeFactory.wire(spliceCornerEdges(allEdges, corner, pieces.value));
     }
 
     /** Apply the corner between two standalone edge bodies, keeping them as separate edges. */
@@ -190,22 +195,25 @@ export abstract class EdgeCornerCommand extends MultiStepCommand {
             return edge;
         });
 
-        const triple = this.applyToEdgePair(edge1, edge2);
-        if (!triple.isOk) {
-            PubSub.default.pub("displayError", triple.error);
+        const pieces = this.applyToEdgePair(edge1, edge2);
+        if (!pieces.isOk) {
+            PubSub.default.pub("displayError", pieces.error);
             return;
         }
 
-        this.replaceStandaloneNodes(shapes, triple.value);
+        this.replaceStandaloneNodes(shapes, pieces.value);
     }
 
     /**
-     * Replace the two standalone edge nodes by their trimmed versions and add
-     * the corner edge as a third standalone edge. The triple's geometry is in
-     * world space (the transforms were baked in), so no transform is copied.
+     * Replace the two standalone edge nodes by their trimmed versions, and add the corner
+     * edge as a third standalone edge when the corner has one - a sharp corner does not.
+     * The pieces' geometry is in world space (the transforms were baked in), so no
+     * transform is copied.
      */
-    private replaceStandaloneNodes(shapes: VisualShapeData[], triple: IEdge[]) {
-        const [trimmed1, cornerEdge, trimmed2] = triple;
+    private replaceStandaloneNodes(shapes: VisualShapeData[], pieces: IEdge[]) {
+        const trimmed1 = pieces[0];
+        const trimmed2 = pieces[pieces.length - 1];
+        const cornerEdge = pieces.length > 2 ? pieces[1] : undefined;
         const node1 = shapes[0].owner.node as ShapeNode;
         const node2 = shapes[1].owner.node as ShapeNode;
         const container1 = node1.parent ?? this.document.modelManager.rootNode;
@@ -213,7 +221,9 @@ export abstract class EdgeCornerCommand extends MultiStepCommand {
 
         container1.add(this.standaloneEdgeNode(node1, trimmed1));
         container2.add(this.standaloneEdgeNode(node2, trimmed2));
-        container1.add(this.standaloneEdgeNode(node1, cornerEdge, `${node1.name}_1`));
+        if (cornerEdge) {
+            container1.add(this.standaloneEdgeNode(node1, cornerEdge, `${node1.name}_1`));
+        }
         node1.parent?.remove(node1);
         node2.parent?.remove(node2);
         this.document.visual.update();

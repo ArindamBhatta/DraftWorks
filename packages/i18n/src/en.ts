@@ -170,6 +170,10 @@ export default {
         // Error
         "error.default:{0}": "error: {0}",
         "error.export.noNodeCanBeExported": "No node can be exported",
+        "error.fillet.zeroRadiusNeedsLines": "A zero radius can only join two straight lines",
+        "error.fillet.noCorner": "The two lines never meet, so there is no corner to make",
+        "error.fillet.cornerAlreadySharp": "These edges already meet at a sharp corner",
+        "error.fillet.zeroRadiusOnSolid": "A zero radius cannot be applied to a solid",
         "error.import.unsupportedFileType:{0}": "{0} is not a DWG or DXF drawing",
         "error.import.notDrawing": "This file is not a drawing that could be read",
         "error.import.binaryDxf:{0}": "{0} is a binary DXF, which cannot be read yet",

@@ -168,6 +168,10 @@ export const I18N_KEYS = [
     // Error
     "error.default:{0}",
     "error.export.noNodeCanBeExported",
+    "error.fillet.zeroRadiusNeedsLines",
+    "error.fillet.noCorner",
+    "error.fillet.cornerAlreadySharp",
+    "error.fillet.zeroRadiusOnSolid",
     "error.import.unsupportedFileType:{0}",
     "error.import.notDrawing",
     "error.import.binaryDxf:{0}",
