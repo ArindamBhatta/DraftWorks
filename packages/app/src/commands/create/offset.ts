@@ -169,7 +169,10 @@ export class OffsetCommand extends CancelableCommand {
         const answer = await promptForValue({
             controller: this.controller,
             statusTip: "prompt.offset.distance",
-            message: I18n.translate("prompt.offset.distance{0}", UnitSetup.formatLength(this.distance)),
+            // A distance is an answer here too, so Through is an alternative rather than
+            // the whole question - which is what keeps AutoCAD's "or".
+            choices: [{ key: "T", name: "prompt.optionName.through" }],
+            defaultAnswer: UnitSetup.formatLength(this.distance),
             parse: (text) => {
                 const parsed = parseOffsetInput(text, this.distance);
                 return parsed ? Result.ok(parsed) : Result.err<I18nKeys>("error.offset.invalidDistance");

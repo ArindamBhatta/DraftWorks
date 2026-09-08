@@ -84,7 +84,6 @@ export class Extend extends TrimExtendCommand {
             quickTarget: "prompt.select.objectToExtend.quick",
             standardTarget: "prompt.select.objectToExtend.standard",
             mode: "prompt.extend.mode",
-            modeDefault: "prompt.extend.mode{0}",
         };
     }
 

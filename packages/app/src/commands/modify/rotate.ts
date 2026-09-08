@@ -106,6 +106,7 @@ export class Rotate extends TransformedCommand {
         const options: StepOption[] = [
             {
                 key: "C",
+                name: "prompt.optionName.copy",
                 display: this.isClone ? "prompt.option.rotateInPlace" : "prompt.option.copy",
                 onSelect: () => {
                     this.isClone = !this.isClone;
@@ -115,6 +116,7 @@ export class Rotate extends TransformedCommand {
         if (!this.#referenceMode) {
             options.push({
                 key: "R",
+                name: "prompt.optionName.reference",
                 display: "prompt.option.reference",
                 onSelect: () => {
                     this.#referenceMode = true;

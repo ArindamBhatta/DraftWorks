@@ -174,6 +174,7 @@ export class Circle extends CreateFaceableCommand {
         return [
             {
                 key: toDiameter ? "D" : "R",
+                name: toDiameter ? "prompt.optionName.diameter" : "prompt.optionName.radius",
                 display: toDiameter ? "prompt.option.diameter" : "prompt.option.radius",
                 onSelect: () => {
                     this.sizeMode = toDiameter

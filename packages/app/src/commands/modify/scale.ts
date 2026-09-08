@@ -85,6 +85,7 @@ export class Scale extends TransformedCommand {
         const options: StepOption[] = [
             {
                 key: "C",
+                name: "prompt.optionName.copy",
                 display: this.isClone ? "prompt.option.scaleInPlace" : "prompt.option.scaleCopy",
                 onSelect: () => {
                     this.isClone = !this.isClone;
@@ -94,6 +95,7 @@ export class Scale extends TransformedCommand {
         if (!this.#referenceMode) {
             options.push({
                 key: "R",
+                name: "prompt.optionName.reference",
                 display: "prompt.option.scaleReference",
                 onSelect: () => {
                     this.#referenceMode = true;

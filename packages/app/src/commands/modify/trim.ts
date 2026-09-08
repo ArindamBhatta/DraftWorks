@@ -29,7 +29,6 @@ export class Trim extends TrimExtendCommand {
             quickTarget: "prompt.select.objectToTrim.quick",
             standardTarget: "prompt.select.objectToTrim.standard",
             mode: "prompt.trim.mode",
-            modeDefault: "prompt.trim.mode{0}",
         };
     }
 

@@ -25,9 +25,33 @@ import type { IView, VisualShapeData } from "../visual";
 export interface StepOption {
     /** What the user types to choose this, e.g. "3P". Matched case-insensitively. */
     key: string;
+    /**
+     * The option's own word, the way AutoCAD spells it out between the brackets:
+     * `[Close/Undo]` rather than `[C/U]`. `key` is emphasised inside it wherever it
+     * falls, which is what AutoCAD's `[mOde]` is saying - the word names the option and
+     * the letter says what to type. An option without one shows as its bare key, which
+     * reads as an abbreviation of nothing.
+     */
+    name?: I18nKeys;
     /** Human label for the option - what the key actually means, used as its tooltip. */
     display: I18nKeys;
     onSelect: () => void;
+}
+
+/**
+ * How a prompt frames the options it is offering, for the surfaces that draw them.
+ *
+ * Both fields exist because AutoCAD's prompt line says more than which options there are.
+ * `Specify next point or [Close/Undo]:` and `Enter a trim mode option [Quick/Standard]
+ * <Quick>:` are different questions: the first takes a point *or* an option, the second
+ * takes nothing but an option, and the second already has an answer that Enter alone will
+ * accept. A prompt drawn without those two facts asks the user to find out by trying.
+ */
+export interface StepOptionsPrompt {
+    /** The remembered answer, shown as AutoCAD's `<...>` - what Enter alone takes. */
+    defaultAnswer?: string;
+    /** Whether the options are the whole question, which is what drops AutoCAD's "or". */
+    optionsOnly?: boolean;
 }
 
 /**

@@ -1,19 +1,101 @@
+/*
+ * The command line proper: one docked strip across the foot of the window, and nothing
+ * else. What was said a moment ago floats over the drawing instead and expires - see
+ * CommandHistory - so this is only ever one line tall.
+ */
 .panel {
     position: relative;
-    background: var(--statusbar-background-color);
-    border-top: 1px solid var(--border-color);
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 6px;
-    padding: 2px 8px;
+    flex-direction: column;
+    background: var(--commandline-background);
+    border-top: 1px solid var(--border-color);
+    font-family: Consolas, "SF Mono", "DejaVu Sans Mono", monospace;
     font-size: 12px;
+    line-height: 17px;
 }
 
-.prompt {
-    color: var(--statusbar-foreground-color);
+/* The one live line: `> FILLET Select first object or [Radius/Trim]: ▏` */
+.live {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
+    padding: 3px 8px;
+    min-width: 0;
+}
+
+.chevron {
     flex: 0 0 auto;
+    color: var(--foreground-muted-color);
     user-select: none;
+}
+
+/* The running command, heading its own prompt. Its own colour, so that "which command
+   am I in" is answered by a glance rather than by reading. */
+.commandName {
+    flex: 0 0 auto;
+    font-weight: 700;
+    color: var(--commandline-command-color);
+    white-space: nowrap;
+    user-select: none;
+}
+
+.commandName:empty {
+    display: none;
+}
+
+.tip {
+    flex: 0 0 auto;
+    color: var(--foreground-color);
+    white-space: nowrap;
+    user-select: none;
+}
+
+/* `or [Close/Undo]:` - empty, and so invisible, whenever the live prompt offers no
+   alternatives, which is most of them. */
+.options {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.optionsText,
+.optionsBracket {
+    color: var(--foreground-muted-color);
+    white-space: nowrap;
+    user-select: none;
+}
+
+.optionsText {
+    margin-right: 4px;
+}
+
+/*
+ * One offered option. Only the words are coloured and only they are clickable, which is
+ * what makes them read as things you could have typed rather than as prompt text.
+ */
+.option {
+    padding: 0 2px;
+    color: var(--commandline-option-color);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+}
+
+.option:hover {
+    background: var(--hover-background-color);
+    border-radius: 2px;
+}
+
+/* The letter you actually type, picked out of the word the way AutoCAD capitalises it. */
+.optionHot {
+    font-weight: 700;
+    color: var(--commandline-option-hot-color);
+    text-decoration: underline;
+    text-underline-offset: 2px;
 }
 
 .input {
@@ -22,20 +104,11 @@
     background: transparent;
     border: none;
     outline: none;
-    padding: 2px 0;
+    padding: 0;
     font-family: inherit;
-    font-size: 12px;
+    font-size: inherit;
+    line-height: inherit;
     color: var(--foreground-color);
-}
-
-.message {
-    flex: 0 0 auto;
-    color: var(--statusbar-foreground-color);
-    user-select: none;
-}
-
-.error {
-    color: #e05252;
 }
 
 /* Opens upwards: the command line sits at the bottom of the window. */
@@ -43,8 +116,8 @@
     position: absolute;
     bottom: 100%;
     left: 8px;
-    min-width: 260px;
-    max-height: 220px;
+    min-width: 300px;
+    max-height: 260px;
     overflow-y: auto;
     z-index: 900;
     background: var(--panel-background-color);
@@ -56,15 +129,15 @@
 .suggestion {
     display: flex;
     flex-direction: row;
-    gap: 10px;
-    align-items: baseline;
+    gap: 8px;
+    align-items: center;
     padding: 3px 10px;
     cursor: pointer;
     color: var(--foreground-color);
 }
 
 .suggestion:hover {
-    background: var(--control-hover-background-color, rgb(127 127 127 / 20%));
+    background: var(--panel-hover-background-color);
 }
 
 .active {
@@ -72,13 +145,36 @@
     color: #fff;
 }
 
+/* The command's ribbon icon. Same picture in both places, so a command learned from the
+   ribbon is recognisable here without being read. */
+.suggestionIcon {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    fill: currentcolor;
+    object-fit: contain;
+}
+
 .alias {
     font-weight: 600;
     text-transform: uppercase;
     flex: 0 0 auto;
-    min-width: 56px;
+    min-width: 48px;
+}
+
+/* The part of the alias already typed, so the list shows what it matched on. */
+.aliasTyped {
+    color: var(--commandline-option-color);
+}
+
+.active .aliasTyped {
+    color: inherit;
+    text-decoration: underline;
 }
 
 .name {
     opacity: 0.8;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

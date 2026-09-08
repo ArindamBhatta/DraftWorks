@@ -79,6 +79,7 @@ export class Stretch extends MultiStepCommand {
     readonly #baseOptions = (): StepOption[] => [
         {
             key: "D",
+            name: "prompt.optionName.displacement",
             display: "prompt.option.displacement",
             onSelect: () => {
                 this.#displacementMode = true;

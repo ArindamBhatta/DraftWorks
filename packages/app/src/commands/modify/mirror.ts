@@ -93,6 +93,7 @@ export class Mirror extends TransformedCommand {
     readonly #eraseOptions = (): StepOption[] => [
         {
             key: "E",
+            name: "prompt.optionName.erase",
             display: this.isClone ? "prompt.option.eraseSource" : "prompt.option.keepSource",
             onSelect: () => {
                 this.isClone = !this.isClone;

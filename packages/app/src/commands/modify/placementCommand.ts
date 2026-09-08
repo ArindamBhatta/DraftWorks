@@ -36,10 +36,8 @@ export interface PlacementPrompts {
     basePoint: I18nKeys;
     secondPoint: I18nKeys;
     displacement: I18nKeys;
-    /** "Enter a copy mode option [Single/Multiple]" - the status-bar line. */
+    /** "Enter a copy mode option" - the command line's own words for the question. */
     mode?: I18nKeys;
-    /** The same question with room for the remembered answer's `<...>`. */
-    modeDefault?: I18nKeys;
 }
 
 /**
@@ -214,6 +212,7 @@ export abstract class PlacementCommand extends TransformedCommand {
         const options: StepOption[] = [
             {
                 key: "D",
+                name: "prompt.optionName.displacement",
                 display: "prompt.option.displacement",
                 onSelect: this.enterDisplacementMode,
             },
@@ -222,6 +221,7 @@ export abstract class PlacementCommand extends TransformedCommand {
         if (this.prompts.mode) {
             options.push({
                 key: "O",
+                name: "prompt.optionName.mode",
                 display: "prompt.option.mode",
                 onSelect: () => {
                     // The question needs the input box, and this prompt still holds it,
@@ -276,16 +276,21 @@ export abstract class PlacementCommand extends TransformedCommand {
      * backs out, which ends the command the way Escape at any other prompt does.
      */
     private async askPlacementMode(): Promise<boolean> {
-        const { mode, modeDefault } = this.prompts;
+        const { mode } = this.prompts;
         // Unreachable: only the `O` option sets the flag, and it is only offered when
         // this command has the question to ask.
-        if (!mode || !modeDefault) return true;
+        if (!mode) return true;
 
         this.controller = new AsyncController();
         const answer = await promptForValue({
             controller: this.controller,
             statusTip: mode,
-            message: I18n.translate(modeDefault, I18n.translate(this.placementMode)),
+            choices: [
+                { key: "S", name: PlacementModes.single },
+                { key: "M", name: PlacementModes.multiple },
+            ],
+            optionsOnly: true,
+            defaultAnswer: I18n.translate(this.placementMode),
             parse: (text) => {
                 const mode = parsePlacementMode(text, this.placementMode);
                 return mode ? Result.ok(mode) : Result.err<I18nKeys>("error.placement.invalidMode");

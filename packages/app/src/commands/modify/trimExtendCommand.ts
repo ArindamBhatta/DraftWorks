@@ -97,10 +97,8 @@ export interface TrimExtendPrompts {
     quickTarget: I18nKeys;
     /** The pick loop's question in Standard mode, where only the named edges are. */
     standardTarget: I18nKeys;
-    /** "Enter a trim mode option [Quick/Standard]" - the status-bar line. */
+    /** "Enter a trim mode option" - the command line's own words for the question. */
     mode: I18nKeys;
-    /** The same question with room for the remembered answer's `<...>`. */
-    modeDefault: I18nKeys;
 }
 
 export class EdgeFilter implements IShapeFilter {
@@ -565,6 +563,7 @@ export abstract class TrimExtendCommand extends CancelableCommand {
         return [
             {
                 key: "O",
+                name: "prompt.optionName.mode",
                 display: "prompt.option.trimExtendMode",
                 onSelect: () => {
                     // The question needs the input box and this prompt still holds it, so
@@ -588,7 +587,14 @@ export abstract class TrimExtendCommand extends CancelableCommand {
         const answer = await promptForValue({
             controller: this.controller,
             statusTip: this.prompts.mode,
-            message: I18n.translate(this.prompts.modeDefault, I18n.translate(this.trimExtendMode)),
+            // The two modes, spelled out beside the question: this prompt takes nothing
+            // else, and a mode you have never heard of cannot be typed from memory.
+            choices: [
+                { key: "Q", name: TrimExtendModeLabels.quick },
+                { key: "S", name: TrimExtendModeLabels.standard },
+            ],
+            optionsOnly: true,
+            defaultAnswer: I18n.translate(this.trimExtendMode),
             parse: (text) => {
                 const mode = parseTrimExtendMode(text, this.trimExtendMode);
                 return mode ? Result.ok(mode) : Result.err<I18nKeys>("error.trimExtend.invalidMode");

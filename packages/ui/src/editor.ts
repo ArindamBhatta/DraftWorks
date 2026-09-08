@@ -11,7 +11,7 @@ import {
     type Ribbon,
 } from "@chili3d/core";
 import { div } from "@chili3d/element";
-import { CommandLine } from "./commandLine";
+import { CommandHistory, CommandLine } from "./commandLine";
 import style from "./editor.module.css";
 import { MaterialDataContent, MaterialEditor } from "./property/material";
 import { RibbonUI } from "./ribbon";
@@ -20,11 +20,13 @@ import { Statusbar } from "./statusbar";
 import { LayoutViewport } from "./viewport";
 
 /**
- * The whole window below the ribbon: drawing area, command line, status bar.
+ * The whole window below the ribbon: drawing area, command line, status bar - with the
+ * command line's recent output floating over the drawing rather than docked under it.
  *
  * There is no sidebar. The document tree and the properties list used to live down the
  * left; properties are now AutoCAD's floating palette, opened on demand by the PROPERTIES
- * command (`PR`), which leaves the drawing the full width of the window.
+ * command (`PR`), which leaves the drawing the full width of the window. Only the line
+ * being answered is worth a permanent strip of it - see CommandHistory for the rest.
  */
 export class Editor extends HTMLElement {
     private readonly _viewportContainer: HTMLDivElement;
@@ -38,7 +40,9 @@ export class Editor extends HTMLElement {
         super();
         const viewport = new LayoutViewport(app);
         viewport.classList.add(style.viewport);
-        this._viewportContainer = div({ className: style.viewportContainer }, viewport);
+        // The recent-lines stack floats over the drawing rather than taking a strip of
+        // it, so it belongs to the viewport - see CommandHistory's own stylesheet.
+        this._viewportContainer = div({ className: style.viewportContainer }, viewport, new CommandHistory());
         this.render();
     }
 

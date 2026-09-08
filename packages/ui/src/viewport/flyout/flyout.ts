@@ -1,17 +1,22 @@
 // Part of the Chili3d Project, under the AGPL-3.0 License.
 // See LICENSE file in the project root for full license information.
 
-import { type DynamicInputState, type I18nKeys, type MessageType, PubSub, type Result } from "@chili3d/core";
+import { type DynamicInputState, type MessageType, PubSub } from "@chili3d/core";
 import { DynamicInput } from "./dynamicInput";
 import style from "./flyout.module.css";
-import { Input } from "./input";
 import { Tip } from "./tip";
 
+/**
+ * What follows the crosshair: the prompt tip and the live distance/angle boxes.
+ *
+ * Typed text used to be taken here too, in a third box that appeared under the cursor.
+ * It is taken on the command line now - see CommandLine - which is where a command line
+ * user is already looking. The dimension boxes stay: a number typed during a pick is a
+ * distance or an angle, and those belong beside the geometry they measure.
+ */
 export class Flyout extends HTMLElement {
     private _tip: HTMLElement | undefined;
-    private _input: Input | undefined;
     private _dynamicInput: DynamicInput | undefined;
-    private lastFocus: HTMLElement | null = null;
 
     constructor() {
         super();
@@ -21,8 +26,6 @@ export class Flyout extends HTMLElement {
     connectedCallback(): void {
         PubSub.default.sub("showFloatTip", this.showTip);
         PubSub.default.sub("clearFloatTip", this.clearTip);
-        PubSub.default.sub("showInput", this.displayInput);
-        PubSub.default.sub("clearInput", this.clearInput);
         PubSub.default.sub("showDynamicInput", this.showDynamicInput);
         PubSub.default.sub("clearDynamicInput", this.clearDynamicInput);
         PubSub.default.sub("focusDynamicInput", this.focusDynamicInput);
@@ -31,8 +34,6 @@ export class Flyout extends HTMLElement {
     disconnectedCallback(): void {
         PubSub.default.remove("showFloatTip", this.showTip);
         PubSub.default.remove("clearFloatTip", this.clearTip);
-        PubSub.default.remove("showInput", this.displayInput);
-        PubSub.default.remove("clearInput", this.clearInput);
         PubSub.default.remove("showDynamicInput", this.showDynamicInput);
         PubSub.default.remove("clearDynamicInput", this.clearDynamicInput);
         PubSub.default.remove("focusDynamicInput", this.focusDynamicInput);
@@ -84,33 +85,6 @@ export class Flyout extends HTMLElement {
         if (this._tip !== undefined) {
             this._tip.remove();
             this._tip = undefined;
-        }
-    };
-
-    private readonly displayInput = (
-        text: string,
-        handler: (text: string) => Result<string, I18nKeys>,
-        onCancelled?: () => void,
-    ) => {
-        if (this._input === undefined) {
-            this.lastFocus = document.activeElement as HTMLElement;
-            this._input = new Input(text, handler);
-            this._input.onCancelled(() => {
-                this.clearInput();
-                onCancelled?.();
-            });
-            this._input.onCompleted(this.clearInput);
-            this.append(this._input);
-            setTimeout(() => this._input?.focus());
-        }
-    };
-
-    private readonly clearInput = () => {
-        if (this._input !== undefined) {
-            this.removeChild(this._input);
-            this._input.dispose();
-            this._input = undefined;
-            this.lastFocus?.focus();
         }
     };
 }

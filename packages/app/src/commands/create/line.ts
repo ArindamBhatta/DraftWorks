@@ -100,10 +100,20 @@ export class Line extends CreateCommand {
     readonly #runOptions = (): StepOption[] => {
         const options: StepOption[] = [];
         if (this.#runNodes.length >= 2 && this.#canCloseRun()) {
-            options.push({ key: "C", display: "prompt.option.close", onSelect: this.#closeRun });
+            options.push({
+                key: "C",
+                name: "prompt.optionName.close",
+                display: "prompt.option.close",
+                onSelect: this.#closeRun,
+            });
         }
         if (this.#runNodes.length >= 1) {
-            options.push({ key: "U", display: "prompt.option.undo", onSelect: this.#undoSegment });
+            options.push({
+                key: "U",
+                name: "prompt.optionName.undo",
+                display: "prompt.option.undo",
+                onSelect: this.#undoSegment,
+            });
         }
         return options;
     };

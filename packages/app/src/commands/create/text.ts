@@ -85,7 +85,7 @@ abstract class TextCommandBase extends CancelableCommand {
         const answer = await promptForValue({
             controller: this.controller,
             statusTip: "prompt.text.height",
-            message: I18n.translate("prompt.text.height{0}", UnitSetup.formatLength(this.height)),
+            defaultAnswer: UnitSetup.formatLength(this.height),
             parse: (text) => {
                 const parsed = parseTextHeight(text, this.height);
                 return parsed === undefined
@@ -166,7 +166,7 @@ export class SingleLineText extends TextCommandBase {
         const answer = await promptForValue({
             controller: this.controller,
             statusTip: "prompt.text.rotation",
-            message: I18n.translate("prompt.text.rotation{0}", this.rotation.toString()),
+            defaultAnswer: this.rotation.toString(),
             parse: (text) => {
                 const parsed = parseTextRotation(text, this.rotation);
                 return parsed === undefined
@@ -185,7 +185,6 @@ export class SingleLineText extends TextCommandBase {
         return promptForValue({
             controller: this.controller,
             statusTip: "prompt.text.content",
-            message: I18n.translate("prompt.text.content"),
             parse: (text) => (text === "" ? Result.err<I18nKeys>("error.text.empty") : Result.ok(text)),
         });
     }

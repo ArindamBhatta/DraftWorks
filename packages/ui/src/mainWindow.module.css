@@ -88,6 +88,13 @@ chili3d-main-window {
     --title-checked: #ffffff;
     --statusbar-foreground-color: #333;
     --statusbar-background-color: #eeeeee;
+    --commandline-background: #fbfbfb;
+    /* The recent lines float over the drawing, so their ground is see-through. */
+    --commandline-history-background: rgba(255, 255, 255, 0.93);
+    /* The running command's name - its own colour, away from the option blue. */
+    --commandline-command-color: #8a5300;
+    --commandline-option-color: #0e62d7;
+    --commandline-option-hot-color: #0a4285;
     --viewport-background-color: #888;
     --input-background-color: #ffffff;
     --input-border-color: #dddddd;
@@ -126,6 +133,11 @@ chili3d-main-window {
     --title-checked: #2a2a2a;
     --statusbar-foreground-color: #ffffff;
     --statusbar-background-color: #1a1a1a;
+    --commandline-background: #141414;
+    --commandline-history-background: rgba(38, 38, 38, 0.93);
+    --commandline-command-color: #e8a33d;
+    --commandline-option-color: #4a9eff;
+    --commandline-option-hot-color: #8fc9ff;
     --viewport-background-color: #242424;
     --input-background-color: #1e1e1e;
     --input-border-color: #404040;

@@ -1,0 +1,75 @@
+/*
+ * The stack of recent lines, over the drawing at its bottom-left corner - just above the
+ * command line, where the eye already is.
+ *
+ * It never takes the pointer: these are messages on their way out, and a click meant for
+ * the drawing should reach the drawing.
+ */
+.stack {
+    position: absolute;
+    /* Clear of the UCS icon, which owns the bottom-left corner - see viewport.module.css. */
+    left: 50%;
+    bottom: 8px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    pointer-events: none;
+    font-family: Consolas, "SF Mono", "DejaVu Sans Mono", monospace;
+    font-size: 12px;
+    line-height: 16px;
+}
+
+/*
+ * One line. The border does the work the ground cannot: over a drawing this sits on
+ * whatever colour happens to be under it, and a soft edge is what keeps a message legible
+ * against grid lines it has landed on.
+ */
+.line {
+    padding: 2px 8px;
+    border: 0.5px solid var(--border-color);
+    border-radius: 3px;
+    background: var(--commandline-history-background);
+    backdrop-filter: blur(4px);
+    box-shadow: var(--panel-shadow);
+    white-space: pre-wrap;
+    max-width: min(640px, 60vw);
+    opacity: 1;
+    transition:
+        opacity 200ms ease,
+        transform 200ms ease;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .line {
+        animation: rise 320ms ease-out;
+    }
+}
+
+@keyframes rise {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+}
+
+/* Fading out. Removed once the transition has had its time - see CommandHistory.show. */
+.leaving {
+    opacity: 0;
+    transform: translateY(-2px);
+}
+
+/* What was asked for and what was answered - the spine of the exchange. */
+.command {
+    color: var(--foreground-color);
+}
+
+/* What the command said back. Quieter, because it is context rather than record. */
+.prompt {
+    color: var(--foreground-secondary-color);
+}
+
+.error {
+    color: var(--error-color);
+}

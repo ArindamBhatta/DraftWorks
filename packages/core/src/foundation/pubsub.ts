@@ -29,7 +29,7 @@ import type { IDocument } from "../document";
 import type { I18nKeys } from "../i18n";
 import type { Material } from "../material";
 import type { INode } from "../model";
-import type { DynamicInputState, StepOption } from "../snap";
+import type { DynamicInputState, StepOption, StepOptionsPrompt } from "../snap";
 import type { DialogButton, FloatPanelOptions } from "../ui";
 import type { CursorType, IView } from "../visual";
 import type { AsyncController } from "./asyncController";
@@ -112,7 +112,12 @@ export interface PubSubEventMap {
      * option changes what the remaining options are - see the Circle command's
      * Radius/Diameter pair, which swap places once one is chosen.
      */
-    showStepOptions: (options: StepOption[]) => void;
+    /**
+     * The alternatives the live prompt is offering, and how it is framing them. `prompt`
+     * is optional because most publishers are picks that take a point as well as an
+     * option and have no remembered answer - which is exactly what its absence means.
+     */
+    showStepOptions: (options: StepOption[], prompt?: StepOptionsPrompt) => void;
     showToast: (message: I18nKeys, ...args: any[]) => void;
     statusBarTip: (tip: I18nKeys) => void;
     viewClosed: (view: IView) => void;

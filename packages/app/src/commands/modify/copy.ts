@@ -48,7 +48,6 @@ export class Copy extends PlacementCommand {
             secondPoint: "prompt.copy.secondPoint",
             displacement: "prompt.copy.displacement",
             mode: "prompt.copy.mode",
-            modeDefault: "prompt.copy.mode{0}",
         };
     }
 }
