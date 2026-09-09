@@ -78,6 +78,16 @@ export const CommandAliases: Partial<Record<CommandKeys, string[]>> = {
     "units.setup": ["un", "units", "ddunits"],
     "layer.moveToCurrent": ["laymcur", "movetolayer"],
     "layer.setup": ["la", "layer", "ddlmodes"],
+    // The LAY* quick actions, under the names AutoCAD gives them.
+    "layer.off": ["layoff"],
+    "layer.on": ["layon"],
+    "layer.isolate": ["layiso"],
+    "layer.unisolate": ["layuniso"],
+    "layer.freeze": ["layfrz"],
+    "layer.thaw": ["laythw"],
+    "layer.lock": ["laylck"],
+    "layer.unlock": ["layulk"],
+    "layer.copyToNew": ["copytolayer"],
     "convert.toWire": ["towire"],
     "convert.toFace": ["toface"],
 };

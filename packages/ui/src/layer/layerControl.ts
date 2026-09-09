@@ -95,6 +95,7 @@ export class LayerControl extends HTMLElement {
         const current = manager.currentLayer;
         this.face.replaceChildren(
             this.visibleToggle(current),
+            this.freezeToggle(current),
             this.lockToggle(current),
             this.colorSwatch(current),
             span({ className: style.name, title: current.name, textContent: current.name }),
@@ -116,6 +117,22 @@ export class LayerControl extends HTMLElement {
             onclick: (e) => {
                 e.stopPropagation();
                 layer.visible = !layer.visible;
+            },
+        });
+    }
+
+    /**
+     * AutoCAD's combo carries freeze between the bulb and the padlock, so all three of
+     * the ways a layer can be taken out of the way sit together.
+     */
+    private freezeToggle(layer: Layer) {
+        return svg({
+            icon: layer.frozen ? "icon-freeze" : "icon-thaw",
+            className: style.toggle,
+            title: new Localize("layer.toggleFreeze"),
+            onclick: (e) => {
+                e.stopPropagation();
+                layer.frozen = !layer.frozen;
             },
         });
     }
@@ -176,6 +193,7 @@ export class LayerControl extends HTMLElement {
                 },
             },
             this.visibleToggle(layer),
+            this.freezeToggle(layer),
             this.lockToggle(layer),
             this.colorSwatch(layer),
             span({ className: style.name, title: layer.name, textContent: layer.name }),

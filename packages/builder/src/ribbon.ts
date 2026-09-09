@@ -43,9 +43,13 @@ export const DefaultRibbon: RibbonTabProfile[] = [
             //Layer
             {
                 groupName: "ribbon.group.layer",
-                // AutoCAD's Layers panel: the layer tools on top, the layer combo
-                // underneath, which is where the current layer is actually read and set.
-                items: [["layer.setup", "layer.moveToCurrent"], { type: "widget", widget: "layerControl" }],
+                // AutoCAD's Layers panel, as one widget rather than a row of buttons:
+                // Layer Properties on the left, and beside it the current-layer combo
+                // over the two rows of LAY* quick actions. See LayersRibbonPanel.
+                items: [{ type: "widget", widget: "layersPanel" }],
+                // Move To Layer has no square in AutoCAD's grid, so it lives behind the
+                // group's overflow arrow rather than being squeezed in as an eleventh.
+                collapsedItems: ["layer.moveToCurrent"],
             },
             //Tools
             {

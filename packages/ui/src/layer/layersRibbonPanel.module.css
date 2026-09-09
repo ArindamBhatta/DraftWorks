@@ -1,0 +1,139 @@
+/* AutoCAD's Layers panel: the Layer Properties button standing on its own at the left,
+   and to its right a column of the current-layer combo over a 5 x 2 grid of quick
+   actions. Everything is sized to fit the ribbon group's fixed 72px content height
+   (see ribbonGroup.module.css .content) without scrolling or clipping. */
+
+.root {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 4px;
+    padding: 1px 4px;
+    box-sizing: border-box;
+}
+
+/* --- Layer Properties, the standalone button --- */
+
+.properties {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 3px;
+    width: 62px;
+    flex: 0 0 auto;
+    padding: 4px 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+
+    &:hover {
+        background-color: var(--hover-background-color);
+    }
+
+    &:active {
+        background-color: var(--active-background-color);
+    }
+}
+
+.propertiesLabel {
+    font-size: 11px;
+    line-height: 1.15;
+    text-align: center;
+    color: var(--foreground-color);
+    /* "Layer Properties" is meant to wrap onto two lines here, as it does in AutoCAD. */
+    overflow-wrap: break-word;
+}
+
+/* --- The right-hand column: combo on top, quick actions below --- */
+
+.stack {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    min-width: 0;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(5, auto);
+    justify-content: start;
+    gap: 2px;
+}
+
+.action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1px;
+    border-radius: 3px;
+    cursor: pointer;
+
+    &:hover {
+        background-color: var(--hover-background-color);
+    }
+
+    &:active {
+        background-color: var(--active-background-color);
+    }
+}
+
+/* --- The composite glyph ---
+
+   Every AutoCAD layer tool is drawn as the same stack of sheets wearing a small badge
+   that says what it does to them. Rather than authoring ten new sprite symbols, each is
+   composed here from two icons the sprite already has: icon-layer-group underneath, the
+   state icon on the corner. That keeps these buttons in the same flat iconography as the
+   rest of the toolbars, and means a later restyle of icon-layer-group carries across all
+   ten for free.
+
+   Icons that carry their own colour in the sprite (icon-freeze and icon-thaw are drawn
+   in AutoCAD's blue) keep it; the rest inherit currentColor, so the pair reads as
+   monochrome with an occasional accent, the way the real panel does. */
+
+.glyph {
+    position: relative;
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    color: var(--foreground-color);
+}
+
+.glyphLarge {
+    position: relative;
+    flex: 0 0 auto;
+    width: 28px;
+    height: 28px;
+    color: var(--foreground-color);
+}
+
+.glyphBase {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.glyphBadge {
+    position: absolute;
+    /* Hung off the stack's lower-left corner rather than sitting on top of it. The badge
+       is the half that says which tool this is, so it gets the clear space; overlapping
+       it with the stack's own hatching is what makes a 12px glyph unreadable. */
+    left: -3px;
+    bottom: -3px;
+    width: 12px;
+    height: 12px;
+    /* Three passes of a 1px shadow in the page colour knock a hole in the stack behind
+       the badge. Follows the badge's real shape, and re-colours with the theme - a solid
+       disc behind it would not survive the button's hover background. */
+    filter: drop-shadow(0 0 1px var(--background-color)) drop-shadow(0 0 1px var(--background-color))
+        drop-shadow(0 0 1px var(--background-color));
+}
+
+.glyphLarge .glyphBadge {
+    left: auto;
+    right: -1px;
+    bottom: -1px;
+    width: 15px;
+    height: 15px;
+}
