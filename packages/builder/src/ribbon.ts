@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 import type { RibbonTabProfile } from "@chili3d/core";
 
 export const DefaultRibbon: RibbonTabProfile[] = [
@@ -30,6 +27,7 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                     "create.hatch",
                 ],
             },
+            //Modify
             {
                 groupName: "ribbon.group.modify",
                 items: [
@@ -37,7 +35,7 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                     ["modify.rotate", "modify.mirror", "modify.scale"],
                     ["modify.trim", "modify.extend", "modify.fillet"],
                     ["modify.array", "modify.explode", "modify.chamfer"],
-                    ["modify.join", "modify.matchProp"],
+                    ["modify.join", "create.offset", "modify.matchProp"],
                 ],
             },
             //Layer
@@ -51,21 +49,20 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                 // group's overflow arrow rather than being squeezed in as an eleventh.
                 collapsedItems: ["layer.moveToCurrent"],
             },
+
             //Tools
             {
                 groupName: "ribbon.group.tools",
-                items: [
-                    "units.setup",
-                    "dimension.setup",
-                    "create.group",
-                    ["create.offset", "create.copyShape"],
-                ],
+                items: ["units.setup", "dimension.setup"],
             },
 
+            //Annotation
             {
                 groupName: "ribbon.group.annotation",
                 items: [{ type: "split", items: ["create.text", "create.mtext"] }],
             },
+
+            //Dimension
             {
                 groupName: "ribbon.group.dimension",
                 items: [
@@ -75,6 +72,7 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                     { type: "split", items: ["dimension.angular"] },
                 ],
             },
+
             {
                 groupName: "ribbon.group.importExport",
                 // The Autosave readout rides along here because this is the file group

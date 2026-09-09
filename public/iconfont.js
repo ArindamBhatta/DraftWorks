@@ -1016,6 +1016,13 @@ window._iconfont_svg_string_3585225 = `
     <path d="M576 288h384v72H576zM576 460h384v72H576zM576 632h288v72H576z">
     </path>
   </symbol>
+  <!-- used by: Units (units.setup) -->
+  <symbol id="icon-units" viewBox="0 0 1024 1024">
+    <path d="M64 352h896v320H64V352z m64 64v192h768V416H128z">
+    </path>
+    <path d="M256 416h32v112h-32zM496 416h32v112h-32zM736 416h32v112h-32zM376 416h32v64h-32zM616 416h32v64h-32zM856 416h32v64h-32z">
+    </path>
+  </symbol>
 </svg>
 `;
 

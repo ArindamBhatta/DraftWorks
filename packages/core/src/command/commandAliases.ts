@@ -52,8 +52,6 @@ export const CommandAliases: Partial<Record<CommandKeys, string[]>> = {
     "modify.properties": ["pr", "ch", "mo", "props", "properties", "ddmodify"],
     "modify.deleteNode": ["e", "erase", "del", "delete"],
     "create.offset": ["o", "off", "offset"],
-    "create.copyShape": ["co", "cp", "copy"],
-    "create.group": ["g", "group"],
     "create.folder": ["fo", "folder"],
 
     // Annotation and dimensions
