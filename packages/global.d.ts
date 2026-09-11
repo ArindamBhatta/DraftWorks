@@ -35,6 +35,13 @@ declare namespace jest {
     interface Matchers<R, T> {}
 }
 
+// @google/genai's declarations reference the Model Context Protocol SDK, an optional
+// peer behind its MCP tool support. This app calls generateContent directly and never
+// reaches that path, so shim the type rather than take on the dependency.
+declare module "@modelcontextprotocol/sdk/client/index.js" {
+    export type Client = unknown;
+}
+
 declare var __APP_VERSION__: string;
 declare var __DOCUMENT_VERSION__: string;
 declare var __IS_PRODUCTION__: boolean;

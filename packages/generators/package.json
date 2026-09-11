@@ -1,0 +1,9 @@
+{
+    "name": "@chili3d/generators",
+    "version": "0.7.0-beta",
+    "description": "Deterministic parametric drawing generators - pure geometry, no document or network dependency.",
+    "main": "src/index.ts",
+    "devDependencies": {
+        "@chili3d/core": "*"
+    }
+}

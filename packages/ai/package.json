@@ -1,0 +1,14 @@
+{
+    "name": "@chili3d/ai",
+    "version": "0.7.0-beta",
+    "description": "Maps a draftsman's plain-language request onto a registered drawing generator.",
+    "main": "src/index.ts",
+    "devDependencies": {
+        "@chili3d/core": "*",
+        "@chili3d/generators": "*"
+    },
+    "dependencies": {
+        "@anthropic-ai/sdk": "^0.71.0",
+        "@google/genai": "^2.19.0"
+    }
+}

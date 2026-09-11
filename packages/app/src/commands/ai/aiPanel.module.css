@@ -1,0 +1,206 @@
+.root {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    gap: 8px;
+    padding: 8px;
+    box-sizing: border-box;
+    font-size: 13px;
+}
+
+.tabs {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 2px;
+    border-bottom: 1px solid rgba(127, 127, 127, 0.3);
+}
+
+.tab {
+    flex: 1 1 0;
+    padding: 5px 4px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: inherit;
+    font: inherit;
+    opacity: 0.6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.tab:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.tab:disabled {
+    cursor: default;
+}
+
+.activeTab {
+    opacity: 1;
+    font-weight: 600;
+    border-bottom-color: var(--primary-color, #4c86d6);
+}
+
+.transcript {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-right: 4px;
+}
+
+.entry {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.request {
+    align-self: flex-end;
+    max-width: 85%;
+    padding: 5px 9px;
+    border-radius: 10px;
+    background-color: var(--panel-background-color, rgba(127, 127, 127, 0.16));
+}
+
+.label {
+    opacity: 0.65;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.summary {
+    font-weight: 600;
+}
+
+.note {
+    opacity: 0.75;
+    line-height: 1.45;
+}
+
+.error {
+    color: var(--error-color, #d05050);
+    line-height: 1.45;
+}
+
+.preview {
+    align-self: flex-start;
+    max-width: 100%;
+    border: 1px solid rgba(127, 127, 127, 0.35);
+    border-radius: 6px;
+    padding: 6px;
+    overflow: hidden;
+}
+
+.preview svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+.question {
+    line-height: 1.4;
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 2px;
+}
+
+.chip {
+    padding: 3px 9px;
+    border: 1px solid rgba(127, 127, 127, 0.45);
+    border-radius: 11px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.chip:hover {
+    border-color: rgba(127, 127, 127, 0.85);
+}
+
+.chosen {
+    border-color: transparent;
+    background-color: var(--primary-color, #4c86d6);
+    color: #fff;
+}
+
+.examples {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    opacity: 0.7;
+    font-style: italic;
+}
+
+.form {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 8px;
+    align-items: center;
+    border: 1px solid rgba(127, 127, 127, 0.35);
+    border-radius: 6px;
+    padding: 8px;
+}
+
+.form label {
+    opacity: 0.8;
+    white-space: nowrap;
+}
+
+.form input,
+.form select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 2px 4px;
+}
+
+.footer {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.input {
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+    min-height: 52px;
+    padding: 6px;
+    font: inherit;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.actions button {
+    padding: 4px 12px;
+    cursor: pointer;
+}
+
+.link {
+    margin-left: auto;
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+    opacity: 0.7;
+    cursor: pointer;
+    text-decoration: underline;
+    font: inherit;
+}

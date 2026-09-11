@@ -3,6 +3,23 @@
 */
 
 export const I18N_KEYS = [
+    // AI
+    "ai.adjust",
+    "ai.apply",
+    "ai.draw",
+    "ai.drawn",
+    "ai.drawnOn",
+    "ai.emptyRequest",
+    "ai.freeformNote",
+    "ai.examples",
+    "ai.header",
+    "ai.needsKey",
+    "ai.noDocument",
+    "ai.openSettings",
+    "ai.questions",
+    "ai.skipQuestions",
+    "ai.thinking",
+    "ai.understood",
     // Annotation
     "annotation",
     "annotation.dimension",
@@ -53,6 +70,8 @@ export const I18N_KEYS = [
     "circle.center",
     "circle.radius",
     // Command
+    "command.ai.draft",
+    "command.ai.setup",
     "command.convert.toFace",
     "command.convert.toWire",
     "command.create.arc",
@@ -152,6 +171,13 @@ export const I18N_KEYS = [
     "common.trust",
     "common.dontTrust",
     // Dialog
+    "dialog.title.aiBaseUrl",
+    "dialog.title.aiKey",
+    "dialog.title.aiKeyNote",
+    "dialog.title.aiModel",
+    "dialog.title.aiModelNote",
+    "dialog.title.aiProvider",
+    "dialog.title.aiSetup",
     "dialog.title.dimensionSetup",
     "dialog.title.dimGeometry",
     "dialog.title.dimPreview",
@@ -590,6 +616,7 @@ export const I18N_KEYS = [
     "rect.dy",
     // Ribbon
     "ribbon.group.2d",
+    "ribbon.group.ai",
     "ribbon.group.annotation",
     "ribbon.group.converter",
     "ribbon.group.dimension",
@@ -630,6 +657,7 @@ export const I18N_KEYS = [
     "statusBar.snap",
     "statusBar.tracking",
     // Toast
+    "toast.ai.drawn",
     "toast.command.{0}excuting",
     "toast.converter.error",
     "toast.converter.invalidColor",

@@ -73,12 +73,22 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                 ],
             },
 
+            //import/Export
             {
                 groupName: "ribbon.group.importExport",
                 // The Autosave readout rides along here because this is the file group
                 // and there is no Save button any more - saving is automatic, and this is
                 // where a user goes looking for it before they believe that.
                 items: ["file.import", "file.export", { type: "widget", widget: "autosaveStatus" }],
+            },
+
+            //AI
+            {
+                groupName: "ribbon.group.ai",
+                // Draft opens the prompt palette; Setup is where the API key goes, and it
+                // sits beside Draft rather than in Tools because a key is the first thing
+                // Draft asks for and the only thing that can stop it working.
+                items: ["ai.draft", "ai.setup"],
             },
         ],
     },

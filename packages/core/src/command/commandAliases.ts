@@ -12,6 +12,9 @@ import type { CommandKeys } from "./commandKeys";
  * reachable whether or not it has an alias here.
  */
 export const CommandAliases: Partial<Record<CommandKeys, string[]>> = {
+    // AI
+    "ai.draft": ["ai", "draft"],
+    "ai.setup": ["aiset", "aisetup"],
     // Draw
     "create.line": ["l", "line"],
     // "r" is not AutoCAD's (there it is REDRAW, which this app has no need of), but it

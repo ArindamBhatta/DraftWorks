@@ -4,6 +4,25 @@ export default {
     display: "English",
     language: "en",
     translation: {
+        // AI
+        "ai.adjust": "Adjust",
+        "ai.apply": "Redraw",
+        "ai.draw": "Draw",
+        "ai.drawn": "Drawn on the WALL, DOOR, WINDOW and TEXT layers.",
+        "ai.drawnOn": "Drawn on the {0} layers.",
+        "ai.emptyRequest": "Describe the drawing you want.",
+        "ai.freeformNote":
+            "This one was drawn from the model's own geometry rather than a built-in drawing, so check the dimensions before you build on it.",
+        "ai.examples": "For example:",
+        "ai.header": "AI Draft",
+        "ai.needsKey":
+            "Add an API key in the AI settings to describe drawings in your own words. Without one you can still fill the parameters in yourself.",
+        "ai.noDocument": "Open or start a drawing first.",
+        "ai.openSettings": "AI settings",
+        "ai.questions": "Before I draw",
+        "ai.skipQuestions": "Just draw it",
+        "ai.thinking": "Reading the request…",
+        "ai.understood": "Understood as",
         // Annotation
         annotation: "Annotation",
         "annotation.dimension": "Dimension",
@@ -54,6 +73,8 @@ export default {
         "circle.center": "Center",
         "circle.radius": "Radius",
         // Command
+        "command.ai.draft": "AI Draft",
+        "command.ai.setup": "AI Setup",
         "command.convert.toFace": "To Face",
         "command.convert.toWire": "To Wire",
         "command.create.arc": "Arc",
@@ -154,6 +175,14 @@ export default {
         "common.trust": "Trust",
         "common.dontTrust": "Don't Trust",
         // Dialog
+        "dialog.title.aiBaseUrl": "Proxy URL (optional)",
+        "dialog.title.aiKey": "{0} API key",
+        "dialog.title.aiKeyNote":
+            "DraftWorks has no server, so the key is stored in this browser and anything running on this page can read it. Use a key created for this alone, or route requests through your own proxy below.",
+        "dialog.title.aiModel": "Model id",
+        "dialog.title.aiModelNote": "Use the API model id, not the display name - lowercase with hyphens.",
+        "dialog.title.aiProvider": "Provider",
+        "dialog.title.aiSetup": "AI Setup",
         "dialog.title.dimensionSetup": "Dimension Style",
         "dialog.title.dimGeometry": "Lines and Arrows",
         "dialog.title.dimPreview": "Preview",
@@ -590,6 +619,7 @@ export default {
         "rect.dy": "Width",
         // Ribbon
         "ribbon.group.2d": "2D",
+        "ribbon.group.ai": "AI",
         "ribbon.group.annotation": "Annotation",
         "ribbon.group.converter": "Converter",
         "ribbon.group.dimension": "Dimension",
@@ -630,6 +660,7 @@ export default {
         "statusBar.snap": "Snap",
         "statusBar.tracking": "Tracking",
         // Toast
+        "toast.ai.drawn": "Drawing added",
         "toast.command.{0}excuting": "Command {0} is runing",
         "toast.converter.error": "Converter error",
         "toast.converter.invalidColor": "The color is invalid",
