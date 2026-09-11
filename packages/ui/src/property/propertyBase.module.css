@@ -1,3 +1,13 @@
+/*
+ * Rows sit flush against each other with a hairline between, so a section reads as one
+ * table. The spacing that used to separate them made three rows of a coordinate look
+ * like three unrelated settings.
+ */
 .panel {
-    margin: 3px 0;
+    display: block;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.panel:last-child {
+    border-bottom: none;
 }

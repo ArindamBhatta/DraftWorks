@@ -37,7 +37,7 @@ export class RegularPolygonNode extends FacebaseNode {
     }
 
     @serialize()
-    @property("circle.radius")
+    @property("circle.radius", { type: "length" })
     get radius() {
         return this.getPrivateValue("radius");
     }

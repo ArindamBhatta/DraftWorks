@@ -1,14 +1,47 @@
+/*
+ * One row of the Properties palette. AutoCAD lays its palette out as two columns -
+ * names down the left, values down the right, every value starting at the same x - so
+ * this is a fixed grid rather than a flex row that lets each label size itself and
+ * leaves the values in a ragged line.
+ */
 .panel {
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: 44% 1fr;
     align-items: center;
+    min-height: 22px;
     position: relative;
 }
 
 .propertyName {
-    font-size: 14px;
-    opacity: 0.75;
+    font-size: 12px;
+    color: var(--foreground-secondary-color);
+    padding: 0 6px 0 4px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* The value cell of a row that picks from a list - Layer, Linetype. */
+.select {
+    width: 100%;
+    min-width: 0;
+    font: inherit;
+    font-size: 12px;
+    padding: 1px 2px;
+    outline: none;
+    background-color: transparent;
     color: var(--foreground-color);
-    min-width: 72px;
-    flex: 0 1 auto;
+
+    border: 1px solid transparent;
+    border-radius: 2px;
+    margin: 0px;
+
+    &:hover {
+        background-color: var(--panel-hover-background-color);
+    }
+
+    &:focus {
+        border-color: var(--primary-color);
+        background-color: var(--input-background-color);
+    }
 }

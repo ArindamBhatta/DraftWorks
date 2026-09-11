@@ -132,6 +132,7 @@ export default {
         "common.general": "General",
         "common.isGroup": "Group",
         "common.language": "Language",
+        "common.layer": "Layer",
         "common.length": "Length",
         "common.lineType": "Linetype",
         "common.location": "Location",
@@ -326,6 +327,16 @@ export default {
         "error.select.twoEdges": "Please select two adjacent edges",
         // File
         "file.format": "Format",
+        // Geometry
+        "geometry.axis.x": "X",
+        "geometry.axis.y": "Y",
+        "geometry.axis.z": "Z",
+        "geometry.circumference": "Circumference",
+        "geometry.deltaX": "Delta X",
+        "geometry.deltaY": "Delta Y",
+        "geometry.deltaZ": "Delta Z",
+        "geometry.diameter": "Diameter",
+        "geometry.perimeter": "Perimeter",
         // Hatch
         "hatch.pattern": "Pattern",
         "hatch.pattern.brick": "Brick",
@@ -561,10 +572,14 @@ export default {
         "prompt.select.objectToExtend.standard": "Select object to extend (only the boundary edges stop it)",
         "prompt.selectedCount": "Selected",
         // Properties
+        "properties.allSelected": "All",
+        "properties.group.general": "General",
+        "properties.group.geometry": "Geometry",
+        "properties.group.misc": "Misc",
         "properties.group.transform": "Transform",
         "properties.header": "Properties",
-        "properties.multivalue": "Multi Value",
-        "properties.noSelection": "No object selected",
+        "properties.multivalue": "*VARIES*",
+        "properties.noSelection": "No selection",
         // Rect
         "rect.dx": "Length",
         "rect.dy": "Width",

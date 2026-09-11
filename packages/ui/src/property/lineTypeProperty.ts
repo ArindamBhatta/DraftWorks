@@ -12,7 +12,6 @@ import {
 } from "@chili3d/core";
 import { div, label, option, select } from "@chili3d/element";
 import commonStyle from "./common.module.css";
-import style from "./lineTypeProperty.module.css";
 import { PropertyBase } from "./propertyBase";
 
 /** In AutoCAD's own dropdown order: Continuous first, then the dashed patterns. */
@@ -65,7 +64,7 @@ export class LineTypeProperty extends PropertyBase {
             );
         }
 
-        return select({ className: style.select, onchange: this.setLineType }, ...options);
+        return select({ className: commonStyle.select, onchange: this.setLineType }, ...options);
     }
 
     /** The shared line type across the selection, or "" if it varies. */

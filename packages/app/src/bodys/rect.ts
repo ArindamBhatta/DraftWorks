@@ -1,5 +1,6 @@
 import {
     FacebaseNode,
+    type GeometryFact,
     type I18nKeys,
     type IDocument,
     type IShape,
@@ -27,7 +28,7 @@ export class RectNode extends FacebaseNode {
     }
 
     @serialize()
-    @property("rect.dx")
+    @property("rect.dx", { type: "length" })
     get dx() {
         return this.getPrivateValue("dx");
     }
@@ -36,7 +37,7 @@ export class RectNode extends FacebaseNode {
     }
 
     @serialize()
-    @property("rect.dy")
+    @property("rect.dy", { type: "length" })
     get dy() {
         return this.getPrivateValue("dy");
     }
@@ -57,6 +58,18 @@ export class RectNode extends FacebaseNode {
         this.setPrivateValue("plane", options.plane);
         this.setPrivateValue("dx", options.dx);
         this.setPrivateValue("dy", options.dy);
+    }
+
+    // What AutoCAD reports for the closed polyline a RECTANG draws: the distance round
+    // it and the ground it covers, whether or not it is filled.
+    override geometryFacts(): GeometryFact[] {
+        const scale = this.worldTransform().getScale();
+        const dx = Math.abs(this.dx * scale.x);
+        const dy = Math.abs(this.dy * scale.y);
+        return [
+            { display: "geometry.perimeter", value: 2 * (dx + dy), kind: "length" },
+            { display: "common.area", value: dx * dy, kind: "area" },
+        ];
     }
 
     generateShape(): Result<IShape, string> {

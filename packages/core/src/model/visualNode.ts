@@ -4,6 +4,22 @@ import { type BoundingBox, Matrix4 } from "../math";
 import { serialize } from "../serialize";
 import { Node } from "./node";
 
+/**
+ * A measured, read-only row in the Properties palette's Geometry section - AutoCAD's
+ * Delta X/Y/Z, Length and Angle on a line, Diameter and Area on a circle.
+ *
+ * These are facts about the shape rather than settings on it: they follow from the
+ * editable properties above them and cannot be typed into, which is exactly how AutoCAD
+ * greys them out. The value stays a number here, tagged with what kind of quantity it
+ * is, so the palette can format it in the drawing's own units and precision instead of
+ * every node inventing its own `toFixed`.
+ */
+export interface GeometryFact {
+    display: I18nKeys;
+    value: number;
+    kind: "length" | "angle" | "area";
+}
+
 // VisualNode is the layer between plain Node (identity/tree position) and
 // GeometryNode (has an actual shape/mesh). It exists so "positioned, transformable,
 // has a bounding box" can apply to nodes that don't carry geometry themselves - a
@@ -62,6 +78,18 @@ export abstract class VisualNode extends Node {
 
     protected onParentVisibleChanged(): void {
         this.document.visual.context.setVisible(this, this.visible && this.parentVisible);
+    }
+
+    /**
+     * The measured rows this node adds to the Geometry section - see GeometryFact.
+     * Empty by default: a node only has these if there is something worth measuring
+     * about it, and the palette simply shows nothing extra when there isn't.
+     *
+     * Implementations report in world coordinates (`worldTransform()`), because that is
+     * what the palette shows and what the user is measuring against the drawing.
+     */
+    geometryFacts(): GeometryFact[] {
+        return [];
     }
 
     abstract boundingBox(): BoundingBox | undefined;

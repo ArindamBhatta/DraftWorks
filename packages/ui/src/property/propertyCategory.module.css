@@ -1,0 +1,42 @@
+.category {
+    display: block;
+}
+
+.header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 6px;
+    cursor: pointer;
+    user-select: none;
+    background-color: var(--title-background);
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.header:hover {
+    background-color: var(--hover-background-color);
+}
+
+.icon {
+    width: 10px;
+    height: 10px;
+    flex: 0 0 auto;
+}
+
+.headerText {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--foreground-color);
+    cursor: pointer;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+}
+
+.hidden {
+    display: none;
+}

@@ -1,19 +1,33 @@
-.readonly {
-    opacity: 0.56;
-}
-
+/*
+ * A value cell. Chrome-free until you touch it, the way an AutoCAD palette cell is -
+ * a column of boxed inputs turns the palette into a form, and the palette is meant to
+ * read as a table of what the object currently is.
+ */
 .box {
-    flex: 1;
-    font-size: 1rem;
-    padding: 4px;
+    width: 100%;
+    min-width: 0;
+    font: inherit;
+    font-size: 12px;
+    padding: 2px 4px;
     outline: none;
+    color: var(--foreground-color);
     background-color: transparent;
 
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
+    border: 1px solid transparent;
+    border-radius: 2px;
     margin: 0px;
+
+    &:hover:not([readonly]) {
+        background-color: var(--panel-hover-background-color);
+    }
 
     &:focus {
         border-color: var(--primary-color);
+        background-color: var(--input-background-color);
+    }
+
+    /* Measured values - Length, Delta X - are facts about the shape, not settings. */
+    &[readonly] {
+        color: var(--foreground-muted-color);
     }
 }

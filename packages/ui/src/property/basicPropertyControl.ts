@@ -2,11 +2,14 @@
 // See LICENSE file in the project root for full license information.
 
 import { type IDocument, Logger, type Property } from "@chili3d/core";
+import { LengthConverter } from "@chili3d/element";
 import { CheckProperty } from "./check";
 import { ColorProperty } from "./colorProperty";
 import { InputProperty } from "./input";
 import { LineTypeProperty } from "./lineTypeProperty";
 import { MaterialProperty } from "./materialProperty";
+
+const LENGTH = new LengthConverter();
 
 export function basicPropertyControl(document: IDocument, objs: any[], prop: Property) {
     if (prop === undefined || objs.length === 0) return "";
@@ -17,6 +20,11 @@ export function basicPropertyControl(document: IDocument, objs: any[], prop: Pro
 
     if (prop.type === "lineType") {
         return new LineTypeProperty(document, objs, prop);
+    }
+
+    // A distance reads in the drawing's units, the same as the coordinate rows above it.
+    if (prop.type === "length") {
+        return new InputProperty(document, objs, { ...prop, converter: prop.converter ?? LENGTH });
     }
 
     if (prop.type === "materialId" && canShowMaterialProperty(objs, prop)) {

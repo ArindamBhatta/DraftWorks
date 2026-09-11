@@ -2,6 +2,7 @@
 // See LICENSE file in the project root for full license information.
 
 export * from "./colorConverter";
+export * from "./lengthConverter";
 export * from "./numberConverter";
 export * from "./stringConverter";
 export * from "./urlConverter";

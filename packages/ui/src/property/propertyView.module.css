@@ -5,31 +5,30 @@
 
 .empty {
     color: var(--foreground-muted-color);
-    font-size: 0.9rem;
-    padding: 6px 4px;
+    font-size: 12px;
+    padding: 6px 8px;
+}
+
+/* What is selected, above the categories - AutoCAD's object-type line. */
+.selection {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--foreground-color);
+    padding: 6px 8px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .panel {
     flex: 1;
-    padding: 10px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
     overflow-y: auto;
-    border-top: 2px solid transparent;
-    border-bottom: 2px solid transparent;
     background-color: var(--panel-background-color);
 }
 
 .properties {
     display: flex;
     flex-direction: column;
-    gap: 3px;
-}
-
-.name {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    grid-gap: 10px;
-    align-items: center;
 }

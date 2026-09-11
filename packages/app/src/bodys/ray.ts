@@ -1,4 +1,5 @@
 import {
+    type GeometryFact,
     type I18nKeys,
     type IDocument,
     type IShape,
@@ -9,6 +10,8 @@ import {
     serialize,
     type XYZ,
 } from "@chili3d/core";
+
+import { segmentFacts } from "./line";
 
 export interface RayOptions {
     document: IDocument;
@@ -51,6 +54,11 @@ export class RayNode extends ParameterShapeNode {
         super({ document: options.document });
         this.setPrivateValue("start", options.start);
         this.setPrivateValue("end", options.end);
+    }
+
+    override geometryFacts(): GeometryFact[] {
+        const world = this.worldTransform();
+        return segmentFacts(world.ofPoint(this.start), world.ofPoint(this.end));
     }
 
     generateShape(): Result<IShape, string> {

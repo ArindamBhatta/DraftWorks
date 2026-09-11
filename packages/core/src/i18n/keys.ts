@@ -130,6 +130,7 @@ export const I18N_KEYS = [
     "common.general",
     "common.isGroup",
     "common.language",
+    "common.layer",
     "common.length",
     "common.lineType",
     "common.location",
@@ -324,6 +325,16 @@ export const I18N_KEYS = [
     "error.select.twoEdges",
     // File
     "file.format",
+    // Geometry - the measured rows in the Properties palette
+    "geometry.axis.x",
+    "geometry.axis.y",
+    "geometry.axis.z",
+    "geometry.circumference",
+    "geometry.deltaX",
+    "geometry.deltaY",
+    "geometry.deltaZ",
+    "geometry.diameter",
+    "geometry.perimeter",
     // Hatch
     "hatch.pattern",
     "hatch.pattern.brick",
@@ -562,6 +573,10 @@ export const I18N_KEYS = [
     "prompt.selectedCount",
 
     // Properties
+    "properties.allSelected",
+    "properties.group.general",
+    "properties.group.geometry",
+    "properties.group.misc",
     "properties.group.transform",
     "properties.header",
     "properties.multivalue",

@@ -132,7 +132,7 @@ export class TextAnnotation extends Annotation {
     }
 
     @serialize()
-    @property("annotation.text.height")
+    @property("annotation.text.height", { type: "length" })
     get height(): number {
         return this.getPrivateValue("height", DimensionSetup.settings.textHeight);
     }
@@ -151,7 +151,7 @@ export class TextAnnotation extends Annotation {
 
     /** 0 for single-line TEXT; the picked box width for MTEXT. */
     @serialize()
-    @property("annotation.text.width")
+    @property("annotation.text.width", { type: "length" })
     get boxWidth(): number {
         return this.getPrivateValue("boxWidth", 0);
     }

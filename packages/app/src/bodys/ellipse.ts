@@ -38,7 +38,7 @@ export class EllipseNode extends FacebaseNode {
     }
 
     @serialize()
-    @property("ellipse.majorRadius")
+    @property("ellipse.majorRadius", { type: "length" })
     get majorRadius() {
         return this.getPrivateValue("majorRadius");
     }
@@ -46,7 +46,7 @@ export class EllipseNode extends FacebaseNode {
         this.setPropertyEmitShapeChanged("majorRadius", radius);
     }
     @serialize()
-    @property("ellipse.minorRadius")
+    @property("ellipse.minorRadius", { type: "length" })
     get minorRadius() {
         return this.getPrivateValue("minorRadius");
     }

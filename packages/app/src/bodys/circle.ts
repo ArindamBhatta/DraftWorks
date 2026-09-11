@@ -1,5 +1,6 @@
 import {
     FacebaseNode,
+    type GeometryFact,
     type I18nKeys,
     type IDocument,
     type IShape,
@@ -38,7 +39,7 @@ export class CircleNode extends FacebaseNode {
     }
 
     @serialize()
-    @property("circle.radius")
+    @property("circle.radius", { type: "length" })
     get radius() {
         return this.getPrivateValue("radius");
     }
@@ -56,6 +57,18 @@ export class CircleNode extends FacebaseNode {
         this.setPrivateValue("normal", options.normal);
         this.setPrivateValue("center", options.center);
         this.setPrivateValue("radius", options.radius);
+    }
+
+    override geometryFacts(): GeometryFact[] {
+        // A scaled circle is still a circle only while the scale is uniform - a
+        // non-uniform one would make it an ellipse, which this body cannot represent -
+        // so reading X is enough to get back to the radius as drawn.
+        const radius = this.radius * this.worldTransform().getScale().x;
+        return [
+            { display: "geometry.diameter", value: radius * 2, kind: "length" },
+            { display: "geometry.circumference", value: 2 * Math.PI * radius, kind: "length" },
+            { display: "common.area", value: Math.PI * radius * radius, kind: "area" },
+        ];
     }
 
     // Always builds the bare circular edge first; only wraps it into a wire and caps

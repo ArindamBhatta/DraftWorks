@@ -1,5 +1,6 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
+export * from "./geometryFactsView";
+export * from "./layerProperty";
+export * from "./pointAxisProperty";
 export * from "./propertiesPanel";
+export * from "./propertyCategory";
 export * from "./propertyView";

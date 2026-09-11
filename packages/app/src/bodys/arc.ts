@@ -1,6 +1,8 @@
-//ink on the paper. arc itself  just four numbers: center, start, angle, normal. This is what gets saved into your file,
+//(Not Visible in Frontend)
+// ink on the paper. arc itself  just four numbers: center, start, angle, normal. This is what gets saved into your file,
 
 import {
+    type GeometryFact,
     type I18nKeys,
     type IDocument,
     type IShape,
@@ -63,6 +65,23 @@ export class ArcNode extends ParameterShapeNode {
         this.setPrivateValue("start", options.start);
         this.setPrivateValue("angle", options.angle);
     }
+    // Radius and arc length are not stored - they fall out of the four numbers above -
+    // so the palette reports them rather than offering them to type into, matching
+    // AutoCAD, where an arc's Radius follows from where its endpoints are.
+    override geometryFacts(): GeometryFact[] {
+        const world = this.worldTransform();
+        const radius = world.ofPoint(this.start).distanceTo(world.ofPoint(this.center));
+        return [
+            { display: "circle.radius", value: radius, kind: "length" },
+            // `angle` is stored in degrees (see PlaneAngle), arc length needs radians.
+            {
+                display: "common.length",
+                value: (radius * Math.abs(this.angle) * Math.PI) / 180,
+                kind: "length",
+            },
+        ];
+    }
+
     //turn those four numbers into an OCCT shape via shapeFactory.arc.
     generateShape(): Result<IShape, string> {
         return shapeFactory.arc(this.normal, this.center, this.start, this.angle);

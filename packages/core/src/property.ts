@@ -2,7 +2,12 @@ import type { IConverter } from "./foundation";
 import type { I18nKeys } from "./i18n";
 import type { Combobox } from "./ui";
 
-export type PropertyType = "color" | "materialId" | "lineType";
+/**
+ * `length` marks a number that is a distance in drawing units, so the palette shows and
+ * accepts it in the drawing's unit format rather than as a bare number - see
+ * LengthConverter. Angles, counts and scales are numbers and stay untagged.
+ */
+export type PropertyType = "color" | "materialId" | "lineType" | "length";
 
 export interface Property {
     name: string;
