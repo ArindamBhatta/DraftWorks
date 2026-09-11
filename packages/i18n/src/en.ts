@@ -170,6 +170,11 @@ export default {
         "dialog.title.unitInsertionContent": "Units to scale inserted content",
         "dialog.title.unitSample": "Sample Output",
         // Dimension style
+        "dimstyle.sample.mechanical": "Machined part — 28 units across",
+        "dimstyle.sample.architectural": "Building plan — 11,400 units across",
+        "dimstyle.sample.next": "Next example",
+        "dimstyle.sample.tooSmall:{0}":
+            "Text and arrows are under a pixel at this size. Set overall scale, on the Fit tab, to about {0}.",
         "dimstyle.tab.lines": "Lines",
         "dimstyle.tab.symbols": "Symbols and Arrows",
         "dimstyle.tab.text": "Text",

@@ -168,6 +168,10 @@ export const I18N_KEYS = [
     "dialog.title.unitInsertionContent",
     "dialog.title.unitSample",
     // Dimension style
+    "dimstyle.sample.mechanical",
+    "dimstyle.sample.architectural",
+    "dimstyle.sample.next",
+    "dimstyle.sample.tooSmall:{0}",
     "dimstyle.tab.lines",
     "dimstyle.tab.symbols",
     "dimstyle.tab.text",

@@ -1,0 +1,287 @@
+/* AutoCAD's Modify Dimension Style dialog: a strip of tabs over a form, with the sample
+   drawing pinned beside it so it stays visible whichever tab is open - the preview is the
+   only thing in the dialog that answers "what does this setting actually do", so it does
+   not belong to any one tab. */
+
+.root {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    /* Just inside the dialog's own 1080px cap, less its 16px padding either side. The
+       preview is the whole point of this dialog, so it gets as much of that as the form
+       can spare. Below this the media query drops it to one column. */
+    min-width: 1020px;
+    /* Shared by the form pane and the preview box beside it, so the two columns are the
+       same height and the preview can use all of it. */
+    --pane-height: 430px;
+    font-size: 13px;
+    color: var(--foreground-color);
+}
+
+.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tab {
+    padding: 7px 14px;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    background: none;
+    color: var(--foreground-secondary-color);
+    font-size: 13px;
+    cursor: pointer;
+    /* The strip sits on the border below it; an active tab covers its own slice of it. */
+    margin-bottom: -1px;
+}
+
+.tab:hover {
+    background-color: var(--hover-background-color);
+}
+
+.tabActive {
+    border-color: var(--border-color);
+    background-color: var(--panel-background-color);
+    color: var(--foreground-color);
+    font-weight: 600;
+}
+
+/* The preview takes the larger share. The form only needs enough width for its widest
+   caption beside a control - the floor on the first column - and everything past that is
+   worth more to the drawing, where a setting either visibly changes something or does not.
+   `stretch` rather than `start` so the preview column is as tall as the form pane. */
+.body {
+    display: grid;
+    grid-template-columns: minmax(360px, 1fr) minmax(0, 1.55fr);
+    gap: 16px;
+    align-items: stretch;
+}
+
+/* A fixed height rather than one that follows the content: the tabs hold very different
+   numbers of controls, and a dialog that grew and shrank as you clicked through them
+   would move the OK button out from under the pointer. */
+.pane {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: var(--pane-height);
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.group {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 4px 12px 12px;
+    margin: 0;
+    min-width: 0;
+}
+
+.groupTitle {
+    padding: 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--foreground-secondary-color);
+}
+
+/* One caption + control per line, captions sharing a column so the controls line up. */
+.rows {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 8px 12px;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.rowLabel {
+    color: var(--foreground-secondary-color);
+}
+
+/* A control that spans both columns - a checkbox with its own text, or a radio list. */
+.rowWide {
+    grid-column: 1 / -1;
+}
+
+.control {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 5px 8px;
+    font-size: 13px;
+    border: 1px solid var(--input-border-color);
+    border-radius: 4px;
+    background-color: var(--input-background-color);
+    color: var(--input-text-color);
+}
+
+.control:hover {
+    border-color: var(--border-hover-color);
+}
+
+.control:focus-visible {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.control:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* Checkboxes read as a line of text you can click, not as a labelled form field, so they
+   sit outside the caption grid. */
+.check {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    color: var(--foreground-color);
+}
+
+.check input {
+    margin: 0;
+    cursor: pointer;
+}
+
+.check:has(input:disabled) {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* Suppress / zero-suppression style rows: two or three checkboxes on one line. */
+.checkRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.radios {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.hint {
+    margin: 8px 0 0;
+    color: var(--foreground-secondary-color);
+}
+
+/* The preview's group box, sized to the form pane beside it so the drawing inside can
+   take the full height rather than sitting in the top corner of an empty column. */
+.previewGroup {
+    display: flex;
+    flex-direction: column;
+    height: var(--pane-height);
+    box-sizing: border-box;
+}
+
+/* The sample drawing, filling whatever the group box has left. The figure keeps its own
+   proportions inside that (the SVG's preserveAspectRatio centres it), so it does not
+   reflow as the numbers beside it change - only the dimensions drawn inside it move. */
+.preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 0;
+    margin-top: 8px;
+    border-radius: 4px;
+    background-color: var(--title-background);
+}
+
+.preview svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Which sample is on show, and the arrow that pages to the next one. The name carries the
+   figure's size, because the samples are 400x apart and a drawing with no visible text is
+   the second one telling the truth rather than the preview being broken. */
+.previewCaption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-top: 8px;
+    color: var(--foreground-secondary-color);
+}
+
+.previewName {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.previewNext {
+    flex-shrink: 0;
+    padding: 1px 12px 3px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--panel-background-color);
+    color: var(--foreground-color);
+    font-size: 16px;
+    line-height: 1.3;
+    cursor: pointer;
+}
+
+.previewNext:hover {
+    background-color: var(--hover-background-color);
+}
+
+.previewNext:focus-visible {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* Only present when the style is too small to see on the sample on show. Collapses when
+   it has nothing to say, rather than holding a blank line open. */
+.previewHint {
+    flex-shrink: 0;
+    margin-top: 6px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    background-color: var(--title-background);
+    color: var(--foreground-secondary-color);
+    line-height: 1.4;
+}
+
+.previewHint:empty {
+    display: none;
+}
+
+/* Set from the viewport width at which the dialog can no longer give `.root` its
+   min-width: the dialog caps itself at 94vw and takes 16px of padding either side, so
+   below roughly this the two-column layout would overflow sideways rather than reflow. */
+@media (max-width: 1140px) {
+    .root {
+        min-width: 0;
+    }
+
+    .body {
+        grid-template-columns: 1fr;
+    }
+
+    .pane {
+        height: auto;
+        max-height: 340px;
+    }
+
+    /* Stacked, the preview has the whole width, so it needs a height of its own rather
+       than one borrowed from a column that is no longer beside it. */
+    .previewGroup {
+        height: auto;
+    }
+
+    .preview {
+        min-height: 260px;
+    }
+}

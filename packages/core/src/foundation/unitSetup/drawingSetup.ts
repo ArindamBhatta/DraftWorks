@@ -1,17 +1,30 @@
 /**
  * The two drawing-wide settings blocks that sit alongside unit setup (see UnitSetup):
  *
- * - DimensionSetup is DIMSTYLE's core geometry: how big dimension text and arrowheads
- *   are drawn, how far extension lines stand off the object, and how many decimals a
- *   measurement shows. Live - read by dimensionGeometry, annotations and text.
+ * - DimensionSetup is DIMSTYLE: the whole dimension style, from line and arrowhead
+ *   geometry through text placement to how a measurement is written and toleranced. The
+ *   settings themselves live in `dimensionStyle`, one block per tab of the dialog; this
+ *   class is what holds the active one and persists it. Live - read by dimensionGeometry,
+ *   dimensionText, the renderer, annotations and text.
  * - MvSetup is MVSETUP: the plot scale and the sheet the drawing is laid out on.
  *   **Groundwork, not a live setting** - see the note on the class.
  *
- * Both are drawing-unit based, so they mean whatever the active unit type means - they
- * deliberately do not convert, exactly like AutoCAD's DIMSCALE-free defaults.
+ * Both are drawing-unit based, so they mean whatever the active unit type means - sizes
+ * deliberately do not convert, and are scaled only by the style's own DIMSCALE.
  */
 
 import { ObjectStorage } from "../objectStorage";
+import {
+    DEFAULT_DIMENSION_SETTINGS,
+    type DimensionSettings,
+    validateDimensionSettings,
+} from "./dimensionStyle";
+import {
+    type DimensionLabel,
+    flattenDimensionLabel,
+    formatDimensionLabel,
+    type MeasurementKind,
+} from "./dimensionText";
 import { UnitSetup } from "./unitSetup";
 
 /** Decimals used for quantities a fraction denominator cannot express - see decimalPlaces. */
@@ -19,22 +32,6 @@ const DEFAULT_DECIMALS = 2;
 
 /** localStorage key holding the dimension settings between sessions. */
 const DIMENSION_STORAGE_KEY = "dimensionSetup";
-
-export interface DimensionSettings {
-    /** Height of dimension text, in drawing units. */
-    textHeight: number;
-    /** Arrowhead length, in drawing units. */
-    arrowSize: number;
-    /** Gap between the measured geometry and the start of its extension line. */
-    extensionOffset: number;
-    /**
-     * Precision a measurement is reported to. Same two-meanings-in-one-number as
-     * UnitSettings.precision (fraction denominator vs decimal places, depending on the
-     * active unit type), which is why it is validated at format time by
-     * UnitSetup.formatLength rather than clamped to a decimal range here.
-     */
-    precision: number;
-}
 
 /** Named sheets MVSETUP offers, sized in millimetres. */
 export const PAPER_SIZES = {
@@ -61,20 +58,8 @@ export interface MvSettings {
 const clampPositive = (value: number, fallback: number) =>
     Number.isFinite(value) && value > 0 ? value : fallback;
 
-const clampPrecision = (value: number, fallback: number) =>
-    Number.isFinite(value) && value >= 0 ? Math.round(value) : fallback;
-
 export class DimensionSetup {
-    // Precision defaults to 1/16", matching UnitSetup's own architectural default, so
-    // the two agree before anyone opens either dialog. If the unit type is later
-    // changed to a decimal one, UnitSetup.formatLength clamps this at render time and
-    // the Dimension Setup dialog re-offers that type's own options.
-    private static _settings: DimensionSettings = {
-        textHeight: 2.5,
-        arrowSize: 2.5,
-        extensionOffset: 0.625,
-        precision: 16,
-    };
+    private static _settings: DimensionSettings = { ...DEFAULT_DIMENSION_SETTINGS };
 
     /** See UnitSetup.isRestored - lets start-up skip re-asking a returning user. */
     static #restored = false;
@@ -87,7 +72,15 @@ export class DimensionSetup {
         const saved = ObjectStorage.default.value<Partial<DimensionSettings>>(DIMENSION_STORAGE_KEY);
         if (saved?.textHeight === undefined) return false;
 
-        DimensionSetup.configure(saved);
+        // Restoring replaces the style rather than patching the live one, so anything the
+        // saved copy is missing or has wrong comes back as its *default* - not as whatever
+        // happened to be set in this session. That matters because a style written by an
+        // older build is missing every setting added since, and folding it onto the live
+        // settings would have quietly kept those instead.
+        DimensionSetup._settings = validateDimensionSettings(saved, DEFAULT_DIMENSION_SETTINGS);
+        // Written straight back so the stored copy is migrated in place, and the next
+        // session reads a complete style rather than repeating this repair.
+        ObjectStorage.default.setValue(DIMENSION_STORAGE_KEY, DimensionSetup._settings);
         DimensionSetup.#restored = true;
         return true;
     }
@@ -109,14 +102,7 @@ export class DimensionSetup {
     }
 
     static configure(settings: Partial<DimensionSettings>): void {
-        const current = DimensionSetup._settings;
-        DimensionSetup._settings = {
-            textHeight: clampPositive(settings.textHeight ?? current.textHeight, current.textHeight),
-            arrowSize: clampPositive(settings.arrowSize ?? current.arrowSize, current.arrowSize),
-            // 0 is a legitimate offset, so this one is not clamped away from zero.
-            extensionOffset: Math.max(0, settings.extensionOffset ?? current.extensionOffset),
-            precision: clampPrecision(settings.precision ?? current.precision, current.precision),
-        };
+        DimensionSetup._settings = validateDimensionSettings(settings, DimensionSetup._settings);
         ObjectStorage.default.setValue(DIMENSION_STORAGE_KEY, DimensionSetup._settings);
     }
 
@@ -125,11 +111,37 @@ export class DimensionSetup {
      * dimension precision. Every length a measure command reports goes through here, so
      * changing Dimension Setup or Unit Setup changes what is already on screen the next
      * time it is drawn - rather than each call site inventing its own `toFixed(2)`.
+     *
+     * This is the bare number only. A *dimension's* label goes through `label()` instead,
+     * which adds the affixes, alternate units and tolerance the style also asks for.
      */
     static formatLength(value: number, precision?: number): string {
         return UnitSetup.formatLength(value, {
             precision: precision ?? DimensionSetup._settings.precision,
         });
+    }
+
+    /**
+     * The full label for a measurement under the active style (or `overrides`, for the
+     * setup dialog's preview) - see `formatDimensionLabel`.
+     */
+    static label(
+        value: number,
+        kind: MeasurementKind = "length",
+        typePrefix = "",
+        overrides?: Partial<DimensionSettings>,
+    ): DimensionLabel {
+        return formatDimensionLabel(value, DimensionSetup.resolve(overrides), kind, typePrefix);
+    }
+
+    /** The same label as one plain string - see `flattenDimensionLabel`. */
+    static labelText(
+        value: number,
+        kind: MeasurementKind = "length",
+        typePrefix = "",
+        overrides?: Partial<DimensionSettings>,
+    ): string {
+        return flattenDimensionLabel(DimensionSetup.label(value, kind, typePrefix, overrides));
     }
 
     /**

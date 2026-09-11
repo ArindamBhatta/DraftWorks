@@ -407,7 +407,10 @@ function appendDimension(
         });
     }
 
-    const textHeight = DimensionSetup.settings.textHeight;
+    const dimStyle = DimensionSetup.settings;
+    // DIMSCALE is folded in here as it is everywhere else the style is drawn - the block
+    // this writes is exploded line work, so nothing downstream would apply it later.
+    const textHeight = dimStyle.textHeight * dimStyle.overallScale;
     entities.push({
         type: "text",
         layer: style.layer,
@@ -415,7 +418,9 @@ function appendDimension(
         // The block's label is centred on the anchor, which is what group 71 = 5 means.
         position: vec(geometry.textPosition),
         height: textHeight,
-        rotation: 0,
+        // The label follows the dimension line under DIMTIH/DIMTOH, so the exported text
+        // has to turn with it or an aligned dimension would export lying flat.
+        rotation: (geometry.textRotation * 180) / Math.PI,
         boxWidth: 0,
         multiline: true,
         attachment: 5,
@@ -517,10 +522,11 @@ function linearRotation(node: DimensionAnnotation): number {
 /** The dimension settings the DIMSTYLE table should carry, so plots match the screen. */
 export function dimensionStyleForExport() {
     const settings = DimensionSetup.settings;
+    const scale = settings.overallScale;
     return {
-        textHeight: settings.textHeight,
-        arrowSize: settings.arrowSize,
-        extensionOffset: settings.extensionOffset,
+        textHeight: settings.textHeight * scale,
+        arrowSize: settings.arrowSize * scale,
+        extensionOffset: settings.extensionOffset * scale,
         decimals: DimensionSetup.decimalPlaces(),
     };
 }

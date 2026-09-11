@@ -8,6 +8,7 @@
 
 import { expect, test } from "@rstest/core";
 import { ObjectStorage } from "../objectStorage";
+import { DEFAULT_DIMENSION_SETTINGS } from "./dimensionStyle";
 import { DimensionSetup } from "./drawingSetup";
 import { UnitSetup } from "./unitSetup";
 
@@ -61,11 +62,47 @@ test("dimension style survives the same round trip", () => {
     });
     expect(DimensionSetup.restore()).toBe(true);
     expect(DimensionSetup.settings).toEqual({
+        ...DEFAULT_DIMENSION_SETTINGS,
         textHeight: 4,
         arrowSize: 3,
         extensionOffset: 1,
         precision: 2,
     });
+});
+
+test("a style saved by an older build gains the settings it never had", () => {
+    clearStorage();
+
+    // What the four-setting version of this dialog wrote. Everything the style has grown
+    // since has to come back as its default rather than as undefined, or the geometry
+    // would be laid out against holes.
+    ObjectStorage.default.setValue("dimensionSetup", { textHeight: 4 });
+
+    expect(DimensionSetup.restore()).toBe(true);
+    expect(DimensionSetup.settings.textHeight).toBe(4);
+    expect(DimensionSetup.settings.arrowhead1).toBe(DEFAULT_DIMENSION_SETTINGS.arrowhead1);
+    expect(DimensionSetup.settings.overallScale).toBe(1);
+    expect(DimensionSetup.settings.toleranceMethod).toBe("none");
+});
+
+test("a hand-edited style with impossible values falls back rather than breaking", () => {
+    clearStorage();
+
+    ObjectStorage.default.setValue("dimensionSetup", {
+        textHeight: -5,
+        arrowhead1: "spiral",
+        overallScale: 0,
+        toleranceMethod: 7,
+        decimalSeparator: "!!",
+    });
+
+    expect(DimensionSetup.restore()).toBe(true);
+    const settings = DimensionSetup.settings;
+    expect(settings.textHeight).toBe(DEFAULT_DIMENSION_SETTINGS.textHeight);
+    expect(settings.arrowhead1).toBe("closedFilled");
+    expect(settings.overallScale).toBe(1);
+    expect(settings.toleranceMethod).toBe("none");
+    expect(settings.decimalSeparator).toBe(".");
 });
 
 test("junk in storage is ignored rather than fatal", () => {

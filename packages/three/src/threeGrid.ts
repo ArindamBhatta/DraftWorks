@@ -22,9 +22,13 @@ const MAX_LINES_PER_AXIS = 600;
  * separation is free - there is no parallax to give it away.
  */
 const DEPTH_NUDGE = 0.05;
-/** Opacity of the minor and major grid lines against the canvas. */
-const MINOR_OPACITY = 0.18;
-const MAJOR_OPACITY = 0.42;
+/**
+ * Opacity of the minor and major grid lines against the canvas. The grid is a drafting
+ * aid, not drawing content, so it sits well below the edge colour it borrows - faint
+ * enough to read past, with the major lines only just distinct from the minor ones.
+ */
+const MINOR_OPACITY = 0.07;
+const MAJOR_OPACITY = 0.16;
 
 /** The 1 / 2 / 5 / 10 ... progression AutoCAD's grid steps through as you zoom out. */
 function niceSpacing(minimum: number): number {

@@ -8,5 +8,7 @@
  * infrastructure that owes nothing to CAD.
  */
 
+export * from "./dimensionStyle";
+export * from "./dimensionText";
 export * from "./drawingSetup";
 export * from "./unitSetup";
