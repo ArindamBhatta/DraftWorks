@@ -10,7 +10,7 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                     // Line's flyout holds AutoCAD's other "click through points" draw
                     // tools - Polyline (create.polygon; see commandAliases.ts, it's
                     // already aliased "pl"/"pline"/"polyline") and Ray.
-                    { type: "split", items: ["create.line", "create.polygon", "create.ray"] },
+                    { type: "split", items: ["create.line", "create.polygon", "create.constructionLine"] },
                     // Rectangle's flyout holds Regular Polygon only.
                     { type: "split", items: ["create.rect", "create.regularPolygon"] },
                     "create.circle",

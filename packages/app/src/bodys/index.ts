@@ -5,10 +5,10 @@
 // Don't rely on this file alone to find every body/usage - grep the directory and
 // cross-reference direct imports too.
 export * from "./circle";
+export * from "./constructionLine";
 export * from "./ellipse";
 export * from "./line";
 export * from "./point";
 export * from "./polygon";
-export * from "./ray";
 export * from "./rect";
 export * from "./regularPolygon";

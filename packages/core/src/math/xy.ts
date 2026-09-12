@@ -89,19 +89,19 @@ export class XY {
         return Math.atan2(this.cross(right), this.dot(right));
     }
 
-    isEqualTo(right: XY, tolerance: number = 1e-8) {
+    isEqualTo(right: XY, tolerance: number = Precision.Distance) {
         return (
             MathUtils.almostEqual(this.x, right.x, tolerance) &&
             MathUtils.almostEqual(this.y, right.y, tolerance)
         );
     }
 
-    isParallelTo(right: XY, tolerance: number = 1e-8): boolean | undefined {
+    isParallelTo(right: XY, tolerance: number = Precision.Angle): boolean | undefined {
         const angle = this.angleTo(right);
         return angle === undefined ? undefined : angle <= tolerance || Math.PI - angle <= tolerance;
     }
 
-    isOppositeTo(right: XY, tolerance: number = 1e-8): boolean | undefined {
+    isOppositeTo(right: XY, tolerance: number = Precision.Angle): boolean | undefined {
         const angle = this.angleTo(right);
         return angle === undefined ? undefined : Math.PI - angle <= tolerance;
     }

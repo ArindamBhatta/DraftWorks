@@ -1,4 +1,4 @@
-//(Not Visible in Frontend)
+//(Core of arg)
 // ink on the paper. arc itself  just four numbers: center, start, angle, normal. This is what gets saved into your file,
 
 import {

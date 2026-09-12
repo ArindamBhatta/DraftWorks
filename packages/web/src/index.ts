@@ -8,7 +8,7 @@ import { parseStartupParams } from "./startupParams";
 const loading = new Loading();
 document.body.appendChild(loading);
 
-async function handleApplicaionBuilt(app: IApplication) {
+async function handleApplicationBuilt(app: IApplication) {
     document.body.removeChild(loading);
 
     const { plugins, fileUrl } = parseStartupParams(window.location.search);
@@ -37,7 +37,7 @@ new AppBuilder()
     .useThree()
     .useUI()
     .build()
-    .then(handleApplicaionBuilt)
+    .then(handleApplicationBuilt)
     .catch((err) => {
         alert(err.message);
     });

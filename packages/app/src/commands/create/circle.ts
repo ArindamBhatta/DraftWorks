@@ -1,3 +1,4 @@
+//Only alive in Drawing
 import {
     Combobox,
     command,
@@ -113,12 +114,14 @@ export class Circle extends CreateFaceableCommand {
                     new PointStep("prompt.circle.firstDiameterPoint", this.getFirstPointData),
                     new PointStep("prompt.circle.secondDiameterPoint", this.getTwoPointSecondData),
                 ];
+            //
             case "option.command.circleMode.threePoint":
                 return [
                     new PointStep("prompt.circle.firstPoint", this.getFirstPointData),
                     new PointStep("prompt.circle.secondPoint", this.getThreePointSecondData),
                     new PointStep("prompt.circle.thirdPoint", this.getThreePointThirdData),
                 ];
+            //
             default:
                 return [
                     new PointStep("prompt.circle.centerPoint", this.getFirstPointData),
@@ -225,7 +228,7 @@ export class Circle extends CreateFaceableCommand {
         ];
     };
 
-    /** A picked length is the diameter when sizeMode says so - halve it to get the radius the kernel needs. */
+    /** A picked length is the diameter when sizeMode says so - we divide it by 2 to get the radius the kernel needs. */
     private pickedToRadius(pickedDistance: number): number {
         return this.sizeMode === "option.command.circleSizeMode.diameter"
             ? pickedDistance / 2

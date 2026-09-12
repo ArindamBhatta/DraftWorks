@@ -195,11 +195,15 @@ export interface ParameterShapeNodeOptions {
     id?: string;
 }
 
-// ParameterShapeNode is what makes Chili3D "parametric" rather than a plain shape
+// ParameterShapeNode is what makes DraftWork "parametric(measurable)" rather than a plain shape
 // viewer: the source of truth for a body (BoxNode, CircleNode, ...) is its numeric/
 // geometric *inputs* (dx, dy, plane, center, radius...), not the OCCT shape they
-// produce. The shape itself is a derived, lazily-computed cache - see the shape
-// getter below, which only calls generateShape() once, the first time it's asked for
+// produce.
+
+//  The shape itself is a derived, lazily-computed cache - see the shape
+// getter below, which only calls
+// ? generateShape()
+// once, the first time it's asked for
 // (guarded by the SHAPE_UNDEFINED sentinel), and setPropertyEmitShapeChanged, which
 // every concrete body's property setters funnel through so that editing a parameter
 // (e.g. BoxNode.dx = 20) transparently invalidates and recomputes the shape. Without

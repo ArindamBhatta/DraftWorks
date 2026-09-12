@@ -62,7 +62,7 @@ export class LineNode extends ParameterShapeNode {
 /**
  * The read-only Geometry rows AutoCAD shows under a line's Start and End: how far the
  * end is from the start along each axis, the straight-line distance, and the bearing in
- * the XY plane. Shared with RayNode, which is the same two points drawn differently.
+ * the XY plane. Shared with ConstructionLineNode, which is the same two points drawn differently.
  *
  * The angle is measured the way AutoCAD reports it - degrees counter-clockwise from the
  * positive X axis, normalised into 0-360 rather than atan2's -180..180, so a line drawn

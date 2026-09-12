@@ -8,6 +8,7 @@ import type { IStep } from "../step";
 import type { IView, VisualState } from "../visual";
 import { CancelableCommand } from "./command";
 
+//collect user input interactively
 export abstract class MultiStepCommand extends CancelableCommand {
     protected stepDatas: SnapResult[] = [];
 
