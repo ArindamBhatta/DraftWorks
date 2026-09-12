@@ -1,4 +1,4 @@
-import type { EdgeMeshData, FaceMeshData, MeshLike, MeshOption, VertexMeshData } from "@chili3d/core";
+import type { EdgeMeshData, FaceMeshData, MeshLike, MeshOption, VertexMeshData } from "@draftworks/core";
 import {
     AlwaysDepth,
     BufferAttribute,

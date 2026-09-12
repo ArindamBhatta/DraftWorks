@@ -18,7 +18,7 @@ import {
     Transaction,
     VisualConfig,
     XY,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { FaceNode } from "../../bodys/face";
 import { HATCH_BASE_TILE_SIZE, HatchPatterns, hatchPatternTexture } from "./hatchPatterns";
 

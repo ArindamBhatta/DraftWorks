@@ -2,7 +2,7 @@
 // arithmetic, but Angle is the one worth pinning: atan2 reports -180..180 and AutoCAD
 // reports 0..360, so a line drawn down-and-left is the case that tells the two apart.
 
-import { XYZ } from "@chili3d/core";
+import { XYZ } from "@draftworks/core";
 import { expect, test } from "@rstest/core";
 import { segmentFacts } from "./line";
 

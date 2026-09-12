@@ -8,7 +8,7 @@ import {
     type IService,
     Logger,
     PubSub,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 export interface Keys {
     key: string;

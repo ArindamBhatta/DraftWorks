@@ -1,4 +1,4 @@
-import { ObjectStorage } from "@chili3d/core";
+import { ObjectStorage } from "@draftworks/core";
 
 export type ProviderId = "anthropic" | "gemini";
 export const PROVIDER_IDS: readonly ProviderId[] = ["anthropic", "gemini"];

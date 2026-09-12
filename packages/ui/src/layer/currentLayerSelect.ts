@@ -1,8 +1,8 @@
 // Part of the Chili3d Project, under the AGPL-3.0 License.
 // See LICENSE file in the project root for full license information.
 
-import { type IDocument, Localize, type ModelManager } from "@chili3d/core";
-import { label, option, select } from "@chili3d/element";
+import { type IDocument, Localize, type ModelManager } from "@draftworks/core";
+import { label, option, select } from "@draftworks/element";
 import commonStyle from "../property/common.module.css";
 import style from "./currentLayerSelect.module.css";
 

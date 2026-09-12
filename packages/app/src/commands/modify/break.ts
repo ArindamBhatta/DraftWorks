@@ -12,7 +12,7 @@ import {
     ShapeTypes,
     Transaction,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 @command({
     key: "modify.break",

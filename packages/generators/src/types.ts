@@ -15,7 +15,7 @@ export type LengthFormatter = (mm: number) => string;
  * floor plan needs WALL/DOOR/WINDOW/TEXT, a rebar detail would want CONCRETE/REBAR/TEXT -
  * so nothing about layers is hardcoded in the renderer that consumes DrawItems.
  *
- * `color` is 0xRRGGBB, or LAYER_COLOR_BY_THEME (-1) from @chili3d/core to follow the
+ * `color` is 0xRRGGBB, or LAYER_COLOR_BY_THEME (-1) from @draftworks/core to follow the
  * light/dark theme instead of pinning one colour.
  */
 export interface LayerSpec {

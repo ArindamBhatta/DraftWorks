@@ -3,7 +3,7 @@
 // points (the case the third point's validator relies on to block a bad pick), and
 // has to work in a plane that isn't just world XY.
 
-import { Plane, XYZ } from "@chili3d/core";
+import { Plane, XYZ } from "@draftworks/core";
 import { expect, test } from "@rstest/core";
 import { circumcircle } from "./circle";
 

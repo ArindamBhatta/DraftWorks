@@ -8,8 +8,8 @@ import {
     type ObjectSnapType,
     ObjectSnapTypes,
     ObjectSnapTypeUtils,
-} from "@chili3d/core";
-import { div, input, label } from "@chili3d/element";
+} from "@draftworks/core";
+import { div, input, label } from "@draftworks/element";
 import style from "./snapConfig.module.css";
 
 const SnapTypes: Array<{

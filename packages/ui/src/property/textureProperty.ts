@@ -8,8 +8,8 @@ import {
     PropertyUtils,
     readFileAsync,
     type Texture,
-} from "@chili3d/core";
-import { div, Expander, img, svg, UrlStringConverter } from "@chili3d/element";
+} from "@draftworks/core";
+import { div, Expander, img, svg, UrlStringConverter } from "@draftworks/element";
 import { basicPropertyControl } from "./basicPropertyControl";
 import style from "./textureProperty.module.css";
 

@@ -12,8 +12,8 @@ import {
     PubSub,
     Result,
     Texture,
-} from "@chili3d/core";
-import { button, ColorConverter, collection, div, span, svg, UrlStringConverter } from "@chili3d/element";
+} from "@draftworks/core";
+import { button, ColorConverter, collection, div, span, svg, UrlStringConverter } from "@draftworks/element";
 import { propertyControl } from "../complexPropertyUtils";
 import type { MaterialDataContent } from "./materialDataContent";
 import style from "./materialEditor.module.css";

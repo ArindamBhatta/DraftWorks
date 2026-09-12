@@ -1,5 +1,5 @@
-import { type CommandKeys, I18n, type I18nKeys, Localize, PubSub } from "@chili3d/core";
-import { div, label, svg } from "@chili3d/element";
+import { type CommandKeys, I18n, type I18nKeys, Localize, PubSub } from "@draftworks/core";
+import { div, label, svg } from "@draftworks/element";
 import { LayerControl } from "./layerControl";
 import style from "./layersRibbonPanel.module.css";
 

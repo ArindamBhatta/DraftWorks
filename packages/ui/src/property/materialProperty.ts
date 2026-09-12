@@ -11,8 +11,8 @@ import {
     type Property,
     PubSub,
     Transaction,
-} from "@chili3d/core";
-import { button, ColorConverter, collection, div, span, UrlStringConverter } from "@chili3d/element";
+} from "@draftworks/core";
+import { button, ColorConverter, collection, div, span, UrlStringConverter } from "@draftworks/element";
 import style from "./materialProperty.module.css";
 import { PropertyBase } from "./propertyBase";
 

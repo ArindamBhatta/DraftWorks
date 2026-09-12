@@ -1,8 +1,8 @@
 // Part of the Chili3d Project, under the AGPL-3.0 License.
 // See LICENSE file in the project root for full license information.
 
-import { I18n, type IDocument, type IView, type Layer, Localize, PubSub } from "@chili3d/core";
-import { div, input, span, svg } from "@chili3d/element";
+import { I18n, type IDocument, type IView, type Layer, Localize, PubSub } from "@draftworks/core";
+import { div, input, span, svg } from "@draftworks/element";
 import { DropdownController } from "../ribbon/dropdownController";
 import style from "./layerControl.module.css";
 

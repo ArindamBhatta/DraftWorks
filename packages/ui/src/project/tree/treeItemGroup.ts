@@ -1,8 +1,8 @@
 // Part of the Chili3d Project, under the AGPL-3.0 License.
 // See LICENSE file in the project root for full license information.
 
-import type { IDocument, INodeLinkedList } from "@chili3d/core";
-import { div, setSVGIcon, svg } from "@chili3d/element";
+import type { IDocument, INodeLinkedList } from "@draftworks/core";
+import { div, setSVGIcon, svg } from "@draftworks/element";
 import { TreeItem } from "./treeItem";
 import style from "./treeItemGroup.module.css";
 

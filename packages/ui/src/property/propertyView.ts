@@ -12,8 +12,8 @@ import {
     PubSub,
     VisualNode,
     XYZ,
-} from "@chili3d/core";
-import { div, label } from "@chili3d/element";
+} from "@draftworks/core";
+import { div, label } from "@draftworks/element";
 import { CurrentLayerSelect } from "../layer";
 import { propertyControl } from "./complexPropertyUtils";
 import { GeometryFactsView } from "./geometryFactsView";

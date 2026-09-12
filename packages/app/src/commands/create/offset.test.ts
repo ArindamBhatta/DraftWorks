@@ -5,7 +5,7 @@
 // three answers it accepts (a length, Through, or Enter for the remembered default)
 // all look alike from the call site. These pin down which is which.
 
-import { UnitSetup } from "@chili3d/core";
+import { UnitSetup } from "@draftworks/core";
 import { expect, test } from "@rstest/core";
 import { parseOffsetInput } from "./offset";
 

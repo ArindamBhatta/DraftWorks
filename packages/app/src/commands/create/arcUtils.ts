@@ -1,4 +1,4 @@
-import type { XYZ } from "@chili3d/core";
+import type { XYZ } from "@draftworks/core";
 
 /**
  * Compute arc geometry from 3 points on a circle.

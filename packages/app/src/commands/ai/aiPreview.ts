@@ -1,5 +1,5 @@
-import { LAYER_COLOR_BY_THEME } from "@chili3d/core";
-import { arcEnd, boundsOf, type DrawItem, type LayerSpec, type Vec2 } from "@chili3d/generators";
+import { LAYER_COLOR_BY_THEME } from "@draftworks/core";
+import { arcEnd, boundsOf, type DrawItem, type LayerSpec, type Vec2 } from "@draftworks/generators";
 
 const NS = "http://www.w3.org/2000/svg";
 

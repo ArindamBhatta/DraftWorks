@@ -1,8 +1,8 @@
 // Part of the Chili3d Project, under the AGPL-3.0 License.
 // See LICENSE file in the project root for full license information.
 
-import { Binding, type IEventHandler, type IView, Localize } from "@chili3d/core";
-import { div, span, svg } from "@chili3d/element";
+import { Binding, type IEventHandler, type IView, Localize } from "@draftworks/core";
+import { div, span, svg } from "@draftworks/element";
 import { Flyout } from "./flyout";
 import style from "./viewport.module.css";
 

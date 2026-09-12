@@ -9,7 +9,7 @@ import {
     type IApplication,
     type ICommand,
     PubSub,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 @command({
     key: "doc.saveToFile",

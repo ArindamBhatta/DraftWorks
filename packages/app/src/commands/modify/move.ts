@@ -1,4 +1,4 @@
-import { command, hideCommandProperty } from "@chili3d/core";
+import { command, hideCommandProperty } from "@draftworks/core";
 import { PlacementCommand, type PlacementPrompts } from "./placementCommand";
 
 /**

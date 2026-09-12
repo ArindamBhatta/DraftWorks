@@ -35,7 +35,7 @@ import {
     type TrimExtendMode,
     VisualConfig,
     type VisualShapeData,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 /** A stretch of a curve, named by its start and end parameter on that curve. */
 export interface ParameterRange {

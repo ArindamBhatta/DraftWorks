@@ -10,8 +10,8 @@ import {
     type RibbonGroup,
     type RibbonTab,
     type RibbonTabKeys,
-} from "@chili3d/core";
-import { collection } from "@chili3d/element";
+} from "@draftworks/core";
+import { collection } from "@draftworks/element";
 import style from "./ribbon.module.css";
 import { RibbonGroupElement } from "./ribbonGroup";
 

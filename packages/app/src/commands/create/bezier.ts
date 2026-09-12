@@ -14,7 +14,7 @@ import {
     type SnapResult,
     VisualConfig,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { CreateCommand } from "../createCommand";
 
 @command({

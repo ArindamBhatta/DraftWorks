@@ -7,8 +7,8 @@ import {
     type RibbonCommand,
     type RibbonGroup,
     type RibbonWidgetKind,
-} from "@chili3d/core";
-import { collection, div, label } from "@chili3d/element";
+} from "@draftworks/core";
+import { collection, div, label } from "@draftworks/element";
 import { LayerControl } from "../layer/layerControl";
 import { LayersRibbonPanel } from "../layer/layersRibbonPanel";
 import { AutosaveControl } from "./autosaveControl";

@@ -6,7 +6,7 @@ import {
     MultiStepCommand,
     PubSub,
     Transaction,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 @command({
     key: "modify.deleteNode",

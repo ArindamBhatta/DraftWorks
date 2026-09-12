@@ -1,7 +1,7 @@
 // Part of the Chili3d Project, under the AGPL-3.0 License.
 // See LICENSE file in the project root for full license information.
 
-import { CurveUtils, type ICircle, type IEdge, type SnapResult, type XYZ } from "@chili3d/core";
+import { CurveUtils, type ICircle, type IEdge, type SnapResult, type XYZ } from "@draftworks/core";
 
 /** What a picked edge tells a dimension command, in world coordinates. */
 export interface PickedEdgeGeometry {

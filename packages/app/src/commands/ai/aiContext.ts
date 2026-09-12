@@ -1,5 +1,5 @@
-import { UnitSetup } from "@chili3d/core";
-import { type GeneratorContext, MM_PER_DRAWING_UNIT } from "@chili3d/generators";
+import { UnitSetup } from "@draftworks/core";
+import { type GeneratorContext, MM_PER_DRAWING_UNIT } from "@draftworks/generators";
 
 /**
  * Bridges the drawing's unit settings to the generators, which speak only millimetres.

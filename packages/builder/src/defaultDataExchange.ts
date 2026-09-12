@@ -7,8 +7,8 @@ import {
     nodesToDxf,
     readDxf,
     writeDxf,
-} from "@chili3d/app";
-import { I18n, type IDataExchange, type IDocument, PubSub, type VisualNode } from "@chili3d/core";
+} from "@draftworks/app";
+import { I18n, type IDataExchange, type IDocument, PubSub, type VisualNode } from "@draftworks/core";
 
 /**
  * DWG and DXF in, DXF out.
@@ -105,7 +105,7 @@ export class DefaultDataExchange implements IDataExchange {
                 }
                 // Loaded on demand - see the note in packages/wasm/src/dwg.ts. A large
                 // DWG takes a moment, so the conversion runs behind the busy indicator.
-                const { DwgReadError, dwgToDxf } = await import("@chili3d/wasm");
+                const { DwgReadError, dwgToDxf } = await import("@draftworks/wasm");
                 try {
                     return await dwgToDxf(bytes);
                 } catch (error) {

@@ -33,7 +33,7 @@ import {
     VisualNode,
     XY,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import {
     Box3,
     BufferAttribute,

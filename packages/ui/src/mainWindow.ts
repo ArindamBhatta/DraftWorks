@@ -10,7 +10,7 @@ import {
     Ribbon,
     RibbonTab,
     type RibbonTabProfile,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { showDialog } from "./dialog";
 import { Editor } from "./editor";
 import { showFloatPanel } from "./floatPanel";

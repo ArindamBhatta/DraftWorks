@@ -12,8 +12,8 @@ import {
     type IDocument,
     type IView,
     PubSub,
-} from "@chili3d/core";
-import { span, svg } from "@chili3d/element";
+} from "@draftworks/core";
+import { span, svg } from "@draftworks/element";
 import style from "./autosaveControl.module.css";
 
 /**

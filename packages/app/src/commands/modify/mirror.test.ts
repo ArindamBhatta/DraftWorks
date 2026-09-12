@@ -6,7 +6,7 @@
 // but it rotates the drawing instead of flipping it - and a symmetric test shape
 // cannot tell the two apart. The handedness check below is the one that can.
 
-import { Matrix4, Plane, XYZ } from "@chili3d/core";
+import { Matrix4, Plane, XYZ } from "@draftworks/core";
 import { expect, test } from "@rstest/core";
 
 const at = (x: number, y: number) => new XYZ({ x, y, z: 0 });

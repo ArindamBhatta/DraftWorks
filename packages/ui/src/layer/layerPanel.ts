@@ -14,8 +14,8 @@ import {
     PubSub,
     Transaction,
     VisualNode,
-} from "@chili3d/core";
-import { div, input, span, svg } from "@chili3d/element";
+} from "@draftworks/core";
+import { div, input, span, svg } from "@draftworks/element";
 import style from "./layerPanel.module.css";
 
 /**

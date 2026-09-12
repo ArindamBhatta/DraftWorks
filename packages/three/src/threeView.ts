@@ -44,8 +44,8 @@ import {
     XY,
     type XYZ,
     type XYZLike,
-} from "@chili3d/core";
-import { div, span, svg } from "@chili3d/element";
+} from "@draftworks/core";
+import { div, span, svg } from "@draftworks/element";
 import {
     type BufferAttribute,
     type BufferGeometry,

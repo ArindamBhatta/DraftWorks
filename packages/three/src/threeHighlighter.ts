@@ -9,7 +9,7 @@ import {
     type VisualState,
     VisualStates,
     VisualStateUtils,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 import { Group, Mesh, Points } from "three";
 

@@ -1,4 +1,4 @@
-import type { IDocument } from "@chili3d/core";
+import type { IDocument } from "@draftworks/core";
 
 /** What a layer looked like before LAYISO hid it. */
 export interface IsolatedLayerState {

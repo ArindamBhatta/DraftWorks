@@ -23,8 +23,8 @@ import {
     UnitSetup,
     VisualConfig,
     type XYZ,
-} from "@chili3d/core";
-import { div, label, textarea } from "@chili3d/element";
+} from "@draftworks/core";
+import { div, label, textarea } from "@draftworks/element";
 
 /**
  * Reads a typed text height: a length in the drawing's units, or an empty line to keep

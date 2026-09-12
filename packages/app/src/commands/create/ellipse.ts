@@ -9,7 +9,7 @@ import {
     Precision,
     type SnapLengthAtPlaneData,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { EllipseNode } from "../../bodys/ellipse";
 import { CreateFaceableCommand } from "../createCommand";
 

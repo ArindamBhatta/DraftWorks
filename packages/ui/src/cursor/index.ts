@@ -1,7 +1,7 @@
 // Part of the Chili3d Project, under the AGPL-3.0 License.
 // See LICENSE file in the project root for full license information.
 
-import type { CursorType } from "@chili3d/core";
+import type { CursorType } from "@draftworks/core";
 
 /**
  * 32 is the ceiling, not a preference: Firefox ignores cursor images larger than

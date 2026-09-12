@@ -9,7 +9,7 @@ import {
     ShapeTypes,
     serializable,
     serialize,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 export interface FaceOptions {
     document: IDocument;

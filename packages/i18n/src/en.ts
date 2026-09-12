@@ -1,4 +1,4 @@
-import type { Locale } from "@chili3d/core";
+import type { Locale } from "@draftworks/core";
 
 export default {
     display: "English",

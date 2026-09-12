@@ -10,7 +10,7 @@ import {
     type StepOption,
     Transaction,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { LineNode } from "../../bodys";
 import { CreateCommand } from "../createCommand";
 

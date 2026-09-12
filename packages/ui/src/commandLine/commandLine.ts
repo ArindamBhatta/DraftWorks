@@ -12,8 +12,8 @@ import {
     PubSub,
     type Result,
     type StepOption,
-} from "@chili3d/core";
-import { createIcon, div, input, span } from "@chili3d/element";
+} from "@draftworks/core";
+import { createIcon, div, input, span } from "@draftworks/element";
 import { CommandHistory } from "./commandHistory";
 import style from "./commandLine.module.css";
 

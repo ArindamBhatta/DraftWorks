@@ -15,7 +15,7 @@ import {
     Transaction,
     type VisualShapeData,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 /**
  * AutoCAD's STRETCH:

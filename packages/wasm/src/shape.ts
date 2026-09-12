@@ -45,7 +45,7 @@ import {
     VisualConfig,
     type XYZ,
     type XYZLike,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import type {
     EdgeMeshData as OccEdgeMeshData,
     FaceMeshData as OccFaceMeshData,

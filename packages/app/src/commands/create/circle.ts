@@ -16,7 +16,7 @@ import {
     type SnapLengthAtPlaneData,
     type StepOption,
     XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { CircleNode } from "../../bodys";
 import { CreateFaceableCommand } from "../createCommand";
 

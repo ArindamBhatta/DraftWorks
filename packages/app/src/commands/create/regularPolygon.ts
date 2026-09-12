@@ -10,7 +10,7 @@ import {
     property,
     type SnapLengthAtPlaneData,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { RegularPolygonNode } from "../../bodys";
 import { CreateFaceableCommand } from "../createCommand";
 

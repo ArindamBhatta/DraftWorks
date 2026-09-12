@@ -9,7 +9,7 @@ import {
     SelectNodeStep,
     Transaction,
     type VisualNode,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 /**
  * AutoCAD's MATCHPROP (MA):

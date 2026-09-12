@@ -1,4 +1,4 @@
-import { Localize, PathBinding } from "@chili3d/core";
+import { Localize, PathBinding } from "@draftworks/core";
 import type { HTMLProps } from "./htmlProps";
 
 export function setProperties<T extends { [K: string]: any }>(left: T, prop: HTMLProps<T>) {

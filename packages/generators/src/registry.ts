@@ -1,4 +1,4 @@
-import { Result } from "@chili3d/core";
+import { Result } from "@draftworks/core";
 import type { DrawingMode } from "./modes";
 import type { DrawItem, LayerSpec, LengthFormatter } from "./types";
 

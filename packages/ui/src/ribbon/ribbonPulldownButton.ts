@@ -1,8 +1,8 @@
 // Part of the Chili3d Project, under the AGPL-3.0 License.
 // See LICENSE file in the project root for full license information.
 
-import { type ButtonSize, type CommandIcon, Localize, type PulldownButton } from "@chili3d/core";
-import { createIcon, div, label } from "@chili3d/element";
+import { type ButtonSize, type CommandIcon, Localize, type PulldownButton } from "@draftworks/core";
+import { createIcon, div, label } from "@draftworks/element";
 import { createDropdownItem, DropdownController } from "./dropdownController";
 import buttonStyle from "./ribbonButton.module.css";
 import style from "./ribbonPulldownButton.module.css";

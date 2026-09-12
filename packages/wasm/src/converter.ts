@@ -13,7 +13,7 @@ import {
     type IShapeConverter,
     Material,
     Result,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import type { ShapeNode } from "../lib/chili-wasm";
 import { OccShape } from "./shape";
 

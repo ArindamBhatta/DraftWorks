@@ -1,4 +1,4 @@
-import { type LineType, VisualConfig, type VisualItemConfig } from "@chili3d/core";
+import { type LineType, VisualConfig, type VisualItemConfig } from "@draftworks/core";
 import { DoubleSide, MeshBasicMaterial, MeshLambertMaterial, PointsMaterial } from "three";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { ThreeHelper } from "./threeHelper";

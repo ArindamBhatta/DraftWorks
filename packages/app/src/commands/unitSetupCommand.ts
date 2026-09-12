@@ -10,8 +10,8 @@ import {
     PubSub,
     UnitSetup,
     type UnitType,
-} from "@chili3d/core";
-import { div, fieldset, legend, option, select, span } from "@chili3d/element";
+} from "@draftworks/core";
+import { div, fieldset, legend, option, select, span } from "@draftworks/element";
 import style from "./setupDialog.module.css";
 
 /**

@@ -5,7 +5,7 @@ import {
     type GeneratorRegistry,
     isTechnicalMode,
     type ParamDef,
-} from "@chili3d/generators";
+} from "@draftworks/generators";
 import type { ToolSpec } from "./conversation";
 import { FREEFORM_DRAW, FREEFORM_TOOL } from "./freeform";
 import { ASK_QUESTIONS, QUESTIONS_TOOL } from "./questions";

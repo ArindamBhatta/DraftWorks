@@ -1,11 +1,11 @@
 {
-    "name": "@chili3d/ai",
+    "name": "@draftworks/ai",
     "version": "0.7.0-beta",
     "description": "Maps a draftsman's plain-language request onto a registered drawing generator.",
     "main": "src/index.ts",
     "devDependencies": {
-        "@chili3d/core": "*",
-        "@chili3d/generators": "*"
+        "@draftworks/core": "*",
+        "@draftworks/generators": "*"
     },
     "dependencies": {
         "@anthropic-ai/sdk": "^0.71.0",

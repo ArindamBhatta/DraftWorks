@@ -1,4 +1,4 @@
-import { Result } from "@chili3d/core";
+import { Result } from "@draftworks/core";
 import { type GeneratorError, generatorError } from "../registry";
 import { clamp } from "../units";
 import { DOOR_CLEARANCE, ROOM_MAX, ROOM_MIN, ROOM_NAMES } from "./defaults";

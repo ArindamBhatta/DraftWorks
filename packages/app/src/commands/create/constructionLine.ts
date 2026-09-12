@@ -7,7 +7,7 @@ import {
     PointStep,
     Precision,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 import { ConstructionLineNode } from "../../bodys";
 

@@ -11,7 +11,7 @@ import {
     type ShapeMeshData,
     type SnapLengthAtPlaneData,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { ArcNode } from "../../bodys/arc";
 import { CreateCommand } from "../createCommand";
 import { computeArcFromPoints } from "./arcUtils";

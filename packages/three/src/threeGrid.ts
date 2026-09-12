@@ -1,4 +1,4 @@
-import { Config, type IDisposable, type Plane, VisualConfig, type VisualItemConfig } from "@chili3d/core";
+import { Config, type IDisposable, type Plane, VisualConfig, type VisualItemConfig } from "@draftworks/core";
 import { BufferAttribute, BufferGeometry, LineBasicMaterial, LineSegments, type Scene } from "three";
 import { Constants } from "./constants";
 import type { ThreeView } from "./threeView";

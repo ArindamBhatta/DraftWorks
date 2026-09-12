@@ -1,4 +1,4 @@
-import { type CommandIcon, Localize } from "@chili3d/core";
+import { type CommandIcon, Localize } from "@draftworks/core";
 import { Collection, type CollectionProps } from "./collection";
 import type { HTMLProps } from "./htmlProps";
 import { setProperties } from "./utils";

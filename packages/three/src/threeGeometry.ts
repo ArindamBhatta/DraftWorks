@@ -15,7 +15,7 @@ import {
     ShapeTypes,
     ShapeTypeUtils,
     type VertexMeshData,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import {
     type Material,
     Mesh,

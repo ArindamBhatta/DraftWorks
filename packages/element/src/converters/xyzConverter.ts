@@ -1,4 +1,4 @@
-import { type IConverter, Result, XY, XYZ } from "@chili3d/core";
+import { type IConverter, Result, XY, XYZ } from "@draftworks/core";
 
 export class XYConverter implements IConverter<XY> {
     convert(value: XY) {

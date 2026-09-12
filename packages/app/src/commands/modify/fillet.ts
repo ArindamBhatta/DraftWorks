@@ -11,7 +11,7 @@ import {
     property,
     Result,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { EdgeCornerCommand } from "./edgeCornerCommand";
 
 /**

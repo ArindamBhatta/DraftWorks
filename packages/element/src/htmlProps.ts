@@ -1,4 +1,4 @@
-import type { IPropertyChanged, Localize, PathBinding } from "@chili3d/core";
+import type { IPropertyChanged, Localize, PathBinding } from "@draftworks/core";
 
 export type HTMLProps<T> = {
     [P in keyof T]?: T[P] extends object

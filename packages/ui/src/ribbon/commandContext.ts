@@ -19,7 +19,7 @@ import {
     type Property,
     PropertyUtils,
     PubSub,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import {
     button,
     ColorConverter,
@@ -32,7 +32,7 @@ import {
     span,
     svg,
     UrlStringConverter,
-} from "@chili3d/element";
+} from "@draftworks/element";
 import style from "./commandContext.module.css";
 
 export class CommandContext extends HTMLElement implements IDisposable {

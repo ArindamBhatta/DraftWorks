@@ -2,7 +2,7 @@
 // it: the second isolate starts from an already half-hidden drawing, so recording that
 // as the thing to restore would strand every layer the first isolate turned off.
 
-import type { IDocument } from "@chili3d/core";
+import type { IDocument } from "@draftworks/core";
 import { expect, test } from "@rstest/core";
 import { captureIsolation, clearIsolation, isolationSnapshot } from "./layerIsolation";
 

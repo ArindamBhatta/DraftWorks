@@ -1,7 +1,7 @@
 // * Starting Point of 2D Cad */
-import { promptDrawingSetupIfFirstRun } from "@chili3d/app";
-import { AppBuilder } from "@chili3d/builder";
-import { type IApplication, Logger } from "@chili3d/core";
+import { promptDrawingSetupIfFirstRun } from "@draftworks/app";
+import { AppBuilder } from "@draftworks/builder";
+import { type IApplication, Logger } from "@draftworks/core";
 import { Loading } from "./loading";
 import { parseStartupParams } from "./startupParams";
 

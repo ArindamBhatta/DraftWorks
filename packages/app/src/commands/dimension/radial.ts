@@ -14,7 +14,7 @@ import {
     SelectShapeStep,
     ShapeTypes,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { DimensionCommandBase } from "./dimensionCommand";
 import { pickedEdgeGeometry } from "./pickedEdge";
 

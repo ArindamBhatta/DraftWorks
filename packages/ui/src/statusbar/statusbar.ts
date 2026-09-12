@@ -1,5 +1,5 @@
-import { I18n } from "@chili3d/core";
-import { div, label } from "@chili3d/element";
+import { I18n } from "@draftworks/core";
+import { div, label } from "@draftworks/element";
 import { SnapConfig } from "./snapConfig";
 import style from "./statusbar.module.css";
 

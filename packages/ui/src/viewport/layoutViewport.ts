@@ -7,7 +7,7 @@ import {
     type IApplication,
     type IView,
     PubSub,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { Cursor } from "../cursor";
 import style from "./layoutViewport.module.css";
 import { Viewport } from "./viewport";

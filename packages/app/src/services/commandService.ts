@@ -10,7 +10,7 @@ import {
     isCancelableCommand,
     Logger,
     PubSub,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 export class CommandService implements IService {
     private _checking: boolean = false;

@@ -1,5 +1,5 @@
-import { type CommandKeys, CommandPrefix, I18n, type I18nKeys, PubSub } from "@chili3d/core";
-import { div } from "@chili3d/element";
+import { type CommandKeys, CommandPrefix, I18n, type I18nKeys, PubSub } from "@draftworks/core";
+import { div } from "@draftworks/element";
 import style from "./commandHistory.module.css";
 
 /** What a line is, which is all that decides how it is coloured. */

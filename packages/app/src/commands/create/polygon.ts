@@ -13,7 +13,7 @@ import {
     type ShapeMeshData,
     type SnapResult,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { PolygonNode } from "../../bodys";
 import { CreateFaceableCommand } from "../createCommand";
 

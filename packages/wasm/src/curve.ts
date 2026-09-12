@@ -22,7 +22,7 @@ import {
     Line,
     type Matrix4,
     XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import type {
     Geom_BezierCurve,
     Geom_BoundedCurve,

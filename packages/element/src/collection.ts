@@ -1,4 +1,4 @@
-import { type CollectionChangedArgs, ObservableCollection } from "@chili3d/core";
+import { type CollectionChangedArgs, ObservableCollection } from "@draftworks/core";
 import type { HTMLProps } from "./htmlProps";
 import { setProperties } from "./utils";
 

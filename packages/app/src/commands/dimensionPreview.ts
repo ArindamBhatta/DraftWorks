@@ -8,7 +8,7 @@ import {
     type I18nKeys,
     resolveDimensionColor,
     XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 /**
  * The sample drawings in AutoCAD's Dimension Style dialog: a figure with one dimension of

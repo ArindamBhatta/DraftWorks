@@ -15,7 +15,7 @@ import {
     type I18nKeys,
     PubSub,
     UnitSetup,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { expect, test } from "@rstest/core";
 import {
     PREVIEW_FIGURE,

@@ -14,7 +14,7 @@ import {
     VisualConfig,
     type VisualNode,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 export abstract class TransformedCommand extends MultiStepCommand {
     protected models?: VisualNode[];

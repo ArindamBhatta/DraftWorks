@@ -1,4 +1,4 @@
-import { UnitSetup } from "@chili3d/core";
+import { UnitSetup } from "@draftworks/core";
 import { describe, expect, test } from "@rstest/core";
 import { generatorContext } from "./aiContext";
 

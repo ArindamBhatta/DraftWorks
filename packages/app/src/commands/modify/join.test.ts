@@ -7,7 +7,7 @@
 // the run from the first endpoint as if nothing could lie behind it - which quietly
 // drops any segment on the other side of where the user happened to click first.
 
-import { type ICurve, XYZ } from "@chili3d/core";
+import { type ICurve, XYZ } from "@draftworks/core";
 import { expect, test } from "@rstest/core";
 import { basisCurveType, collinearSpan } from "./join";
 

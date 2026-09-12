@@ -1,4 +1,4 @@
-import { type ICameraController, Observable, type ViewMode, type XYZLike } from "@chili3d/core";
+import { type ICameraController, Observable, type ViewMode, type XYZLike } from "@draftworks/core";
 
 import { Box3, Camera, MathUtils, type Object3D, OrthographicCamera, Sphere, Vector3 } from "three";
 

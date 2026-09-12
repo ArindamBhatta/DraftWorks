@@ -15,7 +15,7 @@ import {
     ShapeNodeFilter,
     ShapeTypes,
     Transaction,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { FaceNode } from "../../bodys/face";
 import { WireNode } from "../../bodys/wire";
 

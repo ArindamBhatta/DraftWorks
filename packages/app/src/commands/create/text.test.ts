@@ -5,7 +5,7 @@
 // between "keep the remembered value" and "reject this" has to be exact - getting it
 // wrong either drops text at size zero or refuses a legitimate angle.
 
-import { UnitSetup } from "@chili3d/core";
+import { UnitSetup } from "@draftworks/core";
 import { expect, test } from "@rstest/core";
 import { parseTextHeight, parseTextRotation } from "./text";
 

@@ -14,7 +14,7 @@ import {
     ShapeNode,
     ShapeTypeUtils,
     Transaction,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 @command({
     key: "modify.explode",

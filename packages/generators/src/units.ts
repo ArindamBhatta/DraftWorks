@@ -1,4 +1,4 @@
-import type { BaseUnit } from "@chili3d/core";
+import type { BaseUnit } from "@draftworks/core";
 
 /**
  * How many millimetres one drawing unit represents.

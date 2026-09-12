@@ -18,7 +18,7 @@ import {
     type VisualNode,
     type VisualShapeData,
     VisualStates,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 export class Picker implements IPicker {
     constructor(readonly document: IDocument) {}

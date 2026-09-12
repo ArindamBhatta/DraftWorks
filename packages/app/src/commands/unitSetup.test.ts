@@ -6,7 +6,7 @@
 // Architectural and decimal places under Decimal, so a type change has to rebuild the
 // list rather than carry a number across into a format where it is nonsense.
 
-import { type DialogButton, type I18nKeys, PubSub, UnitSetup } from "@chili3d/core";
+import { type DialogButton, type I18nKeys, PubSub, UnitSetup } from "@draftworks/core";
 import { expect, test } from "@rstest/core";
 import { promptUnitSetup } from "./unitSetupCommand";
 

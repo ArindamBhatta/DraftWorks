@@ -33,7 +33,7 @@ import {
     UnitSetup,
     type VisualNode,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import {
     DXF_LINETYPE_CONTINUOUS,
     DXF_UNITS,

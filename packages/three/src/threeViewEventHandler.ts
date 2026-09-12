@@ -1,4 +1,4 @@
-import type { IEventHandler, IView } from "@chili3d/core";
+import type { IEventHandler, IView } from "@draftworks/core";
 
 interface MouseDownData {
     time: number;

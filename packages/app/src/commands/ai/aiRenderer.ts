@@ -9,9 +9,9 @@ import {
     UnitSetup,
     type VisualNode,
     XYZ,
-} from "@chili3d/core";
-import type { DrawItem, LayerSpec, Vec2 } from "@chili3d/generators";
-import { MM_PER_DRAWING_UNIT } from "@chili3d/generators";
+} from "@draftworks/core";
+import type { DrawItem, LayerSpec, Vec2 } from "@draftworks/generators";
+import { MM_PER_DRAWING_UNIT } from "@draftworks/generators";
 import { ArcNode } from "../../bodys/arc";
 import { CircleNode } from "../../bodys/circle";
 import { EllipseNode } from "../../bodys/ellipse";

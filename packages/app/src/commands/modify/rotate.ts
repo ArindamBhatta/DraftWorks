@@ -11,7 +11,7 @@ import {
     type ShapeMeshData,
     type StepOption,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { TransformedCommand } from "./transformedCommand";
 
 /**

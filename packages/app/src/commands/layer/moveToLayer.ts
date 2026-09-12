@@ -1,7 +1,14 @@
 // Part of the Chili3d Project, under the AGPL-3.0 License.
 // See LICENSE file in the project root for full license information.
 
-import { AsyncController, CancelableCommand, command, PubSub, Transaction, VisualNode } from "@chili3d/core";
+import {
+    AsyncController,
+    CancelableCommand,
+    command,
+    PubSub,
+    Transaction,
+    VisualNode,
+} from "@draftworks/core";
 
 /**
  * AutoCAD's "change object's layer": moves the selected objects onto whichever layer is

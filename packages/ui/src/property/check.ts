@@ -1,8 +1,8 @@
 // Part of the Chili3d Project, under the AGPL-3.0 License.
 // See LICENSE file in the project root for full license information.
 
-import { Binding, type IDocument, Localize, type Property, Transaction } from "@chili3d/core";
-import { div, input, span } from "@chili3d/element";
+import { Binding, type IDocument, Localize, type Property, Transaction } from "@draftworks/core";
+import { div, input, span } from "@draftworks/element";
 import commonStyle from "./common.module.css";
 import { PropertyBase } from "./propertyBase";
 

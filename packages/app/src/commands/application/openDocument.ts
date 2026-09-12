@@ -9,7 +9,7 @@ import {
     PubSub,
     readFileAsync,
     type Serialized,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 @command({
     key: "doc.open",

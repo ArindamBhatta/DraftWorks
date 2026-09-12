@@ -4,7 +4,7 @@
 // the corner deletes the half of the line the user was looking at. Both are parameter
 // arithmetic, so they can be pinned down without OCCT.
 
-import { type ICurve, XYZ } from "@chili3d/core";
+import { type ICurve, XYZ } from "@draftworks/core";
 import { expect, test } from "@rstest/core";
 import { cornerSpan, crossingParameters, supportCurve } from "./fillet";
 

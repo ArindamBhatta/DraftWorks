@@ -1,8 +1,8 @@
 // Part of the Chili3d Project, under the AGPL-3.0 License.
 // See LICENSE file in the project root for full license information.
 
-import { type IDocument, Logger, type Property } from "@chili3d/core";
-import { LengthConverter } from "@chili3d/element";
+import { type IDocument, Logger, type Property } from "@draftworks/core";
+import { LengthConverter } from "@draftworks/element";
 import { CheckProperty } from "./check";
 import { ColorProperty } from "./colorProperty";
 import { InputProperty } from "./input";

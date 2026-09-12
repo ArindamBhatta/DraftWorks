@@ -7,7 +7,7 @@
 // functions work in curve parameters, so a line running 0..10 with crossings at 3 and 7
 // is the whole of the geometry a test needs.
 
-import { TrimExtendModes } from "@chili3d/core";
+import { TrimExtendModes } from "@draftworks/core";
 import { expect, test } from "@rstest/core";
 import {
     extendChange,

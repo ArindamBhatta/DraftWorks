@@ -1,4 +1,4 @@
-import type { SelectableItems } from "@chili3d/core";
+import type { SelectableItems } from "@draftworks/core";
 import { div, input, label } from "./elements";
 import style from "./radioGroup.module.css";
 

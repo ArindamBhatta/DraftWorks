@@ -6,7 +6,7 @@ import {
     PubSub,
     Transaction,
     type VisualNode,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 /**
  * AutoCAD's COPYTOLAYER:

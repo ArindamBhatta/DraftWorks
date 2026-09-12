@@ -9,8 +9,8 @@ import {
     Localize,
     type Property,
     Transaction,
-} from "@chili3d/core";
-import { div, label, option, select } from "@chili3d/element";
+} from "@draftworks/core";
+import { div, label, option, select } from "@draftworks/element";
 import commonStyle from "./common.module.css";
 import { PropertyBase } from "./propertyBase";
 

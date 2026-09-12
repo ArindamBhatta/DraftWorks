@@ -20,7 +20,7 @@ import {
     ShapeTypes,
     type XYZ,
     type XYZLike,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import type { ShapeResult, ShapesResult, TopoDS_Edge, TopoDS_Face, TopoDS_Shape } from "../lib/chili-wasm";
 import { OccCurve } from "./curve";
 import { convertFromContinuity, getJoinType } from "./helper";

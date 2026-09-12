@@ -1,4 +1,4 @@
-import { command, type IEdge, type IFace, type IShape, property, type Result } from "@chili3d/core";
+import { command, type IEdge, type IFace, type IShape, property, type Result } from "@draftworks/core";
 import { EdgeCornerCommand } from "./edgeCornerCommand";
 
 @command({

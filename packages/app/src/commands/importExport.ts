@@ -15,7 +15,7 @@ import {
     property,
     readFilesAsync,
     SelectNodeStep,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { importFiles } from "../utils";
 
 @command({

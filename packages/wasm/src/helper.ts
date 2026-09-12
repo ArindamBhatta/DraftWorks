@@ -14,7 +14,7 @@ import {
     ShapeTypes,
     type SurfaceType,
     XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import type {
     Geom_Curve,
     Geom_Surface,

@@ -6,7 +6,7 @@ import {
     PhysicalMaterial,
     type Texture,
     XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import {
     Box3,
     type Camera,

@@ -9,8 +9,8 @@ import {
     Localize,
     PubSub,
     type PushButton,
-} from "@chili3d/core";
-import { createIcon, div, label } from "@chili3d/element";
+} from "@draftworks/core";
+import { createIcon, div, label } from "@draftworks/element";
 
 export interface DropdownItemData {
     command: CommandKeys;

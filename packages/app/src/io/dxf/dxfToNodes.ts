@@ -28,7 +28,7 @@ import {
     type Layer,
     TextAnnotation,
     XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { ArcNode } from "../../bodys/arc";
 import { CircleNode } from "../../bodys/circle";
 import { EllipseNode } from "../../bodys/ellipse";

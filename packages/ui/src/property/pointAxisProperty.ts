@@ -8,8 +8,8 @@ import {
     UnitSetup,
     type VisualNode,
     XYZ,
-} from "@chili3d/core";
-import { div, input, label } from "@chili3d/element";
+} from "@draftworks/core";
+import { div, input, label } from "@draftworks/element";
 import commonStyle from "./common.module.css";
 import style from "./input.module.css";
 import { PropertyBase } from "./propertyBase";

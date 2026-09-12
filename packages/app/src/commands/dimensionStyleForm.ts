@@ -30,8 +30,8 @@ import {
     TOLERANCE_ALIGNMENTS,
     TOLERANCE_METHODS,
     UnitSetup,
-} from "@chili3d/core";
-import { div, fieldset, input, label, legend, option, select, span } from "@chili3d/element";
+} from "@draftworks/core";
+import { div, fieldset, input, label, legend, option, select, span } from "@draftworks/element";
 import style from "./dimensionStyle.module.css";
 
 /**

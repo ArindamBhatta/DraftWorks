@@ -13,7 +13,7 @@ import {
     Transaction,
     VisualConfig,
     XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 /**
  * Shared behaviour for the DIM* commands: while the dimension line is being dragged

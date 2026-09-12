@@ -1,4 +1,4 @@
-import { LAYER_COLOR_BY_THEME } from "@chili3d/core";
+import { LAYER_COLOR_BY_THEME } from "@draftworks/core";
 import { expect, test } from "@rstest/core";
 import { FREEFORM_TOOL, parseFreeform } from "./freeform";
 

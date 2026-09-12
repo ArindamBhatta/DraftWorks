@@ -7,7 +7,7 @@ import {
     type IVisualObject,
     Matrix4,
     resolveDimensionColor,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { BufferAttribute, BufferGeometry, DoubleSide, Mesh, MeshBasicMaterial, Object3D } from "three";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";

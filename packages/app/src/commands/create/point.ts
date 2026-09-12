@@ -1,4 +1,4 @@
-import { command, type GeometryNode, type IStep, PointStep } from "@chili3d/core";
+import { command, type GeometryNode, type IStep, PointStep } from "@draftworks/core";
 import { PointNode } from "../../bodys";
 import { CreateCommand } from "../createCommand";
 

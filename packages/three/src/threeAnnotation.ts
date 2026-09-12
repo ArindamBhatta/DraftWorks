@@ -1,4 +1,4 @@
-import { type BoundingBox, type IVisualObject, Matrix4, type RefSegmentAnnotation } from "@chili3d/core";
+import { type BoundingBox, type IVisualObject, Matrix4, type RefSegmentAnnotation } from "@draftworks/core";
 import { DoubleSide, type Mesh, Object3D, type Points } from "three";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";

@@ -1,4 +1,4 @@
-import type { DrawingMode, GeneratorRegistry } from "@chili3d/generators";
+import type { DrawingMode, GeneratorRegistry } from "@draftworks/generators";
 import { type ConversationTurn, TOOL_REJECTED } from "./conversation";
 import { FREEFORM_DRAW, type FreeformDrawing, parseFreeform } from "./freeform";
 import type { AiProvider } from "./provider";

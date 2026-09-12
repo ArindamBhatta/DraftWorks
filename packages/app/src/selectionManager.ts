@@ -12,7 +12,7 @@ import {
     type VisualShapeData,
     type VisualState,
     VisualStates,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 export class SelectionManager implements ISelection, IDisposable {
     readonly onNodeChanged = new Signal<(selected: INode[]) => void>();

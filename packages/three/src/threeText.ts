@@ -1,4 +1,10 @@
-import { type BoundingBox, type IVisualObject, Matrix4, type TextAnnotation, type XYZ } from "@chili3d/core";
+import {
+    type BoundingBox,
+    type IVisualObject,
+    Matrix4,
+    type TextAnnotation,
+    type XYZ,
+} from "@draftworks/core";
 
 import {
     DoubleSide,

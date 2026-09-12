@@ -9,7 +9,7 @@ import {
     type IEdge,
     Precision,
     VisualConfig,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import {
     type EdgeChange,
     type EdgeContext,

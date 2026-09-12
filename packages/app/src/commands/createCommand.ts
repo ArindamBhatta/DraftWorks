@@ -1,4 +1,4 @@
-import { type GeometryNode, MultiStepCommand, property, Transaction } from "@chili3d/core";
+import { type GeometryNode, MultiStepCommand, property, Transaction } from "@draftworks/core";
 
 // CreateCommand is the base for every "draw a shape" command (Box, Circle, Line, ...).
 // It wraps body construction (geometryNode()) and tree insertion (addNode()) in a

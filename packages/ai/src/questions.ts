@@ -1,4 +1,4 @@
-import { Result } from "@chili3d/core";
+import { Result } from "@draftworks/core";
 import type { ToolSpec } from "./conversation";
 
 /**

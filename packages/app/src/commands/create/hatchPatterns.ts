@@ -1,4 +1,4 @@
-import type { I18nKeys } from "@chili3d/core";
+import type { I18nKeys } from "@draftworks/core";
 
 export type HatchPatternKey = "solid" | "lines" | "brick" | "concrete" | "sand";
 

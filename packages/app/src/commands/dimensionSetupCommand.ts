@@ -6,8 +6,8 @@ import {
     type IApplication,
     type ICommand,
     PubSub,
-} from "@chili3d/core";
-import { button, div, fieldset, legend, span } from "@chili3d/element";
+} from "@draftworks/core";
+import { button, div, fieldset, legend, span } from "@draftworks/element";
 import { PREVIEW_SAMPLES, renderDimensionPreview, suggestedOverallScale } from "./dimensionPreview";
 import style from "./dimensionStyle.module.css";
 import { DimensionStyleForm, dimensionStyleTabs } from "./dimensionStyleForm";

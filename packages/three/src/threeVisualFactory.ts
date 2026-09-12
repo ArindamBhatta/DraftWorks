@@ -1,4 +1,4 @@
-import type { IDocument, IEventHandler, IVisual, IVisualFactory } from "@chili3d/core";
+import type { IDocument, IEventHandler, IVisual, IVisualFactory } from "@draftworks/core";
 
 import { ThreeVisual } from "./threeVisual";
 

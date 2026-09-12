@@ -1,4 +1,4 @@
-import { type IStorage, Logger } from "@chili3d/core";
+import { type IStorage, Logger } from "@draftworks/core";
 
 export class IndexedDBStorage implements IStorage {
     async createDBIfNeeded(database: string, tables: string[]): Promise<void> {

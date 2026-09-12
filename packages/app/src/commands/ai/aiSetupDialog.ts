@@ -1,6 +1,6 @@
-import { AiSetup, DEFAULT_MODELS, PROVIDER_IDS, PROVIDER_LABELS, type ProviderId } from "@chili3d/ai";
-import { command, I18n, type IApplication, type ICommand, PubSub } from "@chili3d/core";
-import { div, input, option, p, select, span } from "@chili3d/element";
+import { AiSetup, DEFAULT_MODELS, PROVIDER_IDS, PROVIDER_LABELS, type ProviderId } from "@draftworks/ai";
+import { command, I18n, type IApplication, type ICommand, PubSub } from "@draftworks/core";
+import { div, input, option, p, select, span } from "@draftworks/element";
 import style from "../setupDialog.module.css";
 
 const PLACEHOLDER: Record<ProviderId, string> = {

@@ -1,4 +1,4 @@
-import { Application, CommandService, HotkeyService, ShowPropertyEventHandler } from "@chili3d/app";
+import { Application, CommandService, HotkeyService, ShowPropertyEventHandler } from "@draftworks/app";
 import {
     AutosaveService,
     Config,
@@ -16,7 +16,8 @@ import {
     type Locale,
     Logger,
     UnitSetup,
-} from "@chili3d/core";
+} from "@draftworks/core";
+
 import { DefaultDataExchange } from "./defaultDataExchange";
 
 export class AppBuilder {
@@ -36,8 +37,8 @@ export class AppBuilder {
         this._inits.push(async () => {
             Logger.info("initializing api");
 
-            (globalThis as any).Chili3dCore = await import("@chili3d/core");
-            (globalThis as any).Chili3dElement = await import("@chili3d/element");
+            (globalThis as any).Chili3dCore = await import("@draftworks/core");
+            (globalThis as any).Chili3dElement = await import("@draftworks/element");
         });
     }
 
@@ -55,7 +56,7 @@ export class AppBuilder {
         this._inits.push(async () => {
             Logger.info("initializing i18n");
 
-            const i18n = await import("@chili3d/i18n");
+            const i18n = await import("@draftworks/i18n");
             for (const key of Object.keys(i18n)) {
                 I18n.addLanguage((i18n as { [key: string]: Locale })[key]);
             }
@@ -66,7 +67,7 @@ export class AppBuilder {
         this._inits.push(async () => {
             Logger.info("initializing IndexedDBStorage");
 
-            const db = await import("@chili3d/storage");
+            const db = await import("@draftworks/storage");
             this._storage = new db.IndexedDBStorage();
             await this._storage.createDBIfNeeded(Constants.DBName, [
                 Constants.DocumentTable,
@@ -82,7 +83,7 @@ export class AppBuilder {
         this._inits.push(async () => {
             Logger.info("initializing wasm occ");
 
-            const wasm = await import("@chili3d/wasm");
+            const wasm = await import("@draftworks/wasm");
             await wasm.initWasm();
             this._shapeProvider = new wasm.OccShapeProvider();
         });
@@ -93,7 +94,7 @@ export class AppBuilder {
         this._inits.push(async () => {
             Logger.info("initializing three");
 
-            const three = await import("@chili3d/three");
+            const three = await import("@draftworks/three");
             this._visualFactory = new three.ThreeVisulFactory((d) => new ShowPropertyEventHandler(d));
         });
         return this;
@@ -103,7 +104,7 @@ export class AppBuilder {
         this._inits.push(async () => {
             Logger.info("initializing MainWindow");
 
-            const ui = await import("@chili3d/ui");
+            const ui = await import("@draftworks/ui");
             const app = document.getElementById("app") as HTMLElement;
             this._window = new ui.MainWindow(await this.getRibbonTabs(), "iconfont.js", app);
         });

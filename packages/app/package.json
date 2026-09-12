@@ -1,12 +1,12 @@
 {
-    "name": "@chili3d/app",
+    "name": "@draftworks/app",
     "version": "0.7.0-beta",
     "description": "",
     "main": "src/index.ts",
     "devDependencies": {
-        "@chili3d/ai": "*",
-        "@chili3d/core": "*",
-        "@chili3d/element": "*",
-        "@chili3d/generators": "*"
+        "@draftworks/ai": "*",
+        "@draftworks/core": "*",
+        "@draftworks/element": "*",
+        "@draftworks/generators": "*"
     }
 }

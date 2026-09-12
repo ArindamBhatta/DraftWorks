@@ -20,7 +20,7 @@ import {
     Transaction,
     type VisualNode,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { LineNode } from "../../bodys/line";
 import { WireNode } from "../../bodys/wire";
 

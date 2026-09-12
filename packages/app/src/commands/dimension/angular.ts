@@ -11,7 +11,7 @@ import {
     Precision,
     type ShapeMeshData,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { DimensionCommandBase } from "./dimensionCommand";
 
 /**

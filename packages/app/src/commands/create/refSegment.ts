@@ -9,7 +9,7 @@ import {
     RefSegmentAnnotation,
     Transaction,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 /**
  * Creates a RefSegmentAnnotation — a dashed reference line segment

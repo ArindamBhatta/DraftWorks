@@ -1,4 +1,4 @@
-import { command, type IApplication, type ICommand } from "@chili3d/core";
+import { command, type IApplication, type ICommand } from "@draftworks/core";
 import { showAiPanel } from "./aiPanel";
 
 /**

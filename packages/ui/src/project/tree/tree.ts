@@ -14,7 +14,7 @@ import {
     ShapeTypes,
     Transaction,
     VisualNode,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import style from "./tree.module.css";
 import { TreeItem } from "./treeItem";
 import { TreeGroup } from "./treeItemGroup";

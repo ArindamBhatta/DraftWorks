@@ -12,7 +12,7 @@ import {
     ShapeTypes,
     ShapeTypeUtils,
     type VisualNode,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 import {
     BufferAttribute,

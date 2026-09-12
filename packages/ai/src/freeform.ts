@@ -1,5 +1,5 @@
-import { LAYER_COLOR_BY_THEME, Result } from "@chili3d/core";
-import type { DrawItem, LayerSpec, Vec2 } from "@chili3d/generators";
+import { LAYER_COLOR_BY_THEME, Result } from "@draftworks/core";
+import type { DrawItem, LayerSpec, Vec2 } from "@draftworks/generators";
 import type { ToolSpec } from "./conversation";
 
 /**

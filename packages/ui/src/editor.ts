@@ -9,8 +9,8 @@ import {
     type Material,
     PubSub,
     type Ribbon,
-} from "@chili3d/core";
-import { div } from "@chili3d/element";
+} from "@draftworks/core";
+import { div } from "@draftworks/element";
 import { CommandHistory, CommandLine } from "./commandLine";
 import style from "./editor.module.css";
 import { MaterialDataContent, MaterialEditor } from "./property/material";

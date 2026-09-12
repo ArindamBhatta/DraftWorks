@@ -5,9 +5,9 @@ import {
     type ConversationTurn,
     type FreeformDrawing,
     route,
-} from "@chili3d/ai";
-import { type FolderNode, I18n, type IApplication, PubSub } from "@chili3d/core";
-import { button, div, input, label, option, p, select, span, textarea } from "@chili3d/element";
+} from "@draftworks/ai";
+import { type FolderNode, I18n, type IApplication, PubSub } from "@draftworks/core";
+import { button, div, input, label, option, p, select, span, textarea } from "@draftworks/element";
 import {
     DRAWING_MODE_INFO,
     DRAWING_MODES,
@@ -18,7 +18,7 @@ import {
     GeneratorRegistry,
     isTechnicalMode,
     type ParamDef,
-} from "@chili3d/generators";
+} from "@draftworks/generators";
 import { generatorContext } from "./aiContext";
 import style from "./aiPanel.module.css";
 import { renderPreview } from "./aiPreview";
@@ -53,7 +53,7 @@ interface ModeState {
  * sentence. That form is also the whole feature offline, with no key and no network.
  *
  * The tabs across the top are not a filter over one catalogue - each is a different
- * posture, decided in `@chili3d/ai`. The three technical ones ask before they draw; the
+ * posture, decided in `@draftworks/ai`. The three technical ones ask before they draw; the
  * freehand one draws.
  */
 export class AiPanel {

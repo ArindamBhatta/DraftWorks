@@ -10,7 +10,7 @@ import {
     type SnapLengthAtPlaneData,
     type SnapResult,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { RectNode } from "../../bodys";
 import { CreateCommand } from "../createCommand";
 

@@ -19,7 +19,7 @@ import {
     PubSub,
     readDocumentWithFallback,
     type Serialized,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { Picker } from "./picker";
 import { SelectionManager } from "./selectionManager";
 

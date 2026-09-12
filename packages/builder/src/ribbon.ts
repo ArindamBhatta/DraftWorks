@@ -1,4 +1,4 @@
-import type { RibbonTabProfile } from "@chili3d/core";
+import type { RibbonTabProfile } from "@draftworks/core";
 
 export const DefaultRibbon: RibbonTabProfile[] = [
     {

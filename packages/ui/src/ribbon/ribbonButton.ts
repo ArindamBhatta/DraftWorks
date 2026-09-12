@@ -12,8 +12,8 @@ import {
     Logger,
     PubSub,
     Result,
-} from "@chili3d/core";
-import { createIcon, label } from "@chili3d/element";
+} from "@draftworks/core";
+import { createIcon, label } from "@draftworks/element";
 import style from "./ribbonButton.module.css";
 
 export class RibbonPushButton extends HTMLElement {

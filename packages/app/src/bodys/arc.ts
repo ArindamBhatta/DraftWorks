@@ -12,7 +12,7 @@ import {
     serializable,
     serialize,
     type XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 export interface ArcOptions {
     document: IDocument;

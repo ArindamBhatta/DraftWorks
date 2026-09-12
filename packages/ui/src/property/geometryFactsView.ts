@@ -1,5 +1,12 @@
-import { DimensionSetup, type GeometryFact, I18n, Localize, UnitSetup, type VisualNode } from "@chili3d/core";
-import { div, input, label } from "@chili3d/element";
+import {
+    DimensionSetup,
+    type GeometryFact,
+    I18n,
+    Localize,
+    UnitSetup,
+    type VisualNode,
+} from "@draftworks/core";
+import { div, input, label } from "@draftworks/element";
 import commonStyle from "./common.module.css";
 import style from "./input.module.css";
 import baseStyle from "./propertyBase.module.css";

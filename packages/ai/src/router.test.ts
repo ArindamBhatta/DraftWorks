@@ -1,4 +1,4 @@
-import { type DrawingMode, floorPlanGenerator, GeneratorRegistry } from "@chili3d/generators";
+import { type DrawingMode, floorPlanGenerator, GeneratorRegistry } from "@draftworks/generators";
 import { describe, expect, test } from "@rstest/core";
 import type { ConversationTurn } from "./conversation";
 import { FREEFORM_DRAW } from "./freeform";

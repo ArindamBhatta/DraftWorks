@@ -1,4 +1,4 @@
-import { type IConverter, Result } from "@chili3d/core";
+import { type IConverter, Result } from "@draftworks/core";
 
 export class NumberConverter implements IConverter<number> {
     convert(value: number): Result<string> {

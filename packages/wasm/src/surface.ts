@@ -26,7 +26,7 @@ import {
     type Matrix4,
     type Plane,
     XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import type {
     Geom_BezierSurface,
     Geom_BSplineSurface,

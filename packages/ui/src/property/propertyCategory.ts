@@ -1,5 +1,5 @@
-import { type I18nKeys, Localize } from "@chili3d/core";
-import { div, label, setSVGIcon, svg } from "@chili3d/element";
+import { type I18nKeys, Localize } from "@draftworks/core";
+import { div, label, setSVGIcon, svg } from "@draftworks/element";
 import style from "./propertyCategory.module.css";
 
 /**

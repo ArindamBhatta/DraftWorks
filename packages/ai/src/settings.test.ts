@@ -1,4 +1,4 @@
-import { ObjectStorage } from "@chili3d/core";
+import { ObjectStorage } from "@draftworks/core";
 import { beforeEach, describe, expect, test } from "@rstest/core";
 import { AiSetup, DEFAULT_MODELS } from "./settings";
 

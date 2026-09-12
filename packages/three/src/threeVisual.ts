@@ -1,4 +1,4 @@
-import { type IDocument, type IEventHandler, type IVisual, isDisposable, type Plane } from "@chili3d/core";
+import { type IDocument, type IEventHandler, type IVisual, isDisposable, type Plane } from "@draftworks/core";
 import { AmbientLight, Object3D, Scene } from "three";
 import { ThreeHighlighter } from "./threeHighlighter";
 import { ThreeView } from "./threeView";

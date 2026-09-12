@@ -5,7 +5,7 @@
 // backwards does not throw - it quietly puts the drawing somewhere else. These pin
 // down which reading applies when, and how a Multiple run rebases between rounds.
 
-import { XYZ } from "@chili3d/core";
+import { XYZ } from "@draftworks/core";
 import { expect, test } from "@rstest/core";
 import { PlacementModes, parsePlacementMode, placementShift } from "./placementCommand";
 

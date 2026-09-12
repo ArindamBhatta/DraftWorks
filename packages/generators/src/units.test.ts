@@ -1,4 +1,4 @@
-import { type BaseUnit, UnitSetup } from "@chili3d/core";
+import { type BaseUnit, UnitSetup } from "@draftworks/core";
 import { expect, test } from "@rstest/core";
 import { clamp, MM_PER_DRAWING_UNIT, mmToUnits, unitsToMm } from "./units";
 

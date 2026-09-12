@@ -1,4 +1,4 @@
-import { buildDrawing, DEFAULT_SPEC, type DrawItem, generateFloorPlan } from "@chili3d/generators";
+import { buildDrawing, DEFAULT_SPEC, type DrawItem, generateFloorPlan } from "@draftworks/generators";
 import { describe, expect, test } from "@rstest/core";
 import { renderPreview } from "./aiPreview";
 

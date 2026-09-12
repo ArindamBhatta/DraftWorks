@@ -1,4 +1,4 @@
-import { type IConverter, Result, UnitSetup } from "@chili3d/core";
+import { type IConverter, Result, UnitSetup } from "@draftworks/core";
 
 /**
  * A distance in the drawing's own unit format, both ways: a radius shows as 8'-4" in an

@@ -7,7 +7,7 @@ import {
     type Result,
     serializable,
     serialize,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 export interface WireOptions {
     document: IDocument;

@@ -9,7 +9,7 @@ import {
     Result,
     type VisualNode,
     type XYZLike,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { InputProperty } from "./input";
 import { PropertyBase } from "./propertyBase";
 

@@ -28,7 +28,7 @@ import {
     setCurrentApplication,
     VisualConfig,
     type VisualItemConfig,
-} from "@chili3d/core";
+} from "@draftworks/core";
 import { Document } from "./document";
 import { PluginManager } from "./pluginManager";
 import { importFiles } from "./utils";

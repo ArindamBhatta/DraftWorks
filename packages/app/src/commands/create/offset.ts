@@ -35,7 +35,7 @@ import {
     VisualConfig,
     type VisualNode,
     XYZ,
-} from "@chili3d/core";
+} from "@draftworks/core";
 
 /**
  * How the offset distance is arrived at, chosen once when the command starts:
