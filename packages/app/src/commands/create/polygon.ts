@@ -15,25 +15,23 @@ import {
     type XYZ,
 } from "@draftworks/core";
 import { PolygonNode } from "../../bodys";
-import { CreateFaceableCommand } from "../createCommand";
+import { CreateCommand } from "../createCommand";
 
 @command({
     key: "create.polygon",
     icon: "icon-toPoly",
 })
-export class Polygon extends CreateFaceableCommand {
+export class Polygon extends CreateCommand {
     @property("common.confirm")
     readonly confirm = () => {
         this.controller?.success();
     };
 
     protected override geometryNode(): GeometryNode {
-        const node = new PolygonNode({
+        return new PolygonNode({
             document: this.document,
             points: this.stepDatas.map((step) => step.point!),
         });
-        node.isFace = this.isFace;
-        return node;
     }
 
     protected override async executeSteps(): Promise<boolean> {

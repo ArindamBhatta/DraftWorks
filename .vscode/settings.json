@@ -11,11 +11,13 @@
         "IGES",
         "neighbours",
         "OCCT",
+        "organised",
         "pline",
         "recoloured",
         "rspack",
         "rstest",
         "totle",
+        "unconstructed",
         "vertexs"
     ]
 }

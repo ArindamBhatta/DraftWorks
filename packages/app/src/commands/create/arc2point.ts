@@ -13,17 +13,22 @@ import {
     type XYZ,
 } from "@draftworks/core";
 import { ArcNode } from "../../bodys/arc";
-import { CreateCommand } from "../createCommand";
+import { type ArcMode, ArcModeCommand } from "./arcMode";
 import { computeArcFromPoints } from "./arcUtils";
 
 @command({
     key: "create.arc2point",
     icon: "icon-arc2point",
 })
-export class Arc2Point extends CreateCommand {
+export class Arc2Point extends ArcModeCommand {
+    protected override get ownMode(): ArcMode {
+        return "option.command.arcMode.twoPoint";
+    }
+
     getSteps(): IStep[] {
         return [
-            new PointStep("prompt.pickFistPoint"),
+            // The first prompt carries `[C/3P]` - see ArcModeCommand.
+            new PointStep("prompt.pickFistPoint", this.getModeStartData),
             new PointStep("prompt.pickArcEnd", this.getEndPointData),
             new LengthAtPlaneStep("prompt.pickArcHeight", this.getHeightData),
         ];

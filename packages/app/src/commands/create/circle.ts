@@ -18,7 +18,7 @@ import {
     XYZ,
 } from "@draftworks/core";
 import { CircleNode } from "../../bodys";
-import { CreateFaceableCommand } from "../createCommand";
+import { CreateCommand } from "../createCommand";
 
 type CircleMode =
     | "option.command.circleMode.center"
@@ -74,13 +74,15 @@ export function circumcircle(
     key: "create.circle",
     icon: "icon-circle",
 })
-export class Circle extends CreateFaceableCommand {
+export class Circle extends CreateCommand {
     @property("option.command.circleMode", {
         combobox: Combobox.from([
             "option.command.circleMode.center",
             "option.command.circleMode.twoPoint",
             "option.command.circleMode.threePoint",
         ]),
+        // The same letters getFirstPointData offers at the prompt.
+        comboboxKeys: ["C", "2P", "3P"],
     })
     get mode(): CircleMode {
         return this.getPrivateValue("mode", "option.command.circleMode.center" as CircleMode);
@@ -94,6 +96,8 @@ export class Circle extends CreateFaceableCommand {
             "option.command.circleSizeMode.radius",
             "option.command.circleSizeMode.diameter",
         ]),
+        // The same letters sizeOptions offers at the prompt.
+        comboboxKeys: ["R", "D"],
         dependencies: [{ property: "mode", value: "option.command.circleMode.center" }],
     })
     get sizeMode(): CircleSizeMode {
@@ -189,9 +193,7 @@ export class Circle extends CreateFaceableCommand {
     };
 
     protected override geometryNode(): GeometryNode {
-        const body = new CircleNode(this.buildCircleData());
-        body.isFace = this.isFace;
-        return body;
+        return new CircleNode(this.buildCircleData());
     }
 
     // ------------------------------------------------------------ Center mode

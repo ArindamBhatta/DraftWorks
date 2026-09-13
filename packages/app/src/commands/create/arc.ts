@@ -18,18 +18,24 @@ import {
 
 import { ArcNode } from "../../bodys/arc";
 
-import { CreateCommand } from "../createCommand";
+import { type ArcMode, ArcModeCommand } from "./arcMode";
 
 @command({
     key: "create.arc",
     icon: "icon-arc",
 })
-export class Arc extends CreateCommand {
+export class Arc extends ArcModeCommand {
     private _planeAngle: PlaneAngle | undefined;
+
+    protected override get ownMode(): ArcMode {
+        return "option.command.arcMode.centerStartAngle";
+    }
+
     // pick center, pick radius, pick angle. It draws rubber-band previews.
     getSteps(): IStep[] {
         return [
-            new PointStep("prompt.pickCircleCenter"),
+            // The first prompt carries `[2P/3P]` - see ArcModeCommand.
+            new PointStep("prompt.pickCircleCenter", this.getModeStartData),
             new LengthAtPlaneStep("prompt.pickRadius", this.getRadiusData),
             new AngleStep(
                 "prompt.pickNextPoint",

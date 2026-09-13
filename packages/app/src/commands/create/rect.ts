@@ -88,14 +88,6 @@ export abstract class RectCommandBase extends CreateCommand {
     icon: "icon-rect",
 })
 export class Rect extends RectCommandBase {
-    @property("option.command.isFace")
-    public get isFace() {
-        return this.getPrivateValue("isFace", true);
-    }
-    public set isFace(value: boolean) {
-        this.setProperty("isFace", value);
-    }
-
     @property("option.rect.centerRect")
     public get centerRect() {
         return this.getPrivateValue("centerRect", false);
@@ -134,8 +126,6 @@ export class Rect extends RectCommandBase {
 
     protected override geometryNode(): GeometryNode {
         const { plane, dx, dy } = this.rectDataFromTwoSteps();
-        const node = new RectNode({ document: this.document, plane, dx, dy });
-        node.isFace = this.isFace;
-        return node;
+        return new RectNode({ document: this.document, plane, dx, dy });
     }
 }

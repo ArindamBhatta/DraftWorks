@@ -12,13 +12,13 @@ import {
     type XYZ,
 } from "@draftworks/core";
 import { RegularPolygonNode } from "../../bodys";
-import { CreateFaceableCommand } from "../createCommand";
+import { CreateCommand } from "../createCommand";
 
 @command({
     key: "create.regularPolygon",
     icon: "icon-polygon",
 })
-export class RegularPolygon extends CreateFaceableCommand {
+export class RegularPolygon extends CreateCommand {
     private _sides: number = 6;
 
     @property("regularPolygon.sides")
@@ -62,7 +62,6 @@ export class RegularPolygon extends CreateFaceableCommand {
             radius: plane.projectDistance(p1, p2),
             sides: this._sides,
         });
-        body.isFace = this.isFace;
         return body;
     }
 

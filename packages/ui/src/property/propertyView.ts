@@ -163,7 +163,7 @@ export class PropertyView extends HTMLElement {
         this.appendCategory(category, controls);
     }
 
-    /** What is left: the shape's kind, whether it is capped into a face, and so on. */
+    /** What is left: the shape's kind, and so on. */
     private addMisc(document: IDocument, nodes: INode[]) {
         const category = new PropertyCategory("properties.group.misc", false);
         this.appendCategory(category, this.controlsFor(document, nodes, MISC_PROPERTIES));
@@ -239,7 +239,15 @@ export class PropertyView extends HTMLElement {
 /** Placed under General by name, wherever in the class hierarchy they are declared. */
 const GENERAL_PROPERTIES = ["name", "lineType", "materialId"];
 
-/** Placed under Misc the same way - neither a drawing setting nor a measurement. */
-const MISC_PROPERTIES = ["shapeType", "isFace"];
+/**
+ * Placed under Misc the same way - neither a drawing setting nor a measurement.
+ *
+ * `isFace` is deliberately not here. Nothing in a 2D drafting app should be capping a
+ * curve into a face: geometry is outlines, and filling a region is HATCH's job. The
+ * property still exists on FacebaseNode so that geometry arriving as a face - a DXF/DWG
+ * import, or a drawing from before the toggle was removed - still loads and still
+ * renders, but it is not something to offer as a checkbox.
+ */
+const MISC_PROPERTIES = ["shapeType"];
 
 customElements.define("chili-property-view", PropertyView);

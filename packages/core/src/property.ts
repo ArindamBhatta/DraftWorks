@@ -36,6 +36,18 @@ export interface Property {
         value: any;
     }[];
     combobox?: Combobox<any>;
+    /**
+     * The letter the prompt accepts for each of `combobox`'s items, in the same order -
+     * Circle's mode is `["C", "2P", "3P"]` against centre/2-point/3-point.
+     *
+     * The panel and the prompt are two views of one setting, and a beginner who only
+     * ever looks at the panel has no way to discover that the prompt takes `3P` unless
+     * the panel says so. Showing the key beside the choice is what turns the panel from
+     * somewhere to stay into somewhere to leave: click it for a month, read `3P` beside
+     * it every time, then one day type it. Omitted where a setting has no prompt
+     * equivalent, and the panel then shows the choice alone.
+     */
+    comboboxKeys?: string[];
 }
 
 const PropertyKeyMap = new Map<object, Map<string | number | symbol, Property>>();

@@ -439,10 +439,16 @@ export default {
         // Model
         "model.visible": "Visible",
         // Option
+        "option.command.arcMode": "Method",
+        "option.command.arcMode.centerStartAngle": "Center, Start, Angle",
+        "option.command.arcMode.threePoint": "3 Points",
+        "option.command.arcMode.twoPoint": "Start, End, Height",
         "option.command.circleMode": "Method",
         "option.command.circleMode.center": "Center",
-        "option.command.circleMode.threePoint": "3P",
-        "option.command.circleMode.twoPoint": "2P",
+        // Spelled as words rather than "3P"/"2P" because the key is now shown beside
+        // each choice - see Property.comboboxKeys - and "3P (3P)" tells nobody anything.
+        "option.command.circleMode.threePoint": "3 Points",
+        "option.command.circleMode.twoPoint": "2 Points",
         "option.command.circleSizeMode": "Specify",
         "option.command.circleSizeMode.diameter": "Diameter",
         "option.command.circleSizeMode.radius": "Radius",

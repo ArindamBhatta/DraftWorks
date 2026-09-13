@@ -433,6 +433,10 @@ export const I18N_KEYS = [
     // Model
     "model.visible",
     // Option
+    "option.command.arcMode",
+    "option.command.arcMode.centerStartAngle",
+    "option.command.arcMode.threePoint",
+    "option.command.arcMode.twoPoint",
     "option.command.circleMode",
     "option.command.circleMode.center",
     "option.command.circleMode.threePoint",

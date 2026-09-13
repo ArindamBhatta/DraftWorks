@@ -11,13 +11,13 @@ import {
     type XYZ,
 } from "@draftworks/core";
 import { EllipseNode } from "../../bodys/ellipse";
-import { CreateFaceableCommand } from "../createCommand";
+import { CreateCommand } from "../createCommand";
 
 @command({
     key: "create.ellipse",
     icon: "icon-ellipse",
 })
-export class Ellipse extends CreateFaceableCommand {
+export class Ellipse extends CreateCommand {
     getSteps(): IStep[] {
         const centerStep = new PointStep("prompt.pickCircleCenter");
         const radiusStepX = new LengthAtPlaneStep("prompt.pickRadius", this.getRadius1Data);
@@ -82,7 +82,6 @@ export class Ellipse extends CreateFaceableCommand {
             xvec: p1.sub(p0),
             majorRadius: d1,
             minorRadius: d2 > d1 ? d1 : d2,
-            isFace: this.isFace,
         });
         return body;
     }

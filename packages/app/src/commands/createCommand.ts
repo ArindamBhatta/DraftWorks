@@ -1,4 +1,4 @@
-import { type GeometryNode, MultiStepCommand, property, Transaction } from "@draftworks/core";
+import { type GeometryNode, MultiStepCommand, Transaction } from "@draftworks/core";
 
 // CreateCommand is the base for every "draw a shape" command (Box, Circle, Line, ...).
 // It wraps body construction (geometryNode()) and tree insertion (addNode()) in a
@@ -33,19 +33,11 @@ export abstract class CreateNodeCommand extends MultiStepCommand {
     protected abstract getNode(): GeometryNode;
 }
 
-// The command-level mirror of FacebaseNode.isFace (core/src/model/facebaseNode.ts):
-// this exposes the "cap as a face?" toggle as a command property (bound to a ribbon
-// checkbox) so the user can choose it before drawing, and concrete commands (e.g.
-// Circle.geometryNode() below) copy this onto the body they create. The default is
-// true here versus false on the body itself: a freshly-created circle/rect defaults
-// to a face in the UI, but a body deserialized without explicit isFace defaults to
-// a bare edge/wire.
-export abstract class CreateFaceableCommand extends CreateCommand {
-    @property("option.command.isFace")
-    public get isFace() {
-        return this.getPrivateValue("isFace", true);
-    }
-    public set isFace(value: boolean) {
-        this.setProperty("isFace", value);
-    }
-}
+// There is deliberately no face toggle here. This is a 2D drafting app: drawing a
+// circle produces a circle - an edge - the way CIRCLE does in AutoCAD, and filling a
+// region is HATCH's job, laid over the boundary as its own object rather than being a
+// property of the boundary. The toggle came from Chili3d, where capping a planar curve
+// into a face is the first step of a 3D operation; here it only offered a second,
+// uneditable way to fill something that competed with the real one. FacebaseNode.isFace
+// still exists on the bodies so older drawings keep deserializing - see
+// core/src/model/facebaseNode.ts.

@@ -318,12 +318,19 @@ export class CommandContext extends HTMLElement implements IDisposable {
         if (current >= 0) combobox.selectedIndex = current;
 
         const options = combobox.items.map((item, index) => {
-            return option({
+            const optionEl = option({
                 selected: index === combobox.selectedIndex,
                 textContent: I18n.isI18nKey(item)
                     ? new Localize(item)
                     : (combobox.converter?.convert(item).unchecked() ?? String(item)),
             });
+            // The prompt's key for this same choice, so the panel names the thing the
+            // user could have typed - see Property.comboboxKeys. Appended after the
+            // label rather than built into it so that the translated word stays the
+            // exact substring changeLanguage swaps out.
+            const key = g.comboboxKeys?.[index];
+            if (key) optionEl.textContent += ` (${key})`;
+            return optionEl;
         });
 
         const selectEl = select(

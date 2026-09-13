@@ -31,9 +31,11 @@ import { HATCH_BASE_TILE_SIZE, HatchPatterns, hatchPatternTexture } from "./hatc
  *
  * A boundary reaches this command in one of two shapes, and each is hatched differently:
  *
- * - Already a face (a rect/circle/polygon drawn with the ribbon's "as face" option on,
- *   which is the default) - it has a fill already, so this repaints that fill. Adding a
- *   second face on top would sit exactly coplanar with the first and z-fight with it.
+ * - Already a face - geometry that arrived that way, from a DXF/DWG import or a drawing
+ *   made before the create commands stopped offering a face toggle. It has a fill
+ *   already, so this repaints that fill; adding a second face on top would sit exactly
+ *   coplanar with the first and z-fight with it. Nothing drawn here produces a face any
+ *   more, so this is the rarer path of the two.
  * - Closed wires/edges - nothing is filling the region yet, so a new `Face` is created to
  *   do it, and the boundary curves are left in place. That is AutoCAD's own model: a
  *   hatch is a fill laid over a boundary, not a replacement for it.
