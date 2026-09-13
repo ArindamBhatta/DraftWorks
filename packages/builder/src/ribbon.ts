@@ -6,27 +6,34 @@ export const DefaultRibbon: RibbonTabProfile[] = [
         groups: [
             {
                 groupName: "ribbon.group.draw",
+                // Laid out like AutoCAD 2013's Draw panel: four large buttons across the
+                // top, then a column of small split buttons beside them.
                 items: [
-                    // Line's flyout holds AutoCAD's other "click through points" draw
-                    // tools - Polyline (create.polygon; see commandAliases.ts, it's
-                    // already aliased "pl"/"pline"/"polyline") and Ray.
-                    { type: "split", items: ["create.line", "create.polygon", "create.constructionLine"] },
-                    // Rectangle's flyout holds Regular Polygon only.
-                    { type: "split", items: ["create.rect", "create.regularPolygon"] },
-                    "create.circle",
+                    "create.line",
+                    // Polyline is create.polygon; see commandAliases.ts, where it is
+                    // already aliased "pl"/"pline"/"polyline".
+                    "create.polygon",
+                    // Circle's flyout holds Construction Line, the other "click through
+                    // points" tool that has no panel square of its own.
+                    { type: "split", items: ["create.circle", "create.constructionLine"] },
+
+                    // Arc's flyout holds its 2-point and 3-point variants.
+                    { type: "split", items: ["create.arc", "create.arc2point", "create.arc3point"] },
+                    // The stacked column - each row keeps its own arrow, so Rectangle can
+                    // reach Regular Polygon without the user going near the panel's
+                    // overflow. Ellipse and Hatch have no variant to offer yet; they keep
+                    // an arrow of their own so the column stays one shape as they grow.
+                    [
+                        { type: "split", items: ["create.rect", "create.regularPolygon"] },
+                        { type: "split", items: ["create.ellipse"] },
+                        { type: "split", items: ["create.hatch"] },
+                    ],
                 ],
-                // Only Line, Rectangle and Circle sit directly in the group; everything
-                // else is one tap away behind the group's overflow arrow.
-                collapsedItems: [
-                    "create.ellipse",
-                    "create.arc",
-                    "create.arc2point",
-                    "create.arc3point",
-                    "create.point",
-                    "create.bezier",
-                    "create.hatch",
-                ],
+                // Point and Bezier are the only tools with no natural parent flyout, so
+                // they are what the group's overflow arrow is for.
+                collapsedItems: ["create.point", "create.bezier"],
             },
+
             //Modify
             {
                 groupName: "ribbon.group.modify",

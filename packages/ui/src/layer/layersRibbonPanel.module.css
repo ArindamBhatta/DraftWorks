@@ -59,14 +59,19 @@
     display: grid;
     grid-template-columns: repeat(5, auto);
     justify-content: start;
-    gap: 2px;
+    /* The badge hangs 3px off the glyph's left edge, so a nominal gap of n reads as n-3
+       between two neighbours. 7px is what leaves the ~4px of clear air the row needs to
+       read as five separate buttons rather than one strip. */
+    gap: 5px 7px;
 }
 
 .action {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1px;
+    /* Asymmetric: the extra 3px on the left is the room the badge overhangs into, so the
+       hover rectangle contains the whole glyph instead of clipping its corner. */
+    padding: 1px 1px 1px 4px;
     border-radius: 3px;
     cursor: pointer;
 
@@ -123,8 +128,8 @@
     bottom: -3px;
     width: 12px;
     height: 12px;
-    /* Three passes of a 1px shadow in the page colour knock a hole in the stack behind
-       the badge. Follows the badge's real shape, and re-colours with the theme - a solid
+    /* Three passes of a 1px shadow in the page color knock a hole in the stack behind
+       the badge. Follows the badge's real shape, and re-colors with the theme - a solid
        disc behind it would not survive the button's hover background. */
     filter: drop-shadow(0 0 1px var(--background-color)) drop-shadow(0 0 1px var(--background-color))
         drop-shadow(0 0 1px var(--background-color));

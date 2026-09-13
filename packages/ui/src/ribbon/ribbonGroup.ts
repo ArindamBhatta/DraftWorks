@@ -25,7 +25,12 @@ export function createRibbonButton(item: RibbonCommand): HTMLElement {
     } else if (item instanceof ObservableCollection) {
         const stack = new RibbonStack();
         item.forEach((b) => {
-            const button = RibbonPushButton.fromCommandName(b, "small");
+            // A stacked row is usually a plain command, but it can be a split button
+            // when that row carries its own flyout - see RibbonStackItem.
+            const button =
+                typeof b === "string"
+                    ? RibbonPushButton.fromCommandName(b, "small")
+                    : new RibbonSplitButton(b, "small");
             if (button) stack.append(button);
         });
         return stack;

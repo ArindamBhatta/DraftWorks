@@ -12,9 +12,16 @@ export type RibbonGroupKeys = {
     [P in I18nKeys]: P extends `ribbon.group.${infer _}` ? P : never;
 }[I18nKeys];
 
+/**
+ * One row of a stacked column - either a plain command, or a split button when the
+ * row needs its own flyout. AutoCAD's Draw panel stacks Rectangle, Ellipse and Hatch
+ * this way, each with an arrow of its own, so a column cannot be commands alone.
+ */
+export type RibbonStackItem = CommandKeys | SplitButton;
+
 export type RibbonCommand =
     | CommandKeys
-    | ObservableCollection<CommandKeys>
+    | ObservableCollection<RibbonStackItem>
     | PushButton
     | PulldownButton
     | SplitButton
@@ -22,7 +29,7 @@ export type RibbonCommand =
 
 export type RibbonGroupProfile = {
     groupName: RibbonGroupKeys;
-    items: (RibbonCommand | CommandKeys[])[];
+    items: (RibbonCommand | RibbonStackItem[])[];
     collapsedItems?: CommandKeys[];
 };
 
@@ -45,7 +52,7 @@ export class RibbonGroup extends Observable {
     }
 
     static fromProfile(profile: RibbonGroupProfile) {
-        const mapItems = (items: (RibbonCommand | CommandKeys[])[]) =>
+        const mapItems = (items: (RibbonCommand | RibbonStackItem[])[]) =>
             items.map((item) => (Array.isArray(item) ? new ObservableCollection(...item) : item));
 
         return new RibbonGroup(profile.groupName, mapItems(profile.items), profile.collapsedItems);
