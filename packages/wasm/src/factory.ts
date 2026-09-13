@@ -1,5 +1,4 @@
 import {
-    type Continuity,
     GeometryUtils,
     type ICompound,
     type ICurve,
@@ -7,20 +6,15 @@ import {
     type IFace,
     type IShape,
     type IShapeFactory,
-    type IShell,
-    type ISolid,
     type IVertex,
     type IWire,
-    type JoinType,
-    type Line,
     MathUtils,
     type Plane,
     Precision,
     Result,
-    ShapeTypes,
-    type XYZ,
     type XYZLike,
 } from "@draftworks/core";
+
 import type { ShapeResult, ShapesResult, TopoDS_Edge, TopoDS_Face, TopoDS_Shape } from "../lib/chili-wasm";
 import { OccCurve } from "./curve";
 import { convertFromContinuity, getJoinType } from "./helper";

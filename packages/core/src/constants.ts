@@ -1,5 +1,5 @@
 export class Constants {
-    static readonly DBName = "chili3d-db";
+    static readonly DBName = "draftworks-db";
     static readonly DocumentTable = "documents";
     static readonly RecentTable = "recents";
     /**

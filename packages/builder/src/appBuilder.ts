@@ -81,10 +81,11 @@ export class AppBuilder {
 
     useWasmOcc() {
         this._inits.push(async () => {
+            // pushed onto a queue, not run yet
             Logger.info("initializing wasm occ");
 
             const wasm = await import("@draftworks/wasm");
-            await wasm.initWasm();
+            await wasm.initWasm(); //the actual wasm load
             this._shapeProvider = new wasm.OccShapeProvider();
         });
         return this;

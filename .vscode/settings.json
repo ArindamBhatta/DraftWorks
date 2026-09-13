@@ -1,5 +1,20 @@
 {
     "typescript.tsdk": "node_modules/typescript/lib",
     "typescript.enablePromptUseWorkspaceTsdk": true,
-    "cSpell.words": ["bodys", "Datas", "OCCT", "totle", "vertexs", "bspline", "draftworks", "recoloured"]
+    "cSpell.words": [
+        "Bhattacharyya",
+        "bodys",
+        "BREP",
+        "bspline",
+        "Datas",
+        "draftworks",
+        "IGES",
+        "OCCT",
+        "pline",
+        "recoloured",
+        "rspack",
+        "rstest",
+        "totle",
+        "vertexs"
+    ]
 }

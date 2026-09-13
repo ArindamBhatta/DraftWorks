@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // Autosave has three promises that are easy to break silently, because breaking them
 // looks like nothing at all until someone loses a drawing: it must coalesce a burst of
 // edits into one write, it must never let a caller wait on a save, and it must have the

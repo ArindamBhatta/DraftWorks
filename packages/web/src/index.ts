@@ -1,13 +1,16 @@
-// * Starting Point of 2D Cad */
 import { promptDrawingSetupIfFirstRun } from "@draftworks/app";
 import { AppBuilder } from "@draftworks/builder";
 import { type IApplication, Logger } from "@draftworks/core";
 import { Loading } from "./loading";
 import { parseStartupParams } from "./startupParams";
 
+//step1: creating an instance of Loading class
 const loading = new Loading();
+
+//step2: inserts it into the live page
 document.body.appendChild(loading);
 
+//
 async function handleApplicationBuilt(app: IApplication) {
     document.body.removeChild(loading);
 
@@ -30,14 +33,16 @@ async function handleApplicationBuilt(app: IApplication) {
     await promptDrawingSetupIfFirstRun();
 }
 
-// prettier-ignore
-new AppBuilder()
-    .useIndexedDB()
-    .useWasmOcc()
-    .useThree()
-    .useUI()
-    .build()
-    .then(handleApplicationBuilt)
-    .catch((err) => {
-        alert(err.message);
-    });
+try {
+    const app = await new AppBuilder()
+        .useIndexedDB() // document + recent-file storage
+        .useWasmOcc() // OCC geometry kernel, compiled to wasm
+        .useThree() // three.js renderer behind the 2D views
+        .useUI() // ribbon and main window, mounted on #app
+        .build();
+
+    await handleApplicationBuilt(app);
+} catch (error) {
+    Logger.error(error);
+    alert(error instanceof Error ? error.message : String(error));
+}
