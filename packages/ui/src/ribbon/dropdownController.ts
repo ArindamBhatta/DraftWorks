@@ -7,8 +7,8 @@ import {
     CommandStore,
     type I18nKeys,
     Localize,
+    type MenuItem,
     PubSub,
-    type PushButton,
 } from "@draftworks/core";
 import { createIcon, div, label } from "@draftworks/element";
 
@@ -17,9 +17,10 @@ export interface DropdownItemData {
     icon: CommandIcon;
     display: I18nKeys;
     onClick: () => void;
+    disabled?: boolean;
 }
 
-export function getItemData(item: PushButton | CommandKeys): DropdownItemData {
+export function getItemData(item: MenuItem): DropdownItemData {
     if (typeof item === "string") {
         const data = CommandStore.getComandData(item);
         return {
@@ -27,6 +28,15 @@ export function getItemData(item: PushButton | CommandKeys): DropdownItemData {
             icon: data?.icon ?? ("icon-command" as CommandIcon),
             display: (data ? `command.${data.key}` : item) as I18nKeys,
             onClick: () => PubSub.default.pub("executeCommand", item),
+        };
+    }
+    if (item.type === "method") {
+        return {
+            command: item.command,
+            icon: item.icon as CommandIcon,
+            display: item.display,
+            disabled: item.disabled,
+            onClick: () => PubSub.default.pub("executeCommand", item.command, item.preset),
         };
     }
     return {
@@ -44,19 +54,35 @@ export interface DropdownItemClasses {
 }
 
 export function createDropdownItem(
-    item: PushButton | CommandKeys,
+    item: MenuItem,
     onSelect: () => void,
     classes: DropdownItemClasses,
+    disabledClass?: string,
 ): HTMLElement {
     const data = getItemData(item);
     const icon = data.icon ? createIcon(data.icon) : div();
     icon.classList.add(classes.icon);
+
+    if (data.disabled) {
+        const row = div(
+            { className: classes.item },
+            icon,
+            label({ className: classes.text, textContent: new Localize(data.display) }),
+        );
+        if (disabledClass) row.classList.add(disabledClass);
+        return row;
+    }
+
     return div(
         {
             className: classes.item,
             onclick: (e) => {
                 e.stopPropagation();
-                PubSub.default.pub("executeCommand", data.command);
+                // The item's own onClick, not a bare executeCommand on its command key:
+                // a flyout entry may carry a preset ("Circle - Center, Diameter") or be
+                // something other than a plain command run, and publishing the key here
+                // would silently throw all of that away.
+                data.onClick();
                 onSelect();
             },
         },
@@ -126,7 +152,16 @@ export class DropdownController {
         const rect = anchor.getBoundingClientRect();
         dropdown.style.top = `${rect.bottom + 2}px`;
         dropdown.style.left = `${rect.left}px`;
-        dropdown.style.width = `${rect.width}px`;
+        // A minimum, not a fixed width: the menu lines up with the button it hangs from,
+        // but an entry naming a drawing method ("Center, Diameter") is far wider than the
+        // button, and pinning the width here would clip it.
+        dropdown.style.minWidth = `${rect.width}px`;
+
+        // Keep it on screen once it is allowed to be wider than its anchor.
+        const overflow = dropdown.getBoundingClientRect().right - document.documentElement.clientWidth;
+        if (overflow > 0) {
+            dropdown.style.left = `${Math.max(0, rect.left - overflow - 4)}px`;
+        }
     }
 
     readonly #onOutsideClick = (e: Event) => {

@@ -19,8 +19,6 @@ export interface RegularPolygonOptions {
     sides: number;
 }
 
-// 2D-compatible - planar, face-optional via FacebaseNode.isFace (see circle.ts for
-// the fuller rationale).
 @serializable()
 export class RegularPolygonNode extends FacebaseNode {
     override display(): I18nKeys {

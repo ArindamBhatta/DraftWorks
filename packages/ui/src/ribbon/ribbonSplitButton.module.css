@@ -165,6 +165,17 @@
     background-color: var(--hover-background-color);
 }
 
+/*
+ * A drawing method the command does not implement yet - Circle's two tangent methods.
+ * Listed rather than omitted so the menu keeps the shape a user coming from AutoCAD
+ * expects, and faded so it is plainly not a thing to click.
+ */
+.dropdownItemDisabled {
+    opacity: 0.4;
+    cursor: default;
+    pointer-events: none;
+}
+
 .dropdownIcon {
     width: 16px;
     height: 16px;

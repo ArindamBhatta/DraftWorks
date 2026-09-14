@@ -31,7 +31,7 @@ export class RibbonSplitButton extends HTMLElement {
         const isLarge = this.size === "large";
         this.className = isLarge ? style.split : style.splitSmall;
 
-        const { icon: iconName, display } = getItemData(this.data.items[0]);
+        const { icon: iconName, display } = getItemData(this.data.primary ?? this.data.items[0]);
 
         this.#iconEl = createIcon(iconName);
         this.#iconEl.classList.add(isLarge ? buttonStyle.icon : buttonStyle.smallIcon);
@@ -70,8 +70,14 @@ export class RibbonSplitButton extends HTMLElement {
         );
     }
 
+    /**
+     * The face's own action. With a `primary` that is the generic tool, unpresetted and
+     * so unlocked - tapping "Circle" is asking for a circle, not for one particular way
+     * of drawing one. Without it the face is whatever was last picked, which is what a
+     * flyout of separate tools wants.
+     */
     private executePrimary() {
-        const item = this.data.items[this.#primaryIndex];
+        const item = this.data.primary ?? this.data.items[this.#primaryIndex];
         if (!item) return;
         getItemData(item).onClick();
     }
@@ -93,6 +99,7 @@ export class RibbonSplitButton extends HTMLElement {
                             icon: style.dropdownIcon,
                             text: style.dropdownText,
                         },
+                        style.dropdownItemDisabled,
                     ),
                 );
             }
@@ -102,6 +109,10 @@ export class RibbonSplitButton extends HTMLElement {
     private switchPrimary(index: number) {
         if (index === this.#primaryIndex) return;
         this.#primaryIndex = index;
+
+        // A generic face never renames itself to the method just chosen: the button is
+        // still the Circle button. See SplitButton.primary.
+        if (this.data.primary !== undefined) return;
 
         const item = this.data.items[index];
         if (!item) return;

@@ -249,9 +249,17 @@ export class CommandContext extends HTMLElement implements IDisposable {
      * keyboard and for screen readers.
      */
     private setDisabled(control: HTMLElement, property: Property) {
-        if (!property.disabledWhen) return;
+        // A setting the command was started on - picked from a ribbon flyout entry such
+        // as "Circle - Center, Diameter" - is locked for the whole run, so it is checked
+        // before (and independently of) disabledWhen's value-dependent condition.
+        const locked = isCancelableCommand(this.command)
+            ? (this.command as CancelableCommand).lockedProperties.has(property.name)
+            : false;
+        if (!locked && !property.disabledWhen) return;
 
-        const disabled = property.disabledWhen.every((d) => (this.command as any)[d.property] === d.value);
+        const disabled =
+            locked ||
+            (property.disabledWhen?.every((d) => (this.command as any)[d.property] === d.value) ?? false);
         control.classList.toggle(style.disabled, disabled);
         control.querySelectorAll("select, input, button").forEach((element) => {
             (element as HTMLSelectElement | HTMLInputElement | HTMLButtonElement).disabled = disabled;
@@ -262,7 +270,10 @@ export class CommandContext extends HTMLElement implements IDisposable {
         let visible = !PropertyUtils.isHiddenProperty(this.command, property.name);
         if (visible && property.dependencies) {
             for (const d of property.dependencies) {
-                if ((this.command as any)[d.property] !== d.value) {
+                // A list of values is OR within the one condition - see Property.dependencies.
+                const current = (this.command as any)[d.property];
+                const matches = Array.isArray(d.value) ? d.value.includes(current) : current === d.value;
+                if (!matches) {
                     visible = false;
                     break;
                 }

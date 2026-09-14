@@ -8,16 +8,20 @@
         "bspline",
         "Datas",
         "draftworks",
+        "Facebase",
         "IGES",
         "neighbours",
         "OCCT",
         "organised",
         "pline",
         "recoloured",
+        "registed",
         "rspack",
         "rstest",
+        "stoped",
         "totle",
         "unconstructed",
-        "vertexs"
+        "vertexs",
+        "xvec"
     ]
 }

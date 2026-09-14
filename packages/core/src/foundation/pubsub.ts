@@ -24,7 +24,7 @@
  * User draws line → Core publishes "modelUpdate" → Viewport redraws → Properties show line props
  */
 
-import type { CommandKeys, ICommand } from "../command";
+import type { CommandKeys, CommandPreset, ICommand } from "../command";
 import type { IDocument } from "../document";
 import type { I18nKeys } from "../i18n";
 import type { Material } from "../material";
@@ -55,7 +55,17 @@ export interface PubSubEventMap {
      */
     documentDirty: (document: IDocument) => void;
     editMaterial: (document: IDocument, material: Material, callback: (material: Material) => void) => void;
-    executeCommand: (commandName: CommandKeys) => void;
+    /**
+     * Run a command, optionally starting it on a chosen setting.
+     *
+     * `preset` is what a ribbon flyout entry like "Circle - Center, Diameter" carries:
+     * the entry names a method, not a separate command, so it seeds the command's own
+     * properties before the first step runs and marks them locked - the user has already
+     * answered that question by choosing the entry, so the panel shows the answer greyed
+     * rather than inviting them to answer it twice. The prompt still offers the other
+     * methods, the way AutoCAD's does; the lock is on the panel, not on the command.
+     */
+    executeCommand: (commandName: CommandKeys, preset?: CommandPreset) => void;
     modelUpdate: (model: INode) => void;
     openCommandContext: (command: ICommand) => void;
     parentVisibleChanged: (model: INode) => void;

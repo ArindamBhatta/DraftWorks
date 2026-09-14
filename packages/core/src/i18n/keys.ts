@@ -344,6 +344,7 @@ export const I18N_KEYS = [
     "toast.export.skippedNodes:{0}",
     "error.input.cannotInputANumber",
     "error.offset.invalidDistance",
+    "error.rect.invalidSetback",
     "error.placement.invalidMode",
     "error.trimExtend.invalidMode",
     "error.text.empty",
@@ -432,6 +433,13 @@ export const I18N_KEYS = [
     "material.texture.wrapT",
     // Model
     "model.visible",
+    // Method - a command's drawing methods, as named in the ribbon flyouts
+    "method.circle.centerDiameter",
+    "method.circle.centerRadius",
+    "method.circle.tanTanRadius",
+    "method.circle.tanTanTan",
+    "method.circle.threePoint",
+    "method.circle.twoPoint",
     // Option
     "option.command.arcMode",
     "option.command.arcMode.centerStartAngle",
@@ -466,6 +474,10 @@ export const I18N_KEYS = [
     "option.command.patternType.rectangular",
     "option.command.repeat",
     "option.rect.centerRect",
+    "option.rect.cornerMode",
+    "option.rect.cornerMode.chamfer",
+    "option.rect.cornerMode.fillet",
+    "option.rect.cornerMode.none",
     // Point
     "point.position",
     // Polygon
@@ -490,6 +502,8 @@ export const I18N_KEYS = [
     "prompt.mtext.firstCorner",
     "prompt.mtext.oppositeCorner",
     "prompt.offset.distance",
+    "prompt.rect.chamferDistance",
+    "prompt.rect.filletRadius",
     "prompt.offset.selectObject",
     "prompt.layer.selectCopy",
     "prompt.layer.selectDestination",
@@ -554,6 +568,8 @@ export const I18N_KEYS = [
     "prompt.scale.newLength",
     // Option
     "prompt.option.center",
+    "prompt.option.chamfer",
+    "prompt.option.fillet",
     "prompt.option.copy",
     "prompt.option.eraseSource",
     "prompt.option.keepSource",
@@ -572,7 +588,9 @@ export const I18N_KEYS = [
     "prompt.option.undo",
     "prompt.option.twoPoint",
     // The word an option goes by inside the prompt's brackets - see StepOption.name.
+    "prompt.optionName.chamfer",
     "prompt.optionName.close",
+    "prompt.optionName.fillet",
     "prompt.optionName.copy",
     "prompt.optionName.diameter",
     "prompt.optionName.displacement",
@@ -616,6 +634,9 @@ export const I18N_KEYS = [
     "properties.multivalue",
     "properties.noSelection",
     // Rect
+    "rect.chamferDistance",
+    "rect.cornerRadius",
+    "rect.cornerSize",
     "rect.dx",
     "rect.dy",
     // Ribbon

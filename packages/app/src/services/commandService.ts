@@ -1,8 +1,6 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 import {
     type CommandKeys,
+    type CommandPreset,
     CommandStore,
     type IApplication,
     type IService,
@@ -45,14 +43,14 @@ export class CommandService implements IService {
             await this.app.executingCommand.cancel();
     };
 
-    private readonly executeCommand = async (commandName: CommandKeys) => {
+    private readonly executeCommand = async (commandName: CommandKeys, preset?: CommandPreset) => {
         const command = commandName === "special.last" ? this.app.lastCommand : commandName;
         if (!command || !(await this.canExecute(command))) return;
         Logger.info(`executing command ${command}`);
-        await this.executeAsync(command);
+        await this.executeAsync(command, preset);
     };
 
-    private async executeAsync(commandName: CommandKeys) {
+    private async executeAsync(commandName: CommandKeys, preset?: CommandPreset) {
         const commandCtor = CommandStore.getCommand(commandName)!;
         if (!commandCtor) {
             Logger.error(`Can not find ${commandName} command`);
@@ -63,7 +61,7 @@ export class CommandService implements IService {
         this.app.executingCommand = command;
         PubSub.default.pub("showProperties", this.app.activeView?.document!, []);
 
-        await Promise.try(command.execute.bind(command), this.app)
+        await Promise.try(() => command.execute(this.app, preset))
             .catch((err) => {
                 PubSub.default.pub("displayError", err as string);
                 Logger.error(err);

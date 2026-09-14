@@ -13,10 +13,73 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                     // Polyline is create.polygon; see commandAliases.ts, where it is
                     // already aliased "pl"/"pline"/"polyline".
                     "create.polygon",
-                    // Circle's flyout holds Construction Line, the other "click through
-                    // points" tool that has no panel square of its own.
-                    { type: "split", items: ["create.circle", "create.constructionLine"] },
-
+                    // Circle's flyout lists its drawing methods the way AutoCAD's does -
+                    // one command, CIRCLE, started on different settings. Picking one
+                    // answers `mode`/`sizeMode` up front, so the panel shows them locked
+                    // while the prompt still offers `[3P/2P]`. Tan-Tan-* are listed and
+                    // greyed: the tangent solve is not implemented (see circle.ts).
+                    {
+                        type: "split",
+                        // The face is the generic Circle: no preset, so every setting in
+                        // the command panel stays editable - the user asked for a circle
+                        // and has not said which kind. The menu below is where they do.
+                        primary: {
+                            type: "method",
+                            command: "create.circle",
+                            display: "command.create.circle",
+                            icon: "icon-circle",
+                        },
+                        items: [
+                            {
+                                type: "method",
+                                command: "create.circle",
+                                display: "method.circle.centerRadius",
+                                icon: "icon-circle",
+                                preset: {
+                                    mode: "option.command.circleMode.center",
+                                    sizeMode: "option.command.circleSizeMode.radius",
+                                },
+                            },
+                            {
+                                type: "method",
+                                command: "create.circle",
+                                display: "method.circle.centerDiameter",
+                                icon: "icon-circle",
+                                preset: {
+                                    mode: "option.command.circleMode.center",
+                                    sizeMode: "option.command.circleSizeMode.diameter",
+                                },
+                            },
+                            {
+                                type: "method",
+                                command: "create.circle",
+                                display: "method.circle.twoPoint",
+                                icon: "icon-circle",
+                                preset: { mode: "option.command.circleMode.twoPoint" },
+                            },
+                            {
+                                type: "method",
+                                command: "create.circle",
+                                display: "method.circle.threePoint",
+                                icon: "icon-circle",
+                                preset: { mode: "option.command.circleMode.threePoint" },
+                            },
+                            {
+                                type: "method",
+                                command: "create.circle",
+                                display: "method.circle.tanTanRadius",
+                                icon: "icon-circle",
+                                disabled: true,
+                            },
+                            {
+                                type: "method",
+                                command: "create.circle",
+                                display: "method.circle.tanTanTan",
+                                icon: "icon-circle",
+                                disabled: true,
+                            },
+                        ],
+                    },
                     // Arc's flyout holds its 2-point and 3-point variants.
                     { type: "split", items: ["create.arc", "create.arc2point", "create.arc3point"] },
                     // The stacked column - each row keeps its own arrow, so Rectangle can
@@ -31,7 +94,7 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                 ],
                 // Point and Bezier are the only tools with no natural parent flyout, so
                 // they are what the group's overflow arrow is for.
-                collapsedItems: ["create.point", "create.bezier"],
+                collapsedItems: ["create.point", "create.bezier", "create.constructionLine"],
             },
 
             //Modify

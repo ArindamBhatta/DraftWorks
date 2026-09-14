@@ -16,6 +16,14 @@ export interface Property {
     group?: I18nKeys;
     icon?: string;
     type?: PropertyType;
+    /**
+     * Conditions that must all hold for the setting to be shown - an array is AND.
+     *
+     * `value` may be a list, which is OR within that one condition: Rectangle's corner
+     * size applies whether the corners are filleted or chamfered, and that is one
+     * question ("are the corners treated?") rather than two conditions to satisfy at
+     * once, which nothing could.
+     */
     dependencies?: {
         property: string | number | symbol;
         value: any;
