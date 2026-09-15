@@ -1,6 +1,7 @@
 import {
     AsyncController,
     Combobox,
+    Config,
     command,
     Dimensions,
     type GeometryNode,
@@ -91,15 +92,32 @@ export abstract class RectCommandBase extends CreateCommand {
      *
      * RECTANG's options interrupt the first prompt rather than following it: the answer
      * changes the rectangle about to be drawn, so the pick has to be re-offered once it
-     * is in. Restarting is how a step sequence re-asks - see CancelableCommand.restart -
-     * and the snap handler underneath is already gone by the time this runs, because
-     * selecting an option ends its wait.
+     * is in. Restarting is how a step sequence re-asks - see CancelableCommand.restart.
+     *
+     * The pick underneath is still running while the question is up, and it keeps its
+     * controller: that controller is the one pickAsync is waiting on, so a question that
+     * took it over would leave the drawing in a pick nothing could ever finish. The
+     * question brings its own - see askCornerSize.
      */
     protected async askThenRestart(ask: () => Promise<void>): Promise<void> {
+        const pick = this.controller;
         await ask();
+
+        // The pick has already ended: the command was cancelled out from under the
+        // question, or a click finished the point while it was up. Either way there is
+        // no prompt left waiting to be re-asked, and restarting would bring a finished
+        // command back to life.
+        if (pick?.result !== undefined) return;
+
         await this.restart();
     }
 
+    /**
+     * `RECTANG Specify other corner point:` - answered as two lengths along the
+     * workplane's axes, which is why the crosshair's boxes are X and Y here rather
+     * than the distance and angle a point pick gets: the answer typed at the prompt
+     * is `10,6`, and the boxes hold the same two numbers.
+     */
     private readonly nextSnapData = (): SnapLengthAtPlaneData => {
         const { point, view } = this.stepDatas[0];
         return {
@@ -107,7 +125,13 @@ export abstract class RectCommandBase extends CreateCommand {
             preview: this.previewRect,
             plane: (tmp: XYZ | undefined) => this.findPlane(view, point!, tmp),
             validator: this.handleValid,
+            dynamicInputMode: "cartesian",
+            // With the boxes up they are already showing these two numbers, in the
+            // fields that can be typed into - a tip repeating them beside the
+            // crosshair is the same reading twice, in the place where there is least
+            // room for it.
             prompt: (snaped: SnapResult) => {
+                if (Config.instance.enableDynamicInput) return undefined;
                 const data = this.rectDataFromTemp(snaped.point!);
                 return `${data.dx.toFixed(2)}, ${data.dy.toFixed(2)}`;
             },
@@ -286,12 +310,19 @@ export class Rect extends RectCommandBase {
      * moved to Fillet when you look up.
      */
     private async askCornerSize(mode: CornerMode, statusTip: I18nKeys): Promise<void> {
-        this.controller = new AsyncController();
+        // A controller of its own rather than the command's: this is asked from inside a
+        // live pick, and `this.controller` is that pick's. Replacing it disposes the
+        // listeners pickAsync is waiting on, which strands the pick - the canvas keeps
+        // the crosshair and answers nothing, not even Escape. Cancelling the pick - the
+        // panel's X, or another command starting - closes this question with it.
+        const controller = new AsyncController();
+        this.controller?.onCancelled(() => controller.cancel());
+
         const remembered =
             this.cornerMode === mode && this.cornerSize > 0 ? this.cornerSize : this.lastCornerSize;
 
         const size = await promptForValue<number>({
-            controller: this.controller,
+            controller,
             statusTip,
             defaultAnswer: UnitSetup.formatLength(remembered),
             parse: (text) => parseSetback(text, remembered),
@@ -336,6 +367,10 @@ export class Rect extends RectCommandBase {
     private changeRectCenter(rect: RectData) {
         if (!this.centerRect) return;
 
+        // A corner aimed at with the mouse - or dialled into the crosshair's boxes,
+        // which measure that same offset - is half the rectangle, because the other
+        // half is drawn back through the centre. Text typed at the prompt is not: it
+        // is the size being asked for, `10,6` meaning a rectangle 10 by 6.
         if (this.stepDatas.at(1)?.type !== "input") {
             rect.dx *= 2;
             rect.dy *= 2;

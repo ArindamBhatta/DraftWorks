@@ -62,7 +62,7 @@ export class Flyout extends HTMLElement {
     };
 
     private readonly focusDynamicInput = (text: string) => {
-        this._dynamicInput?.focusDistance(text);
+        this._dynamicInput?.focusFirst(text);
     };
 
     private readonly showTip = (dom: HTMLElement | { level: MessageType; msg: string }) => {

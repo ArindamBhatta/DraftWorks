@@ -32,6 +32,12 @@
     font-family: monospace;
 }
 
+/* Each mode leaves marks the other has no use for - the degree sign beside an X box,
+   say - and an empty span still takes the row's gap. */
+.prefix:empty {
+    display: none;
+}
+
 .box {
     width: 68px;
     padding: 0;

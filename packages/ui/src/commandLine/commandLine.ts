@@ -14,6 +14,7 @@ import {
     type StepOption,
 } from "@draftworks/core";
 import { createIcon, div, input, span } from "@draftworks/element";
+import { stepOptionLabel } from "../stepOptionLabel";
 import { CommandHistory } from "./commandHistory";
 import style from "./commandLine.module.css";
 
@@ -240,9 +241,13 @@ export class CommandLine extends HTMLElement {
         if (!this.promptInput) return;
 
         this.promptInput = undefined;
+        this.emptyBox();
+    };
+
+    private emptyBox() {
         this.textbox.value = "";
         this.textbox.blur();
-    };
+    }
 
     /**
      * Enter at a running command's prompt. An answer the command rejects is left in the
@@ -251,14 +256,30 @@ export class CommandLine extends HTMLElement {
      */
     private submitPromptInput(prompt: PromptInput) {
         const text = this.textbox.value.trim();
+        // The box is handed back before the answer is acted on, because acting on it can
+        // ask the next question: choosing RECTANG's Chamfer at the first prompt goes
+        // straight on to "Specify chamfer distance", and showPromptInput ignores a
+        // prompt that arrives while another is still armed - so that question would be
+        // asked with nowhere to type the answer, and the command would wait for one for
+        // ever.
+        this.promptInput = undefined;
+        this.emptyBox();
+
         const result = prompt.handler(text);
         if (result.isOk) {
             CommandHistory.push(text, "command");
-            this.clearPromptInput();
             return;
         }
+
         CommandHistory.push(I18n.translate(result.error), "error");
-        this.textbox.select();
+        // Rejected, and nothing else has claimed the box in the meantime: put the
+        // question back with what was typed still in it, ready to be corrected.
+        if (!this.promptInput) {
+            this.promptInput = prompt;
+            this.textbox.value = text;
+            this.textbox.focus();
+            this.textbox.select();
+        }
     }
 
     // ------------------------------------------------------------ keyboard
@@ -488,34 +509,9 @@ function suggestionIcon(command: CommandKeys): Element {
     return element;
 }
 
-/**
- * The option as AutoCAD writes it: the word, with the letter you type picked out of it
- * wherever in the word it falls - `Close`, `Undo`, `mOde`.
- *
- * An option with no word of its own shows as its bare key, which is all there is to show;
- * one whose word does not contain its key carries the key after it in brackets, so the
- * thing to type is never left to be guessed at.
- */
+/** `Close`, `Undo`, `mOde` - see stepOptionLabel, which the panel draws from too. */
 function optionLabel(option: StepOption): (HTMLElement | Text)[] {
-    if (!option.name) {
-        return [span({ className: style.optionHot, textContent: option.key })];
-    }
-
-    const name = I18n.translate(option.name);
-    const at = name.toLowerCase().indexOf(option.key.toLowerCase());
-    if (at < 0) {
-        return [
-            document.createTextNode(name),
-            span({ className: style.optionHot, textContent: ` (${option.key})` }),
-        ];
-    }
-
-    const parts: (HTMLElement | Text)[] = [];
-    if (at > 0) parts.push(document.createTextNode(name.slice(0, at)));
-    parts.push(span({ className: style.optionHot, textContent: name.slice(at, at + option.key.length) }));
-    const rest = name.slice(at + option.key.length);
-    if (rest !== "") parts.push(document.createTextNode(rest));
-    return parts;
+    return stepOptionLabel(option, style.optionHot);
 }
 
 customElements.define("chili-command-line", CommandLine);

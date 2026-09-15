@@ -5,6 +5,7 @@ import type { VisualNode } from "../model";
 import type { IShapeFilter } from "../selectionFilter";
 import type { ShapeMeshData } from "../shape";
 import type { IView, VisualShapeData } from "../visual";
+import type { DynamicInputMode } from "./dynamicInput";
 
 /**
  * One bracketed alternative offered at a prompt - AutoCAD's
@@ -99,7 +100,12 @@ export function matchStepOption(options: StepOptions | undefined, text: string):
 
 export interface SnapData {
     preview?: (point: XYZ | undefined) => ShapeMeshData[];
-    prompt?: (point: SnapResult) => string;
+    /**
+     * What the tip beside the crosshair says about the point under it. Returning
+     * undefined leaves the tip to whatever the snap itself has to report - which is
+     * what a prompt does once the dimension boxes are up and already showing it.
+     */
+    prompt?: (point: SnapResult) => string | undefined;
     filter?: IShapeFilter;
     validator?: (point: XYZ) => boolean;
     featurePoints?: {
@@ -109,6 +115,13 @@ export interface SnapData {
     }[];
     /** Alternatives offered at this prompt - typed by key, or clicked in the status bar. */
     options?: StepOptions;
+    /**
+     * Which pair of boxes this prompt puts at the crosshair. Polar unless said
+     * otherwise, because "how far and which way" is what most picks are asking; a
+     * prompt whose answer is two lengths along the axes - RECTANG's other corner -
+     * asks for cartesian so the boxes hold the two numbers the user would have typed.
+     */
+    dynamicInputMode?: DynamicInputMode;
     /**
      * What bare Enter means here - AutoCAD's `<...>` default, as in MOVE's "Specify
      * second point or <use first point as displacement>". Return the point to finish
@@ -141,6 +154,14 @@ export type SnapType =
     | "axis"
     | "feature"
     | "input"
+    /**
+     * Committed in the crosshair's dimension boxes. Kept apart from "input" because
+     * the two are answers to different questions: typed text is read as the command's
+     * own final numbers, while the boxes measure the offset from the reference point,
+     * which is exactly what a mouse pick gives - see Rect's centered mode, where the
+     * one is a width and the other is half of one.
+     */
+    | "dynamic"
     | "angle";
 
 export interface SnapResult {

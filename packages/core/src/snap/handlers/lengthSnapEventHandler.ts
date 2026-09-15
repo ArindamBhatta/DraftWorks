@@ -71,6 +71,22 @@ export class SnapLengthAtPlaneHandler extends SnapEventHandler<SnapLengthAtPlane
         this.updateWorkplane();
     }
 
+    /**
+     * These picks always have something to measure from - the centre a radius is
+     * dragged out of, the first corner a rectangle is dragged out of - so the boxes
+     * apply from the first mouse move, unlike a point pick where the first point has
+     * no reference. Read fresh each time so toggling DYN in the status bar takes
+     * effect mid-command.
+     */
+    protected override dynamicInputPlane(): Plane | undefined {
+        if (!Config.instance.enableDynamicInput) return undefined;
+        return this.workplane ?? this.lengthData.plane(this._snaped?.point);
+    }
+
+    protected override dynamicInputRefPoint(): XYZ | undefined {
+        return this.lengthData.point();
+    }
+
     private updateWorkplane() {
         if (this._snaped) {
             this.workplane = this.lengthData.plane(this._snaped.point);

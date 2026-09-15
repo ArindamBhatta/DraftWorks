@@ -5,7 +5,7 @@ import type { I18nKeys } from "../../i18n";
 import type { Plane, XYZ } from "../../math";
 import { MeshDataUtils, type ShapeMeshData, type ShapeType, ShapeTypes } from "../../shape";
 import { type IEventHandler, type IView, type MeshOption, screenDistance } from "../../visual";
-import { applyDynamicLocks, type DynamicInputLocks, hasAnyLock, polarOf } from "../dynamicInput";
+import { applyDynamicLocks, type DynamicInputLocks, hasAnyLock, readingOf } from "../dynamicInput";
 import {
     hasStepOptions,
     type ISnap,
@@ -142,7 +142,8 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
 
         this._dynamicShown = true;
         PubSub.default.pub("showDynamicInput", {
-            reading: polarOf(refPoint, this._snaped.point, plane),
+            reading: readingOf(refPoint, this._snaped.point, plane),
+            mode: this.data.dynamicInputMode ?? "polar",
             locks: this._locks,
             setLocks: this.setDynamicLocks,
             commit: this.commitDynamicInput,
@@ -170,8 +171,12 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
             view,
             point: applyDynamicLocks(refPoint, this._snaped?.point ?? refPoint, locks, plane),
             shapes: [],
-            type: "input",
+            type: "dynamic",
             refPoint,
+            // The plane the boxes were measured in, so a command that reads the result
+            // back in plane coordinates - Rect's two corners - gets the same frame the
+            // user was answering in rather than re-deriving one from the view.
+            plane,
         };
         this.handleSuccess();
     };

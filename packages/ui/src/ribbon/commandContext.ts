@@ -19,6 +19,7 @@ import {
     type Property,
     PropertyUtils,
     PubSub,
+    type StepOption,
 } from "@draftworks/core";
 import {
     button,
@@ -33,6 +34,7 @@ import {
     svg,
     UrlStringConverter,
 } from "@draftworks/element";
+import { stepOptionLabel } from "../stepOptionLabel";
 import style from "./commandContext.module.css";
 
 export class CommandContext extends HTMLElement implements IDisposable {
@@ -51,6 +53,12 @@ export class CommandContext extends HTMLElement implements IDisposable {
      */
     private readonly visibleProperties = new Set<string | number | symbol>();
     private readonly container = div({ className: style.container });
+    /**
+     * The alternatives the live prompt is offering, as buttons - see showStepOptions.
+     * Its own strip rather than part of the settings above, because these come and go
+     * with the prompt while the settings stay for the whole command.
+     */
+    private readonly stepOptionsContainer = div({ className: style.stepOptions });
     private selectionControlContainer?: HTMLDivElement;
     private closeIcon?: HTMLElement;
     private selectionCountCleanups: Array<() => void> = [];
@@ -74,6 +82,7 @@ export class CommandContext extends HTMLElement implements IDisposable {
             ),
         );
         this.initContext();
+        this.container.append(this.stepOptionsContainer);
         if (isCancelableCommand(this.command)) {
             this.closeIcon = div(
                 { className: style.cancelButton },
@@ -100,13 +109,59 @@ export class CommandContext extends HTMLElement implements IDisposable {
      * are already saying, in the two places they are looking. MOVE and PAN are exactly
      * that: they take picks, not settings, and both already exit on Escape. So they get
      * the drawing back, and the panel appears for the commands that genuinely have a
-     * setting to offer - or, for any command, while it is waiting on a selection and
-     * the panel is showing the count and the confirm button.
+     * setting to offer - or, for any command, while its prompt is offering options, or
+     * while it is waiting on a selection and the panel is showing the count and the
+     * confirm button.
      */
     private updateVisibility() {
-        const hasContent = this.visibleProperties.size > 0 || this.selectionControlContainer !== undefined;
+        const hasContent =
+            this.visibleProperties.size > 0 ||
+            this.stepOptionsContainer.childElementCount > 0 ||
+            this.selectionControlContainer !== undefined;
         this.style.display = hasContent ? "" : "none";
     }
+
+    /**
+     * The prompt's bracketed alternatives, as buttons - `[Chamfer/Fillet]` while
+     * RECTANG is waiting for its first corner, `[Close/Undo]` part-way through a run
+     * of lines.
+     *
+     * They are the same options the command line is offering at that moment, running
+     * the same StepOption.onSelect, so the two surfaces cannot disagree about what is
+     * on offer - and they change as the command moves from one prompt to the next,
+     * because that is what the prompt itself is doing. Each button carries the letter
+     * it would have been typed as, picked out of its word, so using the panel teaches
+     * the keystroke rather than replacing it.
+     */
+    private readonly showStepOptions = (options: StepOption[]) => {
+        this.stepOptionsContainer.replaceChildren(
+            ...options.map((option) =>
+                button(
+                    {
+                        className: style.optionButton,
+                        title: I18n.translate(option.display),
+                        // The pick is still live behind this click. Focus would go to
+                        // the button and take the keyboard away from the view, which is
+                        // what carries Escape and the option keys to the command.
+                        onmousedown: (e: MouseEvent) => e.preventDefault(),
+                        onclick: (e: MouseEvent) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            option.onSelect();
+                        },
+                    },
+                    ...stepOptionLabel(option, style.optionKey),
+                ),
+            ),
+        );
+        this.updateVisibility();
+    };
+
+    private readonly clearStepOptions = () => {
+        if (this.stepOptionsContainer.childElementCount === 0) return;
+        this.stepOptionsContainer.replaceChildren();
+        this.updateVisibility();
+    };
 
     private readonly showSelectionControl = (controller: AsyncController) => {
         if (this.selectionControlContainer) return;
@@ -166,6 +221,8 @@ export class CommandContext extends HTMLElement implements IDisposable {
     connectedCallback(): void {
         PubSub.default.sub("showSelectionControl", this.showSelectionControl);
         PubSub.default.sub("clearSelectionControl", this.clearSelectionControl);
+        PubSub.default.sub("showStepOptions", this.showStepOptions);
+        PubSub.default.sub("clearStepOptions", this.clearStepOptions);
         if (this.command instanceof Observable) {
             this.command.onPropertyChanged(this.onPropertyChanged);
         }
@@ -173,8 +230,11 @@ export class CommandContext extends HTMLElement implements IDisposable {
 
     disconnectedCallback(): void {
         this.clearSelectionControl();
+        this.clearStepOptions();
         PubSub.default.remove("showSelectionControl", this.showSelectionControl);
         PubSub.default.remove("clearSelectionControl", this.clearSelectionControl);
+        PubSub.default.remove("showStepOptions", this.showStepOptions);
+        PubSub.default.remove("clearStepOptions", this.clearStepOptions);
         if (this.command instanceof Observable) {
             this.command.removePropertyChanged(this.onPropertyChanged);
         }

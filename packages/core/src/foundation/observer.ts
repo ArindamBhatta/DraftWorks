@@ -58,24 +58,33 @@ export class Observable implements IPropertyChanged {
         return `_${String(pubKey)}`;
     }
 
-    protected getPrivateValue<K extends keyof this>(pubKey: K, defaultValue?: this[K]): this[K] {
+    /**
+     * The backing field, or the default this property was declared with.
+     *
+     * The default is taken as *passed*, not as "anything but undefined" - hence the
+     * rest tuple rather than an optional parameter. `undefined` is a real default for
+     * a property that may genuinely hold nothing (the command currently running, the
+     * active view), and reading one of those before it is first set is the ordinary
+     * case, not a mistake to warn about. What the warning is for is a property with no
+     * default at all, which really has been read before anyone gave it a value.
+     */
+    protected getPrivateValue<K extends keyof this>(pubKey: K, ...defaultValue: [] | [this[K]]): this[K] {
         const privateKey = this.getPrivateKey(pubKey) as keyof this;
         return privateKey in this
             ? (this[privateKey] as this[K])
             : this.initializeDefaultValue(pubKey, defaultValue);
     }
 
-    private initializeDefaultValue<K extends keyof this>(pubKey: K, defaultValue?: this[K]): this[K] {
-        if (defaultValue === undefined) {
+    private initializeDefaultValue<K extends keyof this>(pubKey: K, defaultValue: [] | [this[K]]): this[K] {
+        if (defaultValue.length === 0) {
             Logger.warn(
                 `${this.constructor.name}: The property "${String(pubKey)}" is not initialized, and no default value is provided`,
             );
             return undefined as this[K];
         }
 
-        const privateKey = this.getPrivateKey(pubKey);
-        (this as any)[privateKey] = defaultValue;
-        return defaultValue;
+        this.setPrivateValue(pubKey, defaultValue[0]);
+        return defaultValue[0];
     }
 
     setPrivateValue<K extends keyof this>(pubKey: K, newValue: this[K]): void {

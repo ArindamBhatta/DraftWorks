@@ -67,7 +67,18 @@ export class AsyncController implements IDisposable {
         this._failListeners.add(listener);
     }
 
+    /**
+     * Ends the operation if it has not ended already, then drops the listeners.
+     *
+     * The cancel first is what stops a disposed controller taking someone's wait to the
+     * grave with it. Everything that awaits one of these - a pick, a typed prompt - is
+     * blocked on a promise only these listeners can resolve, so clearing them without a
+     * result leaves that promise pending for good: the command never returns, and the
+     * drawing keeps an event handler that answers nothing. A controller that has already
+     * finished is unaffected, which is the ordinary case - see notifyListeners.
+     */
     dispose() {
+        this.cancel();
         this._cancelListeners.clear();
         this._failListeners.clear();
         this._successListeners.clear();

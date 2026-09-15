@@ -7,7 +7,16 @@
 
 import { expect, test } from "@rstest/core";
 import { Plane, XYZ } from "../math";
-import { applyDynamicLocks, hasAnyLock, normalizeAngle, pointFromPolar, polarOf } from "./dynamicInput";
+import {
+    applyDynamicLocks,
+    cartesianOf,
+    hasAnyLock,
+    normalizeAngle,
+    pointFromCartesian,
+    pointFromPolar,
+    polarOf,
+    readingOf,
+} from "./dynamicInput";
 
 const origin = XYZ.zero;
 const at = (x: number, y: number) => new XYZ({ x, y, z: 0 });
@@ -104,4 +113,65 @@ test("hasAnyLock reports whether the point is constrained at all", () => {
     expect(hasAnyLock({ angle: 0 })).toBe(true);
     // Zero is a real lock, not an absent one - locking the angle to 0 means "due east".
     expect(hasAnyLock({ angle: 0, distance: 0 })).toBe(true);
+    expect(hasAnyLock({ dx: 10 })).toBe(true);
+    expect(hasAnyLock({ dy: 0 })).toBe(true);
+});
+
+// The cartesian pair - RECTANG's `@10,6`, read and answered along the plane's axes.
+
+test("reading a point along the plane's own axes", () => {
+    expect(cartesianOf(origin, at(10, 6), Plane.XY)).toEqual({ dx: 10, dy: 6 });
+
+    // Behind and below the reference point is negative in both, which is a rectangle
+    // dragged down and to the left.
+    expect(cartesianOf(at(100, 100), at(90, 94), Plane.XY)).toEqual({ dx: -10, dy: -6 });
+});
+
+test("axes are the plane's, not the world's", () => {
+    // The XZ plane: its y axis is world -Z.
+    const plane = new Plane({ origin: XYZ.zero, normal: XYZ.unitY, xvec: XYZ.unitX });
+    const reading = cartesianOf(origin, new XYZ({ x: 10, y: 0, z: -6 }), plane);
+    expect(reading.dx).toBeCloseTo(10);
+    expect(reading.dy).toBeCloseTo(6);
+});
+
+test("cartesian reading and point are inverses of each other", () => {
+    const point = pointFromCartesian(at(100, 100), 10, 6, Plane.XY);
+    expect(point.x).toBeCloseTo(110);
+    expect(point.y).toBeCloseTo(106);
+
+    const back = cartesianOf(at(100, 100), point, Plane.XY);
+    expect(back.dx).toBeCloseTo(10);
+    expect(back.dy).toBeCloseTo(6);
+});
+
+test("both pairs describe the same offset, so a widget can show either", () => {
+    const reading = readingOf(origin, at(3, 4), Plane.XY);
+    expect(reading.distance).toBeCloseTo(5);
+    expect(reading.angle).toBeCloseTo(53.13, 1);
+    expect(reading.dx).toBeCloseTo(3);
+    expect(reading.dy).toBeCloseTo(4);
+});
+
+test("locking x puts the point on a vertical line - y still follows the cursor", () => {
+    const result = applyDynamicLocks(origin, at(3, 4), { dx: 10 }, Plane.XY);
+    expect(result.x).toBeCloseTo(10);
+    expect(result.y).toBeCloseTo(4);
+});
+
+test("locking both lengths fixes the corner outright, wherever the cursor is", () => {
+    const fromHere = applyDynamicLocks(origin, at(3, 4), { dx: 10, dy: 6 }, Plane.XY);
+    const fromThere = applyDynamicLocks(origin, at(-50, -50), { dx: 10, dy: 6 }, Plane.XY);
+
+    expect(fromHere.isEqualTo(fromThere)).toBe(true);
+    expect(fromHere.x).toBeCloseTo(10);
+    expect(fromHere.y).toBeCloseTo(6);
+});
+
+test("a cartesian lock decides the answer even if a polar one is left over", () => {
+    // The boxes show one pair at a time, so the pair being typed into is the pair
+    // that means anything - a stale distance from the mode before must not bend it.
+    const result = applyDynamicLocks(origin, at(3, 4), { dx: 10, distance: 99 }, Plane.XY);
+    expect(result.x).toBeCloseTo(10);
+    expect(result.y).toBeCloseTo(4);
 });
