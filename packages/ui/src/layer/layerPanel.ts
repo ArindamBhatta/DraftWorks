@@ -16,7 +16,28 @@ import {
     VisualNode,
 } from "@draftworks/core";
 import { div, input, span, svg } from "@draftworks/element";
+import { DropdownController } from "../ribbon/dropdownController";
 import style from "./layerPanel.module.css";
+
+/** The dash patterns each linetype draws with, shared by the preview and the picker. */
+const LINE_TYPE_DASHES: Record<LineType, string> = {
+    byLayer: "",
+    solid: "",
+    dash: "6 4",
+    hidden: "3 3",
+    dot: "1 3",
+};
+
+/** In AutoCAD's dropdown order: Continuous first, then the patterns. "byLayer" is
+ *  absent because a layer cannot defer to itself - it is what the others defer to. */
+const LINE_TYPES: { value: LineType; display: I18nKeys }[] = [
+    { value: "solid", display: "lineType.solid" },
+    { value: "dash", display: "lineType.dash" },
+    { value: "hidden", display: "lineType.hidden" },
+    { value: "dot", display: "lineType.dot" },
+];
+
+const TRANSPARENCY_STEPS = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90];
 
 /**
  * AutoCAD's Layer Properties Manager. Each row carries the full column set - status,
@@ -25,14 +46,18 @@ import style from "./layerPanel.module.css";
  * floating palette - see layerFloatPanel.ts.
  *
  * Every column is a glyph rather than a label, so a row stays readable at a glance and
- * the panel stays narrow. That leaves the three columns which are values rather than
- * states - linetype, lineweight, transparency - without anywhere to put a menu, so they
- * are drawn as a preview of what they do (the actual dash pattern, the actual thickness,
- * the actual fade) and cycle through the available settings on click.
+ * the panel stays narrow. The three columns which are values rather than states -
+ * linetype, lineweight, transparency - still draw themselves (the actual dash pattern,
+ * the actual thickness, the actual fade), but clicking one opens a picker listing every
+ * setting, the way AutoCAD 2013 does. They used to cycle to the next value per click,
+ * which made choosing one a guessing game: to see a pattern you had to select it, and to
+ * compare two you had to walk the whole list around again.
  */
 export class LayerPanel extends HTMLElement {
     private _document: IDocument | undefined;
     private readonly list: HTMLDivElement;
+    /** Set while a colour picker is open - see colorSwatch for why refresh must wait. */
+    private suppressRefresh = false;
 
     // Takes the document up front rather than waiting on activeViewChanged, because that
     // event fires once when a document becomes active and this panel is normally opened
@@ -110,6 +135,10 @@ export class LayerPanel extends HTMLElement {
     };
 
     private readonly refresh = () => {
+        // A live colour picker is a child of the row this would destroy, so rebuilding
+        // now would shut it mid-drag. colorSwatch refreshes once the picker closes.
+        if (this.suppressRefresh) return;
+
         const manager = this._document?.modelManager;
         this.list.replaceChildren();
         if (!manager) return;
@@ -204,9 +233,10 @@ export class LayerPanel extends HTMLElement {
 
     /**
      * A line drawn to show what a setting does. A tooltip on an SVG is a <title> child,
-     * not a title attribute - the attribute is inert here.
+     * not a title attribute - the attribute is inert here. The caller attaches the click
+     * that opens the picker, since only it knows which values are on offer.
      */
-    private linePreview(width: number, dashArray: string, tip: I18nKeys, onClick: () => void) {
+    private linePreview(width: number, dashArray: string, tip: I18nKeys) {
         const ns = "http://www.w3.org/2000/svg";
         const preview = document.createElementNS(ns, "svg");
         preview.setAttribute("viewBox", "0 0 24 12");
@@ -225,47 +255,152 @@ export class LayerPanel extends HTMLElement {
         title.textContent = I18n.translate(tip);
 
         preview.append(title, line);
-        preview.onclick = (e) => {
-            e.stopPropagation();
-            onClick();
-        };
         return preview;
+    }
+
+    /**
+     * Opens a picker under the swatch that was clicked. Each entry previews the value it
+     * sets and is labelled with it, so the list can be read and compared without anything
+     * being applied - picking is what applies it.
+     *
+     * The dropdown is appended to document.body rather than to the row, because the row
+     * is replaced wholesale on every refresh and the list is scroll-clipped; a menu
+     * parented inside either would vanish or be cut off.
+     */
+    private openPicker<T>(
+        anchor: Element,
+        options: { value: T; label: string; preview: () => Element }[],
+        current: T,
+        apply: (value: T) => void,
+    ) {
+        const dropdown = new DropdownController(style.picker);
+        dropdown.open(anchor, (menu) => {
+            options.forEach((entry) => {
+                const row = div(
+                    {
+                        className: `${style.pickerItem} ${entry.value === current ? style.pickerCurrent : ""}`,
+                        onclick: (e) => {
+                            e.stopPropagation();
+                            apply(entry.value);
+                            dropdown.close();
+                        },
+                    },
+                    entry.preview(),
+                    span({ className: style.pickerLabel, textContent: entry.label }),
+                );
+                menu.append(row);
+            });
+        });
+    }
+
+    /** A line drawn at a given width and dash pattern, for use inside a picker row. */
+    private sampleLine(width: number, dashArray: string) {
+        const ns = "http://www.w3.org/2000/svg";
+        const sample = document.createElementNS(ns, "svg");
+        sample.setAttribute("viewBox", "0 0 48 12");
+        sample.classList.add(style.pickerPreview);
+
+        const line = document.createElementNS(ns, "line");
+        line.setAttribute("x1", "1");
+        line.setAttribute("y1", "6");
+        line.setAttribute("x2", "47");
+        line.setAttribute("y2", "6");
+        line.setAttribute("stroke", "currentColor");
+        line.setAttribute("stroke-width", String(width));
+        if (dashArray) line.setAttribute("stroke-dasharray", dashArray);
+
+        sample.append(line);
+        return sample;
     }
 
     /** The linetype drawn as itself: a short line in that dash pattern. */
     private lineTypePreview(layer: Layer) {
-        const order: LineType[] = ["solid", "dash", "hidden", "dot"];
-        const dashes: Record<string, string> = { solid: "", dash: "6 4", hidden: "3 3", dot: "1 3" };
-
-        return this.linePreview(1.5, dashes[layer.lineType] ?? "", "layer.lineType", () => {
-            layer.lineType = order[(order.indexOf(layer.lineType) + 1) % order.length];
-        });
+        const swatch = this.linePreview(1.5, LINE_TYPE_DASHES[layer.lineType] ?? "", "layer.lineType");
+        swatch.onclick = (e) => {
+            e.stopPropagation();
+            this.openPicker(
+                swatch,
+                LINE_TYPES.map((x) => ({
+                    value: x.value,
+                    label: I18n.translate(x.display),
+                    preview: () => this.sampleLine(1.5, LINE_TYPE_DASHES[x.value]),
+                })),
+                layer.lineType,
+                (value) => {
+                    layer.lineType = value;
+                },
+            );
+        };
+        return swatch;
     }
 
     /** The lineweight drawn as itself: a line of that thickness. */
     private lineWeightPreview(layer: Layer) {
-        return this.linePreview(layer.lineWeight, "", "layer.lineWeight", () => {
-            const index = LAYER_LINE_WEIGHTS.indexOf(layer.lineWeight);
-            layer.lineWeight = LAYER_LINE_WEIGHTS[(index + 1) % LAYER_LINE_WEIGHTS.length];
-        });
+        const swatch = this.linePreview(layer.lineWeight, "", "layer.lineWeight");
+        swatch.onclick = (e) => {
+            e.stopPropagation();
+            this.openPicker(
+                swatch,
+                LAYER_LINE_WEIGHTS.map((weight) => ({
+                    value: weight,
+                    label: I18n.translate("layer.lineWeight.value", weight),
+                    preview: () => this.sampleLine(weight, ""),
+                })),
+                layer.lineWeight,
+                (value) => {
+                    layer.lineWeight = value;
+                },
+            );
+        };
+        return swatch;
     }
 
     /** Transparency drawn as itself: the layer colour faded by that much. */
     private transparencyPreview(layer: Layer) {
-        const step = 30;
         const swatch = div({
             className: style.transparency,
             title: I18n.translate("layer.transparency"),
             onclick: (e) => {
                 e.stopPropagation();
-                const next = layer.transparency + step;
-                layer.transparency = next > MAX_LAYER_TRANSPARENCY ? 0 : next;
+                this.openPicker(
+                    swatch,
+                    // Capped at the same ceiling the setter enforces: a layer faded past
+                    // this is invisible, and offering a value that gets clamped on the
+                    // way in would make the picker lie about what it set.
+                    TRANSPARENCY_STEPS.filter((x) => x <= MAX_LAYER_TRANSPARENCY).map((value) => ({
+                        value,
+                        label: I18n.translate("layer.transparency.value", value),
+                        preview: () => this.fadeSample(value),
+                    })),
+                    layer.transparency,
+                    (value) => {
+                        layer.transparency = value;
+                    },
+                );
             },
         });
         swatch.style.opacity = String(1 - layer.transparency / 100);
         return swatch;
     }
 
+    /** A block of the current colour faded by that much, for a transparency picker row. */
+    private fadeSample(transparency: number) {
+        const sample = div({ className: style.fadeSample });
+        sample.style.opacity = String(1 - transparency / 100);
+        return sample;
+    }
+
+    /**
+     * The layer's colour, as the native colour picker.
+     *
+     * Setting layer.color fires onPropertyChanged, which refreshes the list and so
+     * replaces every row - including this input, while the user is still dragging inside
+     * the picker it opened. That closed the dialog on the first colour touched and lost
+     * the edit, which is why the colour could not be changed at all. So the panel holds
+     * off refreshing until the picker is done: `input` paints a live preview straight
+     * onto the drawing without a rebuild, and `change` - fired when the dialog is
+     * dismissed - is what commits and lets the list rebuild again.
+     */
     private colorSwatch(layer: Layer) {
         const picker = input({
             type: "color",
@@ -274,7 +409,24 @@ export class LayerPanel extends HTMLElement {
             title: I18n.translate("layer.color"),
             onclick: (e) => e.stopPropagation(),
             oninput: (e) => {
+                this.suppressRefresh = true;
+                const value = Number.parseInt((e.target as HTMLInputElement).value.slice(1), 16);
+                picker.style.backgroundColor = `#${value.toString(16).padStart(6, "0")}`;
+                picker.classList.remove(style.themeSwatch);
+                layer.color = value;
+            },
+            onchange: (e) => {
+                this.suppressRefresh = false;
                 layer.color = Number.parseInt((e.target as HTMLInputElement).value.slice(1), 16);
+                this.refresh();
+            },
+            // A safety net, not the normal path: `change` is what usually clears the
+            // flag, but it does not fire when the dialog closes on an unchanged colour.
+            // Leaving the flag set would freeze the whole list, so blur clears it too.
+            onblur: () => {
+                if (!this.suppressRefresh) return;
+                this.suppressRefresh = false;
+                this.refresh();
             },
         });
         if (!layer.usesThemeColor) {

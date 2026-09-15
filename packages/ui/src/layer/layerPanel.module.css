@@ -8,7 +8,7 @@
     flex-direction: row;
     align-items: center;
     flex: 0;
-    margin: 0px 12px;
+    margin: 0px 10px;
 }
 
 .header {
@@ -46,12 +46,15 @@
     background-color: var(--panel-background-color);
 }
 
+/* AutoCAD 2013 spaces its Layer Manager columns well apart, so a glyph is clearly its
+   own column rather than one of a crowded strip - and so a click lands on the column
+   the user meant. 10px is what separates these without pushing the name box narrow. */
 .list .row {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 4px;
-    padding: 3px 6px;
+    gap: 10px;
+    padding: 3px 10px;
     cursor: pointer;
     user-select: none;
     border-left: 3px solid transparent;
@@ -193,4 +196,65 @@
     background-color: currentColor;
     flex: 0 0 auto;
     cursor: pointer;
+}
+
+/* The picker hangs off document.body (see openPicker), so it carries its own surface
+   and sits above the floating layer palette rather than inside it. The palette is also
+   z-index 1000, and both are body children, so this must be explicitly higher - equal
+   values would leave the menu's stacking to DOM order, which is whichever opened last. */
+.picker {
+    position: fixed;
+    z-index: 1002;
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+    gap: 1px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--panel-background-color);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 25%);
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.pickerItem {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    user-select: none;
+    color: var(--foreground-color);
+
+    &:hover {
+        background-color: var(--hover-background-color);
+    }
+}
+
+/* The value already set, so reopening the picker shows where you are. */
+.pickerCurrent {
+    background-color: var(--active-background-color);
+    font-weight: bold;
+}
+
+.pickerPreview {
+    width: 48px;
+    height: 12px;
+    flex: 0 0 auto;
+    color: var(--foreground-color);
+}
+
+.fadeSample {
+    width: 48px;
+    height: 12px;
+    border-radius: 2px;
+    background-color: var(--foreground-color);
+    flex: 0 0 auto;
+}
+
+.pickerLabel {
+    font-size: 0.85rem;
+    white-space: nowrap;
 }

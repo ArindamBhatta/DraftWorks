@@ -404,6 +404,8 @@ export const I18N_KEYS = [
     "layer.status.current",
     "layer.status.inUse",
     "layer.status.empty",
+    "layer.lineWeight.value",
+    "layer.transparency.value",
     // Line
     "line.end",
     "line.start",

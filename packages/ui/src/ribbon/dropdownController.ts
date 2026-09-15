@@ -115,7 +115,9 @@ export class DropdownController {
         return this.#isOpened;
     }
 
-    open(anchor: HTMLElement, buildItems: (dropdown: HTMLElement) => void): void {
+    // The anchor is only ever measured, so it is typed as the Element it has to be:
+    // the layer panel hangs its pickers off <svg> swatches, which are not HTMLElements.
+    open(anchor: Element, buildItems: (dropdown: HTMLElement) => void): void {
         if (this.#isOpened) return;
 
         DropdownController.closeAll();
@@ -148,7 +150,7 @@ export class DropdownController {
         this.close();
     }
 
-    #position(dropdown: HTMLElement, anchor: HTMLElement): void {
+    #position(dropdown: HTMLElement, anchor: Element): void {
         const rect = anchor.getBoundingClientRect();
         dropdown.style.top = `${rect.bottom + 2}px`;
         dropdown.style.left = `${rect.left}px`;

@@ -21,8 +21,10 @@ import { pickedEdgeGeometry } from "./pickedEdge";
 /** Only circles and arcs can carry a radius or diameter dimension. */
 const circularEdges = {
     allow: (shape: IShape) => {
-        const edge = shape as IEdge;
-        return edge.shapeType === ShapeTypes.edge && CurveUtils.isCircle(edge.curve);
+        if (shape.shapeType !== ShapeTypes.edge) return false;
+        // An edge's curve is always trimmed, so the circle is the curve it was cut
+        // from - testing the wrapper itself rejects every circle and arc there is.
+        return CurveUtils.isCircle((shape as IEdge).curve.basisCurve);
     },
 };
 

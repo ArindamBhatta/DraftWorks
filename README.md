@@ -4,10 +4,13 @@ A web-based 2D CAD drafting application for civil engineering — structural dra
 
 DraftWorks pairs an OCCT (OpenCascade) geometry kernel compiled to WebAssembly with a Three.js renderer, so drafting stays precise (real B-Rep geometry, not just pixels) while running with no install and no server round-trip per edit.
 
-## Screenshots
+## Architecture Drawing
   <!-- ![Structural framing plan](doc/images/structural-plan.png) -->
   ![Architectural floor plan](doc/images/architectural-plan.png)
-  <!-- ![2D elevation](doc/images/elevation.png) -->
+
+## Structural Drawing
+
+
 
 
 

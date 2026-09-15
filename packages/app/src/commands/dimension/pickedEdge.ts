@@ -43,8 +43,13 @@ function readEdge(data: SnapResult): PickedEdgeGeometry | undefined {
             start: curve.startPoint(),
             end: curve.endPoint(),
         };
-        if (CurveUtils.isCircle(curve)) {
-            const circle = curve as ICircle;
+        // The curve off an edge is trimmed; the circle it was cut from is its basis,
+        // so an arc reports the radius of its full circle - which is what a radius or
+        // diameter dimension measures. The edge is already transformed above, so the
+        // centre and radius read out in world coordinates.
+        const basisCurve = curve.basisCurve;
+        if (CurveUtils.isCircle(basisCurve)) {
+            const circle = basisCurve as ICircle;
             geometry.circle = { center: circle.center, radius: circle.radius };
         }
         return geometry;

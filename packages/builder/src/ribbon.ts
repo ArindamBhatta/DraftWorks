@@ -174,7 +174,6 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                     "dimension.object",
                     { type: "split", items: ["dimension.linear", "dimension.aligned"] },
                     { type: "split", items: ["dimension.radius", "dimension.diameter"] },
-                    { type: "split", items: ["dimension.angular"] },
                 ],
             },
 
