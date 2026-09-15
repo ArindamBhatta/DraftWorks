@@ -142,9 +142,14 @@ export class Matrix4 {
     /**
      * Matrix multiplication: composes two transforms into a single one.
      * This is the core operation for building up placements — e.g.
-     * `parentWorldMatrix.multiply(childLocalMatrix)` gives a child part's world matrix inside an
+     * `childLocalMatrix.multiply(parentWorldMatrix)` gives a child part's world matrix inside an
      * assembly, or `translation.multiply(rotation)` combines a move and a rotate into one transform.
-     * Order matters: `A.multiply(B)` applies B's transform first, then A's.
+     * Order matters: `A.multiply(B)` applies A's transform first, then B's. Translation
+     * lives in the last row here and `ofPoint` multiplies the point on the left
+     * (`v' = v * M`), so composition reads left to right - the opposite of the
+     * column-vector convention used by OpenGL-style maths libraries. Pivoting a
+     * transform about a point therefore starts with the negative translation: see
+     * `fromAxisRad`.
      */
     public multiply(other: Matrix4): Matrix4 {
         const array = new Array(16).fill(0);

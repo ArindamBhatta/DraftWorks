@@ -1,6 +1,7 @@
 import {
     command,
     Dimensions,
+    FactorStep,
     type IStep,
     Matrix4,
     type PointSnapData,
@@ -53,7 +54,12 @@ export class Scale extends TransformedCommand {
             ];
         }
 
-        return [basePoint, new PointStep("prompt.scale.factor", this.getFactorData, true)];
+        return [
+            basePoint,
+            // Not a PointStep: a typed factor is a multiplier, not a distance in
+            // drawing units, and it must work before the cursor has moved at all.
+            new FactorStep("prompt.scale.factor", () => this.stepDatas[0].point!, this.getFactorData, true),
+        ];
     }
 
     protected override resetStepDatas() {
@@ -152,11 +158,18 @@ export class Scale extends TransformedCommand {
     protected override transfrom(point: XYZ): Matrix4 {
         const base = this.stepDatas[0].point!;
         const factor = this.getScaleFactor(point);
+        // Last line of defence against a degenerate factor. The typed-input path bypasses
+        // the step validator entirely (SnapEventHandler commits typed points without
+        // consulting it), so a zero here would silently collapse the selection to a
+        // point - which is destructive and looks exactly like the objects vanishing.
+        if (!Number.isFinite(factor) || factor <= Precision.Distance) return Matrix4.identity();
         // Scale about the base point: bring it to the origin, scale there, put it back.
-        // `A.multiply(B)` applies B first, so this reads right to left.
-        return Matrix4.fromTranslation(base.x, base.y, base.z)
+        // Matrix4 keeps its translation in the last row and `ofPoint` multiplies the
+        // point on the left, so `A.multiply(B)` applies A first and this reads left to
+        // right - the same order Matrix4.fromAxisRad uses to pivot a rotation.
+        return Matrix4.fromTranslation(-base.x, -base.y, -base.z)
             .multiply(Matrix4.fromScale(factor, factor, factor))
-            .multiply(Matrix4.fromTranslation(-base.x, -base.y, -base.z));
+            .multiply(Matrix4.fromTranslation(base.x, base.y, base.z));
     }
 
     private readonly scalePreview = (point: XYZ | undefined): ShapeMeshData[] => {
