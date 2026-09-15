@@ -44,7 +44,12 @@ export class TrackingSnap implements ISnap {
 
         const trackingDatas = this.detectTracking(data.view, data.mx, data.my);
         if (trackingDatas.length === 0) return undefined;
-        trackingDatas.sort((x) => x.distance);
+        // Nearest path first: the rest of this method takes [0] as the one the cursor is
+        // on, and it names the tooltip and the distance reported from it. `sort` wants a
+        // comparator, and was being given a key - which returns a positive number for
+        // every pair and so leaves the order to the sort's own internals, handing the
+        // wrong path's measurement to a user standing on a different one.
+        trackingDatas.sort((a, b) => a.distance - b.distance);
         const snaped = this.shapeIntersectTracking(data, trackingDatas);
         if (snaped !== undefined) return snaped;
         if (trackingDatas.length === 1) {
@@ -135,7 +140,12 @@ export class TrackingSnap implements ISnap {
                 points.push({ intersect: p.point, location: x.axis.point });
             });
         });
-        points.sort((p) => screenDistance(data.view, data.mx, data.my, p.intersect));
+        // Nearest to the cursor, comparator not key - see the sort in snap().
+        points.sort(
+            (a, b) =>
+                screenDistance(data.view, data.mx, data.my, a.intersect) -
+                screenDistance(data.view, data.mx, data.my, b.intersect),
+        );
         return points.at(0);
     }
 

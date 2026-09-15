@@ -16,6 +16,20 @@ interface SnapeInfo {
     shapeId: number;
 }
 
+/**
+ * Whether two snaps are the cursor sitting on one and the same thing - the same kind of
+ * point in the same place. Exported for testing.
+ *
+ * Both halves are needed. Without the point, a hover never completes; without the type,
+ * an endpoint and the "nearest point on curve" that shares its position would read as
+ * one hover, and resting on a line's end would acquire nothing while the cursor slid
+ * between the two.
+ */
+export function isSameTrackingTarget(current?: SnapResult, next?: SnapResult): boolean {
+    if (!current?.point || !next?.point) return false;
+    return current.type === next.type && current.point.isEqualTo(next.point);
+}
+
 export class ObjectTracking extends TrackingBase {
     private timer?: number;
     private snapping?: SnapResult;
@@ -41,8 +55,22 @@ export class ObjectTracking extends TrackingBase {
         return result;
     }
 
+    /**
+     * AutoCAD's point acquisition: rest on a key point and it starts tracking from
+     * there, so alignment paths radiate from it for the rest of the pick. Hovering an
+     * acquired point again drops it.
+     *
+     * "The same point" is what it looks like on screen, not the object the snap arrived
+     * in: every pointer move builds a fresh SnapResult, so comparing the objects made
+     * every move look like a move to somewhere new. The timer was cleared and restarted
+     * each time, and only a mouse held perfectly still for 600ms ever acquired anything
+     * - a hand that drifts a pixel while hovering an endpoint, which is every hand,
+     * acquired nothing at all. Comparing the points instead lets one hover run its 600ms
+     * out while the cursor stays on the point, and stops a hover that is still sitting
+     * there from immediately dropping what it just acquired.
+     */
     showTrackingAtTimeout(document: IDocument, snap?: SnapResult) {
-        if (snap !== undefined && this.snapping === snap) return;
+        if (isSameTrackingTarget(this.snapping, snap)) return;
 
         this.clearTimer();
         this.snapping = snap;
