@@ -86,15 +86,50 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                     // reach Regular Polygon without the user going near the panel's
                     // overflow. Ellipse and Hatch have no variant to offer yet; they keep
                     // an arrow of their own so the column stays one shape as they grow.
+                    // Three rows is the column's limit: .content is a fixed 72px with
+                    // overflow hidden, so a fourth row would be clipped rather than
+                    // wrapped - a second column is how the panel grows from here.
                     [
                         { type: "split", items: ["create.rect", "create.regularPolygon"] },
-                        { type: "split", items: ["create.ellipse"] },
+                        {
+                            type: "split",
+                            // Like Circle's, the face is the generic tool and the menu
+                            // names ways of drawing it. Elliptical Arc is missing because
+                            // the kernel draws only whole ellipses - see ellipse.ts.
+                            primary: {
+                                type: "method",
+                                command: "create.ellipse",
+                                display: "command.create.ellipse",
+                                icon: "icon-ellipse",
+                            },
+                            items: [
+                                {
+                                    type: "method",
+                                    command: "create.ellipse",
+                                    display: "option.ellipse.mode.axisEnd",
+                                    icon: "icon-ellipse",
+                                    preset: { mode: "option.ellipse.mode.axisEnd" },
+                                },
+                                {
+                                    type: "method",
+                                    command: "create.ellipse",
+                                    display: "option.ellipse.mode.center",
+                                    icon: "icon-ellipse",
+                                    preset: { mode: "option.ellipse.mode.center" },
+                                },
+                            ],
+                        },
                         { type: "split", items: ["create.hatch"] },
                     ],
                 ],
                 // Point and Bezier are the only tools with no natural parent flyout, so
                 // they are what the group's overflow arrow is for.
-                collapsedItems: ["create.point", "create.bezier", "create.constructionLine"],
+                collapsedItems: [
+                    "create.point",
+                    "create.bezier",
+                    "create.constructionLine",
+                    "create.revisionCloud",
+                ],
             },
 
             //Modify

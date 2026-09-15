@@ -28,6 +28,7 @@ export const CommandAliases: Partial<Record<CommandKeys, string[]>> = {
     "create.constructionLine": ["ray", "xline", "cline"],
     "create.polygon": ["pl", "pline", "polyline"],
     "create.regularPolygon": ["pol", "polygon"],
+    "create.revisionCloud": ["revcloud", "cloud"],
     "create.bezier": ["spl", "spline", "bezier"],
     "create.hatch": ["h", "bh", "hatch", "bhatch"],
     "create.point": ["po", "point"],

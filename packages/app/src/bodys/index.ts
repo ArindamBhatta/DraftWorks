@@ -12,3 +12,4 @@ export * from "./point";
 export * from "./polygon";
 export * from "./rect";
 export * from "./regularPolygon";
+export * from "./revisionCloud";

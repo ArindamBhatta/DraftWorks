@@ -1023,6 +1023,20 @@ window._iconfont_svg_string_3585225 = `
     <path d="M256 416h32v112h-32zM496 416h32v112h-32zM736 416h32v112h-32zM376 416h32v64h-32zM616 416h32v64h-32zM856 416h32v64h-32z">
     </path>
   </symbol>
+  <!-- used by: Construction Line (create.constructionLine).
+       The line runs corner to corner with no endpoints drawn, which is what separates
+       an XLINE from a LINE; the two squares are the origin and through-point picked. -->
+  <symbol id="icon-constructionLine" viewBox="0 0 1024 1024">
+    <path d="M62.4 916.8l854.4-854.4 44.8 44.8-854.4 854.4z">
+    </path>
+    <path d="M320 640h96v96h-96zM608 352h96v96h-96z">
+    </path>
+  </symbol>
+  <!-- used by: Revision Cloud (create.revisionCloud) -->
+  <symbol id="icon-revisionCloud" viewBox="0 0 1024 1024">
+    <path d="M232 296c0-53 43-96 96-96 26 0 50 10 68 27 17-45 60-77 111-77 50 0 93 31 111 75 17-15 39-25 64-25 53 0 96 43 96 96 0 5 0 10-1 15 45 13 78 54 78 103 0 48-32 89-75 102 8 14 13 31 13 49 0 53-43 96-96 96-24 0-46-9-63-24-15 39-53 67-97 67-45 0-83-29-97-70-17 20-43 32-71 32-53 0-96-43-96-96 0-14 3-27 8-39-49-9-86-52-86-104 0-49 33-90 78-103-1-9-2-18-2-28z m96-32c-18 0-32 14-32 32 0 12 3 22 8 31l22 42-47 5c-25 3-43 24-43 49 0 26 20 47 45 49l50 4-25 43c-4 7-6 14-6 22 0 18 14 32 32 32 13 0 24-7 29-18l31-64 22 68c6 18 23 31 42 31 19 0 35-12 42-29l25-66 33 61c6 11 17 18 29 18 18 0 32-14 32-32 0-9-3-17-9-24l-33-39 50-7c25-3 44-24 44-49 0-25-18-46-43-49l-47-5 22-42c5-9 8-19 8-31 0-18-14-32-32-32-14 0-26 9-30 22l-24 66-31-62c-8-17-25-28-44-28-20 0-37 12-45 30l-27 63-30-52c-6-10-16-16-28-16z">
+    </path>
+  </symbol>
 </svg>
 `;
 

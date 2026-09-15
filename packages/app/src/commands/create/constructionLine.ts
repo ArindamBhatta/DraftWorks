@@ -27,7 +27,7 @@ const constructionLineLength = 1000000; // 1 million mm, or 1 km, or 3,280 feet 
 
 @command({
     key: "create.constructionLine",
-    icon: "icon-arrows",
+    icon: "icon-constructionLine",
 })
 export class ConstructionLine extends CreateCommand {
     protected override geometryNode(): GeometryNode {

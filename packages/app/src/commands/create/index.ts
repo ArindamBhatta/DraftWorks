@@ -14,4 +14,5 @@ export * from "./polygon";
 export * from "./rect";
 export * from "./refSegment";
 export * from "./regularPolygon";
+export * from "./revisionCloud";
 export * from "./text";
