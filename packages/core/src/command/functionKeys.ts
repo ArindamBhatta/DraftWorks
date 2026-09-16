@@ -10,10 +10,13 @@ export type DraftingAidKey = Extract<
     keyof Config,
     | "enableSnap"
     | "enableGrid"
+    | "enableGridSnap"
     | "enableOrtho"
     | "enablePolarTracking"
     | "enableSnapTracking"
     | "enableDynamicInput"
+    | "showLineWeight"
+    | "enableSelectionCycling"
 >;
 
 export interface FunctionKeyToggle {
@@ -39,12 +42,14 @@ export interface FunctionKeyToggle {
  *   F4  3D object snap    - this is a 2D drafting app
  *   F5  isoplane          - no isometric drafting mode
  *   F6  dynamic UCS       - the workplane is fixed
- *   F9  snap mode         - grid *snap* needs a fixed grid spacing, and this app's grid
- *                           is adaptive by design (see ThreeGrid), so there is no
- *                           increment to snap to. It stays free for when there is.
  *
  * F1 (this list itself) and F2 (the command history) are not in the table because they
  * toggle UI rather than a Config flag - see FunctionKeyService.
+ *
+ * Two more drafting aids have no function key in AutoCAD either, and so none here: LWT
+ * (Lineweight display) and Selection Cycling, which AutoCAD puts on Ctrl+W - a chord no
+ * browser will hand over. Both are in `StatusBarToggles` below, which is what the status
+ * bar renders, so they get a button without pretending to a key they do not have.
  */
 export const FunctionKeyToggles: readonly FunctionKeyToggle[] = [
     {
@@ -58,6 +63,12 @@ export const FunctionKeyToggles: readonly FunctionKeyToggle[] = [
         property: "enableGrid",
         label: "snap.grid",
         description: "snap.gridTip",
+    },
+    {
+        key: "F9",
+        property: "enableGridSnap",
+        label: "snap.snapMode",
+        description: "snap.snapModeTip",
     },
     {
         key: "F8",
@@ -85,7 +96,54 @@ export const FunctionKeyToggles: readonly FunctionKeyToggle[] = [
     },
 ];
 
+/**
+ * What the status bar shows, in the order AutoCAD's own status bar shows it: the drawing
+ * aids that shape where a point lands, then the ones that change what you see or pick.
+ *
+ * A superset of FunctionKeyToggles - LWT and Selection Cycling have no function key, so
+ * they appear here and not there. Deriving the row from one list rather than from the
+ * order of calls in a render method is what keeps the buttons, their tooltips and their
+ * keys describing the same set.
+ */
+export interface StatusBarToggle {
+    readonly property: DraftingAidKey;
+    readonly label: I18nKeys;
+    readonly description: I18nKeys;
+}
+
+/** The two aids AutoCAD gives a status bar button but no function key. */
+const KeylessToggles: readonly StatusBarToggle[] = [
+    {
+        property: "showLineWeight",
+        label: "statusBar.lineWeight",
+        description: "statusBar.lineWeightTip",
+    },
+    {
+        property: "enableSelectionCycling",
+        label: "statusBar.selectionCycling",
+        description: "statusBar.selectionCyclingTip",
+    },
+];
+
+const StatusBarOrder: readonly DraftingAidKey[] = [
+    "enableGrid",
+    "enableGridSnap",
+    "enableOrtho",
+    "enablePolarTracking",
+    "enableSnap",
+    "enableSnapTracking",
+    "enableDynamicInput",
+    "showLineWeight",
+    "enableSelectionCycling",
+];
+
+export const StatusBarToggles: readonly StatusBarToggle[] = StatusBarOrder.map((property) => {
+    const toggle = [...FunctionKeyToggles, ...KeylessToggles].find((t) => t.property === property);
+    if (!toggle) throw new Error(`No toggle defined for ${property}`);
+    return toggle;
+});
+
 /** The function key that toggles a given aid, for labelling its status bar button. */
-export function functionKeyFor(property: FunctionKeyToggle["property"]): string | undefined {
+export function functionKeyFor(property: DraftingAidKey): string | undefined {
     return FunctionKeyToggles.find((t) => t.property === property)?.key;
 }

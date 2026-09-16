@@ -1,4 +1,4 @@
-import { type LineType, VisualConfig, type VisualItemConfig } from "@draftworks/core";
+import { Config, type LineType, VisualConfig, type VisualItemConfig } from "@draftworks/core";
 import { DoubleSide, MeshBasicMaterial, MeshLambertMaterial, PointsMaterial } from "three";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { ThreeHelper } from "./threeHelper";
@@ -61,6 +61,24 @@ function applyLineType(material: LineMaterial, lineType: LineType) {
 const layerEdgeMaterials = new Map<string, LineMaterial>();
 
 /**
+ * The width an edge is actually drawn at - AutoCAD's LWDISPLAY, applied here rather than
+ * at the geometry.
+ *
+ * `linewidth` is a plain uniform on LineMaterial, so it can be changed on a live material
+ * and take effect on the next frame. That is what lets the LWT button be a single pass
+ * over this cache instead of a rebuild of every object's geometry: the cache key keeps
+ * the *assigned* weight, and this decides what that weight renders as.
+ */
+function renderedLineWidth(lineWeight: number) {
+    return Config.instance.showLineWeight ? lineWeight : 1;
+}
+
+/** The assigned weight for a cached material, read back out of its key. */
+function assignedLineWeight(key: string) {
+    return Number(key.split(":")[2]);
+}
+
+/**
  * The edge material for a layer colour and linetype. A negative colour means "follow the
  * drawing's default edge colour" (LAYER_COLOR_BY_THEME); solid + that sentinel is the
  * single shared, theme-aware `defaultEdgeMaterial`.
@@ -80,7 +98,7 @@ export function layerEdgeMaterial(
     if (!material) {
         const opacity = 1 - transparency / 100;
         material = new LineMaterial({
-            linewidth: lineWeight,
+            linewidth: renderedLineWidth(lineWeight),
             color: color < 0 ? VisualConfig.defaultEdgeColor : color,
             side: DoubleSide,
             polygonOffset: true,
@@ -108,6 +126,16 @@ VisualConfig.onPropertyChanged((property: keyof VisualItemConfig) => {
             material.dashScale = VisualConfig.lineTypeScale;
         });
     }
+});
+
+// LWT. Every cached material is re-widened or flattened in place; the assigned weight is
+// never lost, because it is the cache key rather than the uniform.
+Config.instance.onPropertyChanged((property) => {
+    if (property !== "showLineWeight") return;
+
+    layerEdgeMaterials.forEach((material, key) => {
+        material.linewidth = renderedLineWidth(assignedLineWeight(key));
+    });
 });
 
 export const hilightEdgeMaterial = new LineMaterial({

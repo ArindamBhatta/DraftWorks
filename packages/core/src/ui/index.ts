@@ -3,4 +3,5 @@ export * from "./combobox";
 export * from "./dialog";
 export * from "./floatPanel";
 export * from "./ribbon";
+export * from "./selectionCycle";
 export * from "./window";

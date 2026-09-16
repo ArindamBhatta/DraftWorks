@@ -9,6 +9,7 @@ import { type Dimension, DimensionUtils } from "../dimension";
 import type { ISnap, SnapData, SnapResult } from "../snap";
 import {
     AxisSnap,
+    GridSnap,
     ObjectSnap,
     OrthoSnap,
     PlaneSnap,
@@ -60,7 +61,18 @@ export class PointSnapEventHandler extends SnapEventHandler<PointSnapData> {
             : new WorkplaneSnap(pointData.refPoint);
         const trackingSnap = new TrackingSnap(pointData.refPoint, true);
         const surfaceSnap = new SurfaceSnap();
-        return [...this.getOrthoSnaps(pointData), objectSnap, trackingSnap, surfaceSnap, workplaneSnap];
+        // GridSnap sits last before the free workplane point: everything that snaps to
+        // real geometry outranks the lattice, and the lattice outranks picking anywhere
+        // at all. See GridSnap for why that is the AutoCAD order.
+        const gridSnap = new GridSnap(pointData.refPoint, pointData.plane);
+        return [
+            ...this.getOrthoSnaps(pointData),
+            objectSnap,
+            trackingSnap,
+            surfaceSnap,
+            gridSnap,
+            workplaneSnap,
+        ];
     }
 
     /**
@@ -194,6 +206,7 @@ export class SnapPointPlaneEventHandler extends PointSnapEventHandler {
         return [
             ...this.getOrthoSnaps(pointData),
             new ObjectSnap(Config.instance.snapType),
+            new GridSnap(pointData.refPoint, pointData.plane),
             new PlaneSnap(pointData.plane),
         ];
     }

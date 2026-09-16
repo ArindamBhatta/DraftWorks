@@ -716,8 +716,14 @@ export default {
         "snap.polarAngle": "Polar tracking angles - rays are drawn at every multiple of each angle ticked",
         "snap.nearCurve": "On the Curve",
         "snap.onSurface": "On the surface",
+        "snap.snapMode": "Snap",
+        "snap.snapModeTip":
+            "Snap mode: restrict the cursor to steps of the snap spacing. Object snaps still override it",
+        "snap.snapSpacing": "Snap spacing",
+        "snap.snapSpacingCustom": "Custom",
         "snap.tangent": "Tangent",
         "snap.trackingTip": "Object snap tracking: align to points acquired by hovering an object snap",
+        "snap.objectSnapSettings": "Object snap settings - which key points the cursor snaps to",
         // Shortcuts
         "shortcuts.title": "Keyboard Shortcuts",
         "shortcuts.group.draftingAids": "Drafting aids",
@@ -736,8 +742,15 @@ export default {
         "shortcuts.helpTip": "Show these keyboard shortcuts",
         "shortcuts.repeat": "Repeat last command",
         // StatusBar
-        "statusBar.snap": "Snap",
-        "statusBar.tracking": "Tracking",
+        "statusBar.snap": "Osnap",
+        "statusBar.tracking": "Otrack",
+        "statusBar.lineWeight": "LWT",
+        "statusBar.lineWeightTip":
+            "Lineweight display: draw objects at the thickness assigned by their layer or properties",
+        "statusBar.selectionCycling": "Cycling",
+        "statusBar.selectionCyclingTip":
+            "Selection cycling: when a click lands on stacked objects, list them and let you choose (Ctrl+Shift+W)",
+        "statusBar.cyclingPrompt": "Select an object",
         // Toast
         "toast.ai.drawn": "Drawing added",
         "toast.command.{0}excuting": "Command {0} is runing",

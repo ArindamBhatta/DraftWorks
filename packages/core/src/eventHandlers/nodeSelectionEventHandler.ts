@@ -1,8 +1,10 @@
 // Part of the Chili3d Project, under the AGPL-3.0 License.
 // See LICENSE file in the project root for full license information.
 
+import { Config } from "../config";
 import type { IDocument } from "../document";
-import type { AsyncController } from "../foundation";
+import { type AsyncController, PubSub } from "../foundation";
+import { I18n } from "../i18n";
 import type { INodeFilter } from "../selectionFilter";
 import { ShapeTypes } from "../shape";
 import { type IView, type IVisualObject, VisualStates } from "../visual";
@@ -33,6 +35,68 @@ export class NodeSelectionHandler extends SelectionHandler {
             .filter((x) => x !== undefined);
 
         return this.document.selection.setSelectedNodes(models, this.toggleSelect(event));
+    }
+
+    /**
+     * AutoCAD's selection cycling. A click that lands on a stack of objects offers the
+     * stack instead of silently taking whichever happened to be drawn on top - which is
+     * the whole difficulty with overlapping geometry: the topmost is rarely the one
+     * meant, and there is no way to tell from the drawing which one you got.
+     *
+     * Only for a plain click on more than one object. A rectangle drag means the whole
+     * region, a shift-click is adding to a set, and a click on a single object has
+     * nothing to disambiguate - in all three the menu would be in the way.
+     */
+    protected override tryCycleSelection(view: IView, event: PointerEvent): boolean {
+        if (!Config.instance.enableSelectionCycling) return false;
+        if (this.isRectDrag(event) || this.toggleSelect(event)) return false;
+
+        const candidates = this._detectAtMouse;
+        if (!candidates || candidates.length < 2) return false;
+
+        PubSub.default.pub("showSelectionCycle", {
+            clientX: event.clientX,
+            clientY: event.clientY,
+            items: candidates.map((candidate) => ({
+                name: this.describe(view, candidate),
+                detail: this.layerOf(view, candidate),
+                // Hovering a row lights that object up in the drawing, so the names in
+                // the list can be matched to the geometry without picking one first.
+                onHover: () => this.highlightDetecteds(view, [candidate]),
+                onPick: () => {
+                    const node = view.document.visual.context.getNode(candidate);
+                    this.cleanHighlights();
+                    if (node) this.document.selection.setSelectedNodes([node], false);
+                    view.update();
+                    if (!this.multiMode) this.controller?.success();
+                },
+            })),
+            onCancel: () => {
+                this.cleanHighlights();
+                view.update();
+            },
+        });
+        return true;
+    }
+
+    /** What a row in the cycling list reads. */
+    private describe(view: IView, candidate: IVisualObject): string {
+        return view.document.visual.context.getNode(candidate)?.name ?? I18n.translate("common.name");
+    }
+
+    /**
+     * The layer shown beside the name, which is usually what tells two rows apart - a
+     * stack of overlapping objects is very often several of the same kind, and "Line,
+     * Line, Line" is not a choice anyone can make.
+     *
+     * The layer, not the tree parent: a node's layer is `layerId` on it (layers are
+     * orthogonal to the tree - see Layer), so `parent` would name the folder it was
+     * grouped into, which is a different question.
+     */
+    private layerOf(view: IView, candidate: IVisualObject): string | undefined {
+        const node = view.document.visual.context.getNode(candidate);
+        if (!node || !("layerId" in node)) return undefined;
+        return this.document.modelManager.layerOf(node as { layerId?: string }).name;
     }
 
     /**

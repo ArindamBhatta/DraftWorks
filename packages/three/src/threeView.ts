@@ -206,11 +206,22 @@ export class ThreeView extends Observable implements IView {
         this._grid = new ThreeGrid(this, this._scene);
         this.cameraController.setCameraLayer(this.camera, this.mode);
         this.document.application.views.push(this);
+        Config.instance.onPropertyChanged(this.handleConfigChanged);
         this.animate();
     }
 
+    /**
+     * Settings that change what is already on screen without changing any geometry. The
+     * materials themselves are updated where they live - see materials.ts for LWT - so
+     * all this has to do is ask for another frame, which nothing else would.
+     */
+    private readonly handleConfigChanged = (property: keyof Config) => {
+        if (property === "showLineWeight") this.update();
+    };
+
     override disposeInternal(): void {
         super.disposeInternal();
+        Config.instance.removePropertyChanged(this.handleConfigChanged);
         this._grid.dispose();
         this._resizeObserver.disconnect();
     }

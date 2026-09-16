@@ -30,7 +30,7 @@ import type { I18nKeys } from "../i18n";
 import type { Material } from "../material";
 import type { INode } from "../model";
 import type { DynamicInputState, StepOption, StepOptionsPrompt } from "../snap";
-import type { DialogButton, FloatPanelOptions } from "../ui";
+import type { DialogButton, FloatPanelOptions, SelectionCycleOptions } from "../ui";
 import type { CursorType, IView } from "../visual";
 import type { AsyncController } from "./asyncController";
 import type { IDisposable } from "./disposable";
@@ -127,6 +127,12 @@ export interface PubSubEventMap {
      */
     showPropertiesPanel(document: IDocument, nodes: INode[]): void;
     showSelectionControl: (controller: AsyncController) => void;
+    /**
+     * Selection cycling: the objects stacked under a click, for the user to pick between.
+     * Published only while the mode is on and only when a click actually found more than
+     * one - a menu offering a single choice is a click that has been made twice.
+     */
+    showSelectionCycle: (options: SelectionCycleOptions) => void;
     /**
      * The bracketed alternatives for the prompt now showing, rendered as clickable
      * chips beside the status bar tip. Republished (not just cleared) whenever an

@@ -43,17 +43,43 @@ export class FunctionKeyService implements IService {
     }
 
     private readonly handleKeyDown = (e: KeyboardEvent) => {
-        // A modifier makes it a different shortcut, not this one: Ctrl+F4 and Alt+F4 are
-        // the browser's and the window manager's, and taking those would be worse than
-        // not having the key at all.
-        if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
-        if (!this.dispatch(e.key)) return;
+        const handled = this.hasOnlyCtrlShift(e)
+            ? this.dispatchChord(e.key)
+            : this.hasNoModifier(e) && this.dispatch(e.key);
+        if (!handled) return;
 
         e.preventDefault();
         // Stops HotkeyService and the command line's own global handler seeing the key
         // as well, so nothing else can act on the same press.
         e.stopImmediatePropagation();
     };
+
+    /**
+     * A modifier makes it a different shortcut, not this one: Ctrl+F4 and Alt+F4 are the
+     * browser's and the window manager's, and taking those would be worse than not having
+     * the key at all.
+     */
+    private hasNoModifier(e: KeyboardEvent) {
+        return !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey;
+    }
+
+    private hasOnlyCtrlShift(e: KeyboardEvent) {
+        return (e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey;
+    }
+
+    /**
+     * The modifier shortcuts for aids that have no function key.
+     *
+     * Selection cycling is Ctrl+W in AutoCAD, and Ctrl+W alone is not available to a web
+     * page: Chrome and Firefox close the tab on it and do not let `preventDefault` stop
+     * them. Ctrl+Shift+W is the nearest chord a page is actually given.
+     */
+    private dispatchChord(key: string): boolean {
+        if (key.toLowerCase() !== "w") return false;
+
+        this.toggleAid("enableSelectionCycling", "statusBar.selectionCycling");
+        return true;
+    }
 
     /** Runs whatever the key is bound to. False means "not ours", so leave the event alone. */
     private dispatch(key: string): boolean {

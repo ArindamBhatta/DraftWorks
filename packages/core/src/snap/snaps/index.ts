@@ -2,6 +2,7 @@
 // See LICENSE file in the project root for full license information.
 
 export * from "./axisSnap";
+export * from "./gridSnap";
 export * from "./objectSnap";
 export * from "./orthoSnap";
 export * from "./planeSnap";

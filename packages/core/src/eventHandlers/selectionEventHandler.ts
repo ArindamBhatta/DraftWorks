@@ -92,6 +92,15 @@ export abstract class SelectionHandler implements IEventHandler {
 
     protected abstract highlightNext(view: IView): void;
 
+    /**
+     * A chance to hand this click to a selection-cycling menu instead of selecting now.
+     * Returning true means "the click is being dealt with elsewhere" - see pointerUp.
+     * Only NodeSelectionHandler offers this; picking sub-shapes has no stack to cycle.
+     */
+    protected tryCycleSelection(_view: IView, _event: PointerEvent): boolean {
+        return false;
+    }
+
     /** In multi mode, returning true after a pick completes the selection immediately. */
     protected canFinishSelection(): boolean {
         return false;
@@ -158,6 +167,13 @@ export abstract class SelectionHandler implements IEventHandler {
         if (this.mouse.isDown && event.isPrimary) {
             this.mouse.isDown = false;
             this.removeRect(view);
+            // Selection cycling takes the click over when it has a stack to offer: the
+            // menu it opens does the selecting, whenever the user gets round to it, so
+            // nothing here may clear the highlights or finish the controller first.
+            if (this.tryCycleSelection(view, event)) {
+                this.pointerEventMap.delete(event.pointerId);
+                return;
+            }
             const count = this.select(view, event);
             this.cleanHighlights();
             view.update();

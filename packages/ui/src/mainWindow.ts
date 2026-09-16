@@ -17,6 +17,7 @@ import { showFloatPanel } from "./floatPanel";
 import { showLayerPanel } from "./layer";
 import { Permanent } from "./permanent";
 import { showPropertiesPanel } from "./property";
+import { SelectionCyclePanel } from "./selectionCyclePanel";
 import { ShortcutPanel } from "./shortcutPanel";
 import { Toast } from "./toast";
 
@@ -88,6 +89,7 @@ export class MainWindow extends HTMLElement implements IWindow {
         PubSub.default.sub("showLayerPanel", showLayerPanel);
         PubSub.default.sub("showPermanent", Permanent.show);
         PubSub.default.sub("toggleShortcutPanel", ShortcutPanel.toggle);
+        PubSub.default.sub("showSelectionCycle", SelectionCyclePanel.show);
 
         Config.instance.onPropertyChanged(this.handleConfigChanged);
         window.matchMedia?.("(prefers-color-scheme: dark)").addEventListener("change", () => {
@@ -133,10 +135,14 @@ export class MainWindow extends HTMLElement implements IWindow {
             "enableGrid",
             "enableSnap",
             "enableOrtho",
+            "enableGridSnap",
+            "snapSpacing",
             "enablePolarTracking",
             "polarAngles",
             "enableSnapTracking",
             "enableDynamicInput",
+            "showLineWeight",
+            "enableSelectionCycling",
         ];
         if (shouldSaveProps.includes(prop)) {
             Config.instance.saveToStorage();

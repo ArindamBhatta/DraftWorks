@@ -2,74 +2,176 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 8px;
+    gap: 2px;
     color: var(--foreground-color);
-
-    div {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 4px;
-        user-select: none;
-
-        input {
-            width: 12px;
-            height: 12px;
-        }
-
-        label {
-            color: var(--foreground-color);
-            font-size: 12px;
-        }
-    }
 }
 
 /*
- * The polar increments, sized to read as part of the POLAR button rather than as a
- * separate control - they are that button's argument, not another setting.
+ * A status bar toggle, lit while its mode is on - AutoCAD's own status bar, where every
+ * button carries its state in its background rather than in a tick beside it.
+ *
+ * Blue for on because that is the one colour nothing else in the drawing area uses for
+ * state: snap markers, tracking lines and previews are all the green, and selection is
+ * the paler blue of the highlight, neither of which appears down here. Off is left
+ * transparent rather than given a second colour, so a glance down the row reads as "these
+ * few are on" instead of asking for two shades to be told apart.
  */
-.angleWrap {
-    position: relative;
-}
-
-.angle {
+.toggle {
+    appearance: none;
     background: transparent;
     color: var(--foreground-color);
-    border: 1px solid var(--border-color);
-    border-radius: 2px;
-    font-size: 11px;
-    padding: 1px 4px;
-    cursor: pointer;
-    white-space: nowrap;
+    border: 1px solid transparent;
+    border-radius: 3px;
     font-family: inherit;
+    font-size: 12px;
+    line-height: 1;
+    padding: 4px 7px;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    transition:
+        background-color 120ms ease,
+        border-color 120ms ease;
+
+    &:hover {
+        background: var(--hover-background-color);
+        border-color: var(--border-color);
+    }
+
+    /*
+     * The lit state. `aria-pressed` rather than a class, so the thing a screen reader
+     * reads and the thing the eye reads are the same attribute and cannot disagree.
+     */
+    &[aria-pressed="true"] {
+        background: #1a6dd4;
+        border-color: #3f8ae8;
+        color: #fff;
+
+        &:hover {
+            background: #2a7ee8;
+        }
+    }
+
+    &:focus-visible {
+        outline: 1px solid #7fd4ff;
+        outline-offset: 1px;
+    }
+}
+
+/* Anchors a flyout to the button it belongs to - see .flyout, which is positioned here. */
+.flyoutWrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/*
+ * The arrow that opens a settings flyout, as on AutoCAD's OSNAP and POLAR buttons.
+ *
+ * The same arrow on all three (object snaps, polar angles, snap spacing) rather than the
+ * current value spelled out on some and an arrow on others. Two of these used to be wide
+ * buttons reading "90°, 45°" or "10", which made those settings look like a different
+ * kind of control from the one behind OSNAP's arrow, and cost a good deal of status bar
+ * width to say something the flyout says anyway by lighting up what is in force. The
+ * value moved to the tooltip, so hovering still answers "what is it set to?".
+ *
+ * Narrow and unlabelled because the button it belongs to is right beside it and already
+ * named: this only has to say "there is more behind this one". Pulled tight against that
+ * button by the negative margin, so the pair reads as one control and not as two.
+ */
+.flyoutTrigger {
+    appearance: none;
+    background: transparent;
+    color: var(--foreground-color);
+    border: 1px solid transparent;
+    border-radius: 3px;
+    font-family: inherit;
+    font-size: 9px;
+    line-height: 1;
+    padding: 5px 3px;
+    margin-left: -5px;
+    cursor: pointer;
+    opacity: 0.6;
+
+    &:hover:not(:disabled) {
+        background: var(--hover-background-color);
+        opacity: 1;
+    }
+
+    /* Open: lit like the toggles, so it is clear which flyout the list belongs to. */
+    &[aria-expanded="true"] {
+        background: #1a6dd4;
+        color: #fff;
+        opacity: 1;
+    }
 
     &:disabled {
-        opacity: 0.45;
+        opacity: 0.25;
         cursor: default;
     }
 }
 
 /*
- * Opens upwards: this sits in the status bar at the bottom of the window, so a menu
- * dropping down would open off the edge of the screen.
+ * A settings flyout - the polar angles, the object snaps. Opens upwards and in one
+ * column: this sits in the status bar at the bottom of the window, so a menu dropping
+ * down would open off the edge of the screen.
+ *
+ * The `[hidden]` rule is not redundant. `display: flex` here outranks the browser's
+ * `[hidden] { display: none }`, so without it the list is painted over the drawing at all
+ * times - open, closed, or on a page that has never touched it.
  */
-.anglePopup {
+.flyout {
     position: absolute;
-    bottom: calc(100% + 4px);
+    bottom: calc(100% + 6px);
     right: 0;
     z-index: 10;
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 2px;
-    padding: 6px 8px;
-    background: var(--panel-background-color, var(--background-color));
+    gap: 1px;
+    min-width: 72px;
+    padding: 4px;
+    background: var(--panel-background-color);
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    box-shadow: var(--panel-shadow, 0 4px 16px rgb(0 0 0 / 35%));
+    box-shadow: var(--panel-shadow);
 
-    div {
-        gap: 6px;
-        white-space: nowrap;
+    &[hidden] {
+        display: none;
+    }
+}
+
+/* One row in a flyout - an angle, or an object snap. Lit in the same blue when in force. */
+.flyoutOption {
+    appearance: none;
+    background: transparent;
+    color: var(--foreground-color);
+    border: 1px solid transparent;
+    border-radius: 3px;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1;
+    /* Left, because a flyout may hold names ("Middle") as well as numbers ("22.5°"). */
+    text-align: left;
+    padding: 5px 8px;
+    cursor: pointer;
+    white-space: nowrap;
+
+    &:hover {
+        background: var(--hover-background-color);
+    }
+
+    &[aria-pressed="true"] {
+        background: #1a6dd4;
+        color: #fff;
+
+        &:hover {
+            background: #2a7ee8;
+        }
+    }
+
+    &:focus-visible {
+        outline: 1px solid #7fd4ff;
+        outline-offset: -1px;
     }
 }

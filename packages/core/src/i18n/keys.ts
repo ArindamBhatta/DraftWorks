@@ -711,8 +711,13 @@ export const I18N_KEYS = [
     "snap.polarAngle",
     "snap.nearCurve",
     "snap.onSurface",
+    "snap.snapMode",
+    "snap.snapModeTip",
+    "snap.snapSpacing",
+    "snap.snapSpacingCustom",
     "snap.tangent",
     "snap.trackingTip",
+    "snap.objectSnapSettings",
     // Shortcuts
     "shortcuts.title",
     "shortcuts.group.draftingAids",
@@ -732,6 +737,11 @@ export const I18N_KEYS = [
     // StatusBar
     "statusBar.snap",
     "statusBar.tracking",
+    "statusBar.lineWeight",
+    "statusBar.lineWeightTip",
+    "statusBar.selectionCycling",
+    "statusBar.selectionCyclingTip",
+    "statusBar.cyclingPrompt",
     // Toast
     "toast.ai.drawn",
     "toast.command.{0}excuting",

@@ -3,9 +3,12 @@ import {
     CommandPrefix,
     Config,
     DefaultShortcuts,
-    FunctionKeyToggles,
+    type DraftingAidKey,
+    functionKeyFor,
     I18n,
     type I18nKeys,
+    type StatusBarToggle,
+    StatusBarToggles,
 } from "@draftworks/core";
 import { div, span } from "@draftworks/element";
 import style from "./shortcutPanel.module.css";
@@ -39,6 +42,27 @@ function commandName(command: CommandKeys): string {
     // is the literal "__Last_COMMAND__" - so it is described by what it does instead.
     if (command === "special.last") return I18n.translate("shortcuts.repeat");
     return I18n.translate(`${CommandPrefix}${command}` as I18nKeys);
+}
+
+/**
+ * The keys that reach a drafting aid. Usually its function key; Selection Cycling has no
+ * function key and is on the chord standing in for AutoCAD's Ctrl+W, and LWT has neither.
+ */
+function keysForAid(property: DraftingAidKey): string[] {
+    const key = functionKeyFor(property);
+    if (key) return [key];
+    return property === "enableSelectionCycling" ? ["Ctrl+Shift+W"] : [];
+}
+
+/** An aid's name, with the detail that answers the question actually being asked of it. */
+function aidName(toggle: StatusBarToggle): string {
+    const name = I18n.translate(toggle.label);
+    // "Polar ON" does not say what it is tracking at, which is the thing worth knowing.
+    if (toggle.property === "enablePolarTracking") {
+        return `${name} (${Config.instance.polarAngles.map((a) => `${a}°`).join(", ")})`;
+    }
+    if (toggle.property === "enableGridSnap") return `${name} (${Config.instance.snapSpacing})`;
+    return name;
 }
 
 /** Which heading a command's shortcut is filed under, by what the command is. */
@@ -142,16 +166,13 @@ export class ShortcutPanel extends HTMLElement {
         const groups: Group[] = [
             {
                 title: "shortcuts.group.draftingAids",
-                entries: FunctionKeyToggles.map((toggle) => ({
-                    keys: [toggle.key],
-                    // Polar names the angles it is tracking at, since "Polar ON" alone
-                    // does not answer the question anyone actually has about it.
-                    name:
-                        toggle.property === "enablePolarTracking"
-                            ? `${I18n.translate(toggle.label)} (${Config.instance.polarAngles
-                                  .map((a) => `${a}°`)
-                                  .join(", ")})`
-                            : I18n.translate(toggle.label),
+                // Driven from the status bar's list, not the function-key one, so the two
+                // aids that have no key - LWT and Selection Cycling - are still listed
+                // with their state. Without a key they are otherwise only findable by
+                // noticing the button.
+                entries: StatusBarToggles.map((toggle) => ({
+                    keys: keysForAid(toggle.property),
+                    name: aidName(toggle),
                     state: Config.instance[toggle.property],
                 })),
             },

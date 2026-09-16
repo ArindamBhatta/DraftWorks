@@ -277,6 +277,72 @@ export class Config extends Observable {
         this.setProperty("enableGrid", value);
     }
 
+    /**
+     * AutoCAD's SNAPMODE (F9): the picked point is rounded to the nearest multiple of
+     * `snapSpacing` on the workplane, so the cursor moves in steps rather than freely.
+     * Off by default, as it is in AutoCAD. See GridSnap.
+     *
+     * Named "snap mode" rather than "grid snap" because it is not tied to the grid: the
+     * grid here is adaptive - it re-picks a 1/2/5 decade spacing from the zoom, see
+     * ThreeGrid - so there is no spacing on it to snap to. This has its own, which is
+     * also how AutoCAD works, where SNAPUNIT and GRIDUNIT are separate variables.
+     */
+    @serialize()
+    get enableGridSnap() {
+        return this.getPrivateValue("enableGridSnap", false);
+    }
+    set enableGridSnap(value: boolean) {
+        this.setProperty("enableGridSnap", value);
+    }
+
+    /**
+     * AutoCAD's SNAPUNIT: the step SNAPMODE rounds to, in drawing units. Guarded against
+     * zero and negatives, which would make the rounding divide by zero and put every
+     * point at the origin.
+     */
+    @serialize()
+    get snapSpacing() {
+        return this.getPrivateValue("snapSpacing", 10);
+    }
+    set snapSpacing(value: number) {
+        this.setProperty("snapSpacing", Number.isFinite(value) && value > 0 ? value : 10);
+    }
+
+    /**
+     * AutoCAD's LWDISPLAY (the LWT button): whether an object's assigned Lineweight is
+     * drawn at its real thickness, or everything is drawn thin.
+     *
+     * On by default, where AutoCAD has it off. AutoCAD's default is a holdover from
+     * needing model space to redraw fast on hardware that no longer exists, and it has
+     * the effect that setting a layer's Lineweight appears to do nothing at all until
+     * you find the button. Here the weights are a layer property people set on purpose,
+     * so they are shown by the same reasoning.
+     */
+    @serialize()
+    get showLineWeight() {
+        return this.getPrivateValue("showLineWeight", true);
+    }
+    set showLineWeight(value: boolean) {
+        this.setProperty("showLineWeight", value);
+    }
+
+    /**
+     * AutoCAD's SELECTIONCYCLING: when a click lands on more than one object, offer a
+     * list of what is under the cursor instead of silently taking the topmost.
+     *
+     * AutoCAD puts this on Ctrl+W. A browser will not give that key up - it closes the
+     * tab and `preventDefault` does not stop it - so the binding here is Ctrl+Shift+W.
+     * Tab still steps through the candidates one at a time, which is the older way of
+     * doing the same thing and is unaffected by this.
+     */
+    @serialize()
+    get enableSelectionCycling() {
+        return this.getPrivateValue("enableSelectionCycling", false);
+    }
+    set enableSelectionCycling(value: boolean) {
+        this.setProperty("enableSelectionCycling", value);
+    }
+
     @serialize()
     get language() {
         return this.getPrivateValue("language", I18n.defaultLanguage());

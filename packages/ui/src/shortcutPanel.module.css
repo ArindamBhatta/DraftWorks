@@ -124,9 +124,10 @@
     padding: 0 4px;
 }
 
+/* The same blue the status bar toggles light up in - one colour means "on" app-wide. */
 .on {
-    color: #33ff33;
-    background: rgb(51 255 51 / 12%);
+    color: #fff;
+    background: #1a6dd4;
 }
 
 .off {

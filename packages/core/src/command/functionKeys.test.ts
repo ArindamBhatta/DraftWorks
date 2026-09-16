@@ -8,18 +8,34 @@
 
 import { expect, test } from "@rstest/core";
 import { Config } from "../config";
-import { FunctionKeyToggles, functionKeyFor } from "./functionKeys";
+import { FunctionKeyToggles, functionKeyFor, StatusBarToggles } from "./functionKeys";
 
 test("the row is bound the way AutoCAD binds it", () => {
     const bound = Object.fromEntries(FunctionKeyToggles.map((t) => [t.key, t.property]));
     expect(bound).toEqual({
         F3: "enableSnap",
         F7: "enableGrid",
+        F9: "enableGridSnap",
         F8: "enableOrtho",
         F10: "enablePolarTracking",
         F11: "enableSnapTracking",
         F12: "enableDynamicInput",
     });
+});
+
+test("the status bar carries every keyed aid, plus the two without a key", () => {
+    const shown = StatusBarToggles.map((t) => t.property);
+    // Nothing with a function key may be missing from the row: the key and the button are
+    // the two ways to reach the same mode, and a mode reachable only by a key nobody has
+    // been told about is a mode nobody finds.
+    for (const toggle of FunctionKeyToggles) {
+        expect(shown).toContain(toggle.property);
+    }
+    // LWT and Selection Cycling have no function key in AutoCAD - Ctrl+W is not one a
+    // browser will give up - so the button is the only way to them.
+    expect(shown).toContain("showLineWeight");
+    expect(shown).toContain("enableSelectionCycling");
+    expect(new Set(shown).size).toBe(shown.length);
 });
 
 test("no key is claimed twice", () => {

@@ -1,0 +1,77 @@
+/*
+ * The selection cycling list, floated at the pointer. Fixed rather than absolute so its
+ * coordinates are the pointer's own client coordinates, with no offset parent to correct
+ * for - see SelectionCyclePanel.position.
+ */
+.menu {
+    position: fixed;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    min-width: 160px;
+    max-width: 320px;
+    /* Long stacks scroll rather than growing past the window. */
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 4px;
+    background: var(--panel-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-shadow: var(--panel-shadow);
+    color: var(--foreground-color);
+    font-size: 12px;
+}
+
+.title {
+    font-size: 11px;
+    opacity: 0.55;
+    padding: 2px 6px 4px;
+}
+
+.item {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 4px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    white-space: nowrap;
+
+    /*
+     * The same blue every other "this is the one" in the app uses. On hover rather than
+     * on selection because hovering a row *is* the choice being previewed - the object it
+     * names is lit up in the drawing at the same moment.
+     */
+    &:hover {
+        background: #1a6dd4;
+        color: #fff;
+
+        .index,
+        .detail {
+            color: #fff;
+            opacity: 0.75;
+        }
+    }
+}
+
+.index {
+    font-family: monospace;
+    font-size: 10px;
+    opacity: 0.5;
+    min-width: 12px;
+    text-align: right;
+}
+
+.name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* The layer, to tell two objects of the same kind apart. */
+.detail {
+    font-size: 11px;
+    opacity: 0.5;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
