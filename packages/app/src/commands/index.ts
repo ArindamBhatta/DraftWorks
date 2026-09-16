@@ -10,6 +10,7 @@ export * from "./folder";
 export * from "./importExport";
 export * from "./layer";
 export * from "./modify";
+export * from "./plot";
 export * from "./properties";
 export * from "./redo";
 export * from "./undo";

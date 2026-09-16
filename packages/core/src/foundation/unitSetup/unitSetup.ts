@@ -104,6 +104,18 @@ export class UnitSetup {
         ObjectStorage.default.setValue(STORAGE_KEY, UnitSetup._currentSettings);
     }
 
+    /**
+     * How many millimetres one drawing unit measures.
+     *
+     * Only the base unit decides this; the format is how a length is *written*, not how
+     * big it is. Plotting is what needs it: a sheet is in millimetres and a drawing is
+     * not, so a plot scale of 1:100 cannot be worked out without knowing which is which.
+     */
+    static millimetresPerUnit(settings: Partial<UnitSettings> = {}): number {
+        const baseUnit = settings.baseUnit ?? UnitSetup._currentSettings.baseUnit;
+        return INCHES_PER_UNIT[baseUnit] * 25.4;
+    }
+
     /** True when the type's precision is a fraction denominator rather than decimal places. */
     static usesFractionalPrecision(type: UnitType): boolean {
         return type === "architectural" || type === "fractional";

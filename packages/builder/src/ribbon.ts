@@ -183,7 +183,12 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                 // The Autosave readout rides along here because this is the file group
                 // and there is no Save button any more - saving is automatic, and this is
                 // where a user goes looking for it before they believe that.
-                items: ["file.import", "file.export", { type: "widget", widget: "autosaveStatus" }],
+                items: [
+                    "file.import",
+                    "file.export",
+                    "file.plot",
+                    { type: "widget", widget: "autosaveStatus" },
+                ],
             },
 
             //AI

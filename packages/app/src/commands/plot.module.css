@@ -1,0 +1,135 @@
+/* PLOT. The same two-column shape as the other setup dialogs - settings on the left,
+   a live view of the result on the right - because a plot is judged by the sheet it
+   produces far more than by the numbers that produced it. */
+
+.root {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 760px;
+    font-size: 13px;
+    color: var(--foreground-color);
+}
+
+.columns {
+    display: grid;
+    /* The preview takes the larger share: it is the point of the dialog, and a sheet
+       shown small enough to be ambiguous is worse than no preview at all. */
+    grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.group {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 6px 14px 14px;
+    margin: 0;
+    min-width: 0;
+}
+
+.groupTitle {
+    padding: 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--foreground-secondary-color);
+}
+
+.field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.fieldLabel {
+    color: var(--foreground-secondary-color);
+    white-space: nowrap;
+}
+
+.select,
+.input {
+    min-width: 0;
+    flex: 1 1 auto;
+    max-width: 170px;
+    padding: 2px 4px;
+    font-size: 13px;
+    color: var(--foreground-color);
+    background-color: var(--panel-color);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+}
+
+.check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    cursor: pointer;
+}
+
+.previewPane {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+/* The sheet. A mid grey behind it so the paper reads as paper in both themes, rather
+   than as white on white or white on black. */
+.preview {
+    width: 100%;
+    background-color: #808080;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.readout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--foreground-secondary-color);
+}
+
+/* Reserved for the two things that make a plot come out wrong: an empty area and a
+   drawing too big for the sheet. */
+.warning {
+    color: #d93025;
+    font-weight: 600;
+}
+
+/* "Window <". Full width of its row rather than tucked beside the dropdown, because it
+   is the control that does something rather than one that holds a value. */
+.pick {
+    flex: 1 1 auto;
+    padding: 4px 8px;
+    font-size: 13px;
+    color: var(--foreground-color);
+    background-color: var(--panel-color);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.pick:hover {
+    background-color: var(--background-selected-color, var(--panel-color));
+}

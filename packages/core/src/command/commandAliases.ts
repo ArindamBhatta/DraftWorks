@@ -74,6 +74,7 @@ export const CommandAliases: Partial<Record<CommandKeys, string[]>> = {
     "doc.saveToFile": ["saveas"],
     "file.import": ["imp", "import", "insert"],
     "file.export": ["exp", "export"],
+    "file.plot": ["plot", "print"],
     "edit.undo": ["u", "undo"],
     "edit.redo": ["red", "redo"],
     "view.pan": ["p", "pan"],

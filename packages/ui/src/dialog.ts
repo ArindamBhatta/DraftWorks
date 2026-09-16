@@ -14,12 +14,28 @@ const DefaultButtons: DialogButton[] = [
     },
 ];
 
-export function showDialog(title: I18nKeys, content: HTMLElement, buttons?: DialogButton[] | (() => void)) {
+/** A handle on an open dialog, for the rare case that owns closing it itself. */
+export interface DialogHandle {
+    /**
+     * Closes the dialog as a button would, without invoking any of them.
+     *
+     * Wanted where the dialog has to step out of the way of the drawing and come back -
+     * PLOT's "pick a window on screen", which needs the viewport the modal is covering.
+     */
+    close(): void;
+}
+
+export function showDialog(
+    title: I18nKeys,
+    content: HTMLElement,
+    buttons?: DialogButton[] | (() => void),
+): DialogHandle {
     const dialog = document.createElement("dialog");
     const host = app.mainWindow ?? document.body;
     host.appendChild(dialog);
-    renderDialog(dialog, title, content, combineButtons(buttons));
+    const close = renderDialog(dialog, title, content, combineButtons(buttons));
     dialog.showModal();
+    return { close };
 }
 
 function renderDialog(
@@ -27,7 +43,7 @@ function renderDialog(
     title: I18nKeys,
     content: HTMLElement,
     combinedButtons: DialogButton[],
-) {
+): () => void {
     const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Enter") {
             const confirmBtn = combinedButtons.find(
@@ -75,6 +91,8 @@ function renderDialog(
             ),
         ),
     );
+
+    return closeDialog;
 }
 
 function combineButtons(buttons?: DialogButton[] | (() => void)): DialogButton[] {

@@ -89,7 +89,7 @@ export async function dwgToDxf(bytes: Uint8Array, options?: DwgWasmOptions): Pro
  *
  * Runs entirely locally, like the read direction: nothing is uploaded.
  */
-export async function dxfToDwg(dxf: string, options?: DwgWasmOptions): Promise<Uint8Array> {
+export async function dxfToDwg(dxf: string, options?: DwgWasmOptions): Promise<Uint8Array<ArrayBuffer>> {
     if (dxf.length === 0) {
         throw new DwgWriteError("empty drawing");
     }
@@ -123,7 +123,14 @@ export async function dxfToDwg(dxf: string, options?: DwgWasmOptions): Promise<U
 
         // Copied out before the release, and re-read from HEAPU8 for the same reason as
         // the read path: encoding a large drawing can grow the heap and detach the view.
-        const dwg = module.HEAPU8.slice(result, result + size);
+        //
+        // Allocated here rather than taken from HEAPU8.slice, which would carry the heap's
+        // own buffer type: Emscripten types HEAPU8 as a plain Uint8Array, so a slice of it
+        // is backed by ArrayBufferLike, and that includes SharedArrayBuffer, which a Blob
+        // cannot be built from. Owning the buffer says what is true - this is a detached
+        // copy - and costs the same one pass as the slice would.
+        const dwg = new Uint8Array(size);
+        dwg.set(module.HEAPU8.subarray(result, result + size));
         module._dwg_wasm_release();
         return dwg;
     } finally {
