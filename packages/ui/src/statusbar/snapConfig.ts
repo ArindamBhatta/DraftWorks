@@ -3,14 +3,28 @@
 
 import {
     Config,
+    type DraftingAidKey,
+    functionKeyFor,
+    I18n,
     type I18nKeys,
     Localize,
     type ObjectSnapType,
     ObjectSnapTypes,
     ObjectSnapTypeUtils,
 } from "@draftworks/core";
-import { div, input, label } from "@draftworks/element";
+import { button, div, input, label } from "@draftworks/element";
 import style from "./snapConfig.module.css";
+
+/**
+ * The polar increments AutoCAD offers in its own POLARANG list, which are the angles
+ * drawings are actually built from. Config accepts anything from 1 to 90, so a value
+ * arriving from storage that is not listed here is still shown and still honoured.
+ *
+ * 60 is the one that does not divide 90, and so the one that shows why several can be
+ * ticked at once: 90 and 60 together give eight directions, which no single increment
+ * in this list produces.
+ */
+const PolarAngles = [90, 60, 45, 30, 22.5, 15, 10, 5];
 
 const SnapTypes: Array<{
     type: ObjectSnapType;
@@ -51,6 +65,14 @@ const SnapTypes: Array<{
 ];
 
 export class SnapConfig extends HTMLElement {
+    /**
+     * Whether the polar angle popup is open, held on the component rather than in the
+     * DOM. Ticking an angle changes Config, which rebuilds this whole element - so a
+     * popup whose open state lived on the node it rebuilds would shut after every tick,
+     * which is exactly the one thing a multiple-choice list must not do.
+     */
+    private anglePopupOpen = false;
+
     constructor() {
         super();
         this.className = style.container;
@@ -59,13 +81,34 @@ export class SnapConfig extends HTMLElement {
         this.render();
     }
 
+    connectedCallback() {
+        document.addEventListener("click", this.handleDocumentClick);
+    }
+
+    disconnectedCallback() {
+        document.removeEventListener("click", this.handleDocumentClick);
+        Config.instance.removePropertyChanged(this.snapTypeChanged);
+    }
+
+    /** A click anywhere but the popup and its button closes it, as any menu does. */
+    private readonly handleDocumentClick = (e: MouseEvent) => {
+        if (!this.anglePopupOpen) return;
+        if (e.target instanceof Node && this.contains(e.target)) return;
+        this.anglePopupOpen = false;
+        this.innerHTML = "";
+        this.render();
+    };
+
     private readonly snapTypeChanged = (property: keyof Config) => {
         if (
             property === "snapType" ||
             property === "enableSnap" ||
             property === "enableSnapTracking" ||
             property === "enableOrtho" ||
-            property === "enableGrid"
+            property === "enableGrid" ||
+            property === "enableDynamicInput" ||
+            property === "enablePolarTracking" ||
+            property === "polarAngles"
         ) {
             this.innerHTML = "";
             this.render();
@@ -83,14 +126,22 @@ export class SnapConfig extends HTMLElement {
     private render() {
         const items: HTMLElement[] = [];
         for (const snapType of SnapTypes) {
-            // GRID and ORTHO sit just ahead of the perpendicular snap, the way AutoCAD
-            // keeps those two toggles next to the object snap settings.
+            // The drafting aids sit just ahead of the perpendicular snap, the way AutoCAD
+            // keeps those toggles next to the object snap settings. Polar goes beside
+            // Ortho because the two answer the same question - "constrain this to an
+            // angle" - and a drafter reaching for one is choosing between them.
             if (snapType.type === ObjectSnapTypes.perpendicular) {
-                items.push(this.createGridToggle(), this.createOrthoToggle(), this.createDynToggle());
+                items.push(
+                    this.createAidToggle("enableGrid", "snap.grid", "snap.gridTip"),
+                    this.createAidToggle("enableOrtho", "snap.ortho", "snap.orthoTip"),
+                    this.createAidToggle("enablePolarTracking", "snap.polar", "snap.polarTip"),
+                    this.createPolarAngleSelect(),
+                    this.createAidToggle("enableDynamicInput", "snap.dynamicInput", "snap.dynamicInputTip"),
+                );
             }
             items.push(this.createSnapCheckbox(snapType.type, snapType.display));
         }
-        items.push(this.createTrackingCheckbox());
+        items.push(this.createAidToggle("enableSnapTracking", "statusBar.tracking", "snap.trackingTip"));
 
         this.append(...items);
     }
@@ -110,75 +161,86 @@ export class SnapConfig extends HTMLElement {
         );
     }
 
-    private createGridToggle() {
+    /**
+     * One of the drafting aids - GRID, ORTHO, POLAR, OSNAPTRACK, DYN - as a checkbox that
+     * names its function key in the tooltip.
+     *
+     * These were five near-identical methods. They are one because the aids differ only
+     * in which flag they hold, and because the function key in the tooltip has to be the
+     * key that is actually bound: taking it from `functionKeyFor` means the button and
+     * FunctionKeyService cannot end up claiming different keys.
+     */
+    private createAidToggle(property: DraftingAidKey, display: I18nKeys, tip: I18nKeys) {
+        const key = functionKeyFor(property);
+        const id = `snap-${property}`;
         return div(
-            { title: new Localize("snap.gridTip") },
+            { title: key ? `${I18n.translate(tip)} (${key})` : I18n.translate(tip) },
             input({
                 type: "checkbox",
-                id: "snap-grid",
-                checked: Config.instance.enableGrid,
+                id,
+                checked: Config.instance[property],
                 onclick: () => {
-                    Config.instance.enableGrid = !Config.instance.enableGrid;
+                    Config.instance[property] = !Config.instance[property];
                 },
             }),
-            label({
-                htmlFor: "snap-grid",
-                textContent: new Localize("snap.grid"),
-            }),
+            label({ htmlFor: id, textContent: new Localize(display) }),
         );
     }
 
-    /** AutoCAD's DYN button: the distance/angle boxes that ride the crosshair. */
-    private createDynToggle() {
-        return div(
-            { title: new Localize("snap.dynamicInputTip") },
-            input({
-                type: "checkbox",
-                id: "snap-dyn",
-                checked: Config.instance.enableDynamicInput,
-                onclick: () => {
-                    Config.instance.enableDynamicInput = !Config.instance.enableDynamicInput;
-                },
-            }),
-            label({
-                htmlFor: "snap-dyn",
-                textContent: new Localize("snap.dynamicInput"),
-            }),
-        );
+    /**
+     * AutoCAD's POLARANG, except that several increments can be in force at once - rays
+     * are drawn at every multiple of every angle ticked.
+     *
+     * A popup of checkboxes rather than a `<select multiple>`: the status bar has room
+     * for one short button, and a multi-select that size shows one row at a time, which
+     * is the worst way to present a set. The button itself names the current set, so the
+     * popup is only needed to change it.
+     *
+     * Shown greyed rather than hidden while polar tracking is off, so the angles in force
+     * stay readable without switching the mode on to find out what they are.
+     */
+    private createPolarAngleSelect() {
+        const enabled = Config.instance.enablePolarTracking;
+        const angles = Config.instance.polarAngles;
+
+        const popup = div({ className: style.anglePopup, hidden: !this.anglePopupOpen });
+        const trigger = button({
+            className: style.angle,
+            disabled: !enabled,
+            title: I18n.translate("snap.polarAngle"),
+            textContent: angles.map((a) => `${a}°`).join(", "),
+            onclick: () => {
+                this.anglePopupOpen = !this.anglePopupOpen;
+                popup.hidden = !this.anglePopupOpen;
+            },
+        });
+
+        // Angles set from elsewhere - a stored config, a future typed POLARANG - may not
+        // be among the offered steps, so they are listed too rather than silently
+        // dropped the next time the popup is opened.
+        const listed = [...new Set([...PolarAngles, ...angles])].sort((a, b) => b - a);
+        popup.append(...listed.map((angle) => this.createAngleOption(angle, angles)));
+
+        return div({ className: style.angleWrap }, trigger, popup);
     }
 
-    private createOrthoToggle() {
-        return div(
-            { title: new Localize("snap.orthoTip") },
-            input({
-                type: "checkbox",
-                id: "snap-ortho",
-                checked: Config.instance.enableOrtho,
-                onclick: () => {
-                    Config.instance.enableOrtho = !Config.instance.enableOrtho;
-                },
-            }),
-            label({
-                htmlFor: "snap-ortho",
-                textContent: new Localize("snap.ortho"),
-            }),
-        );
-    }
-
-    private createTrackingCheckbox() {
+    private createAngleOption(angle: number, selected: number[]) {
+        const id = `polar-angle-${String(angle).replace(".", "-")}`;
         return div(
             input({
                 type: "checkbox",
-                id: "snap-tracking",
-                checked: Config.instance.enableSnapTracking,
-                onclick: () => {
-                    Config.instance.enableSnapTracking = !Config.instance.enableSnapTracking;
+                id,
+                checked: selected.includes(angle),
+                onclick: (e) => {
+                    const checked = (e.target as HTMLInputElement).checked;
+                    // Config re-sorts, dedupes and refuses an empty list, so the last
+                    // angle cannot be unticked into a polar mode with no rays.
+                    Config.instance.polarAngles = checked
+                        ? [...Config.instance.polarAngles, angle]
+                        : Config.instance.polarAngles.filter((a) => a !== angle);
                 },
             }),
-            label({
-                htmlFor: "snap-tracking",
-                textContent: new Localize("statusBar.tracking"),
-            }),
+            label({ htmlFor: id, textContent: `${angle}°` }),
         );
     }
 }

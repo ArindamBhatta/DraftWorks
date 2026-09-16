@@ -4,6 +4,7 @@ export * from "./commandData";
 export * from "./commandKeys";
 export * from "./commandStore";
 export * from "./decorator";
+export * from "./functionKeys";
 export * from "./multiStepCommand";
 export * from "./prompt";
 export * from "./shortcutProfiles";

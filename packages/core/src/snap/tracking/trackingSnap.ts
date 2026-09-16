@@ -40,7 +40,10 @@ export class TrackingSnap implements ISnap {
     };
 
     snap(data: MouseAndDetected): SnapResult | undefined {
-        if (!Config.instance.enableSnapTracking) return undefined;
+        // Two independent modes feed this snap - polar tracking (F10) and object snap
+        // tracking (F11) - so it is dead only when both are off. detectTracking gates
+        // each source separately; this is just the early out.
+        if (!Config.instance.enablePolarTracking && !Config.instance.enableSnapTracking) return undefined;
 
         const trackingDatas = this.detectTracking(data.view, data.mx, data.my);
         if (trackingDatas.length === 0) return undefined;
@@ -151,14 +154,24 @@ export class TrackingSnap implements ISnap {
 
     private detectTracking(view: IView, x: number, y: number) {
         const data: TrackingData[] = [];
-        if (this.referencePoint) {
-            const axies = this._axisTracking.getAxes(view, this.referencePoint());
+        // Polar tracking: rays from the point the command is measuring from, at every
+        // multiple of POLARANG. The four workplane axes this used to offer are just the
+        // 90° case, so nothing is lost when polarAngles is left at its default.
+        if (this.referencePoint && Config.instance.enablePolarTracking) {
+            const axies = this._axisTracking.getAxes(
+                view,
+                this.referencePoint(),
+                Config.instance.polarAngles,
+            );
             data.push(...this.getSnapedFromAxes(axies, view, x, y, "axis"));
         }
-        const objectTrackingRays = this._objectTracking.getTrackingRays(view);
-        objectTrackingRays.forEach((a) => {
-            data.push(...this.getSnapedFromAxes(a.axes, view, x, y, a.snapType, a.objectName));
-        });
+        // Object snap tracking: rays from points acquired by hovering an object snap.
+        if (Config.instance.enableSnapTracking) {
+            const objectTrackingRays = this._objectTracking.getTrackingRays(view);
+            objectTrackingRays.forEach((a) => {
+                data.push(...this.getSnapedFromAxes(a.axes, view, x, y, a.snapType, a.objectName));
+            });
+        }
         return data;
     }
 
@@ -198,7 +211,12 @@ export class TrackingSnap implements ISnap {
         if (start.distanceTo(end) < Precision.Float) return vector.length();
         const dir = end.sub(start).normalize()!;
         const dot = vector.dot(dir);
-        return Math.sqrt(vector.lengthSq() - dot * dot);
+        // Clamped at zero before the square root. This is Pythagoras on a vector that is
+        // exactly along `dir` when the cursor is sitting on the path, where rounding can
+        // leave lengthSq - dot² a hair below zero - and `Math.sqrt` of that is NaN, which
+        // fails `distance < SnapDistance` and drops the tracking at the one moment the
+        // user is precisely on it.
+        return Math.sqrt(Math.max(0, vector.lengthSq() - dot * dot));
     }
 
     removeDynamicObject(): void {
@@ -211,7 +229,16 @@ export class TrackingSnap implements ISnap {
     }
 
     private readonly onSnapTypeChanged = (property: keyof Config): void => {
-        if (property === "snapType" || property === "enableSnapTracking" || property === "enableSnap") {
+        // The axis cache is built once per view from the polar angle in force at the
+        // time, and cannot tell that the angle has since moved - so a change to either
+        // polar setting has to throw it away, not just stop it being consulted.
+        if (
+            property === "snapType" ||
+            property === "enableSnapTracking" ||
+            property === "enableSnap" ||
+            property === "enablePolarTracking" ||
+            property === "polarAngles"
+        ) {
             this.removeDynamicObject();
             this._objectTracking.clear();
             this._axisTracking.clear();

@@ -1,5 +1,6 @@
 import { ObjectStorage, Observable } from "./foundation";
 import { I18n } from "./i18n";
+import { MathUtils } from "./math";
 import { type SerializedData, Serializer, serialize } from "./serialize";
 import { type ObjectSnapType, ObjectSnapTypes, ObjectSnapTypeUtils } from "./snapType";
 
@@ -150,6 +151,16 @@ export class Config extends Observable {
         this.setProperty("snapType", snapType);
     }
 
+    /**
+     * AutoCAD's object snap tracking (F11): once a point has been acquired by hovering an
+     * object snap, alignment paths run out from it, so a point can be placed "level with
+     * that endpoint" without drawing a construction line. See ObjectTracking.
+     *
+     * Distinct from polar tracking below, which runs its paths from the point the command
+     * is already measuring from rather than from an acquired one. AutoCAD keeps them on
+     * separate keys because they answer different questions, and so does this.
+     */
+    @serialize()
     get enableSnapTracking() {
         return this.getPrivateValue("enableSnapTracking", true);
     }
@@ -157,6 +168,58 @@ export class Config extends Observable {
         this.setProperty("enableSnapTracking", value);
     }
 
+    /**
+     * AutoCAD's polar tracking (F10): alignment paths radiating from the command's
+     * reference point at every multiple of each angle in `polarAngles`, with the cursor
+     * snapping onto one when it comes near. See AxisTracking, which builds the rays.
+     *
+     * Where ORTHO *forces* the point onto the nearest axis, polar tracking only *offers*
+     * the alignment - come off the path and the point is free again. Which is also why
+     * the two cannot both be on: ortho leaves no cursor position at which a polar ray
+     * could be offered, so the interlock in the setter turns the other off.
+     */
+    @serialize()
+    get enablePolarTracking() {
+        return this.getPrivateValue("enablePolarTracking", true);
+    }
+    set enablePolarTracking(value: boolean) {
+        // The other half of the ORTHO / POLAR interlock - see enableOrtho.
+        this.setProperty("enablePolarTracking", value, () => {
+            if (value) this.enableOrtho = false;
+        });
+    }
+
+    /**
+     * The polar tracking increments, in degrees - AutoCAD's POLARANG, except that more
+     * than one may be in force at a time. Rays are drawn at every multiple of every
+     * increment listed, so `[90, 60]` offers the four axes *and* the sixths of a circle:
+     * eight directions that no single increment produces.
+     *
+     * A list rather than one value because the useful combinations are exactly the ones
+     * that do not divide each other. Where they do - [90, 45] - the finer increment
+     * already covers the coarser and the union is simply the finer one, which is the
+     * answer a drafter picking both would expect anyway.
+     *
+     * Sanitised on the way in rather than trusted: this drives `while (angle < 360)` in
+     * AxisTracking, where a zero or negative step would not terminate, and a very small
+     * one would carpet the view in rays all within snapping distance of each other. 5° is
+     * the smallest AutoCAD offers in its list, but typed values down to 1° are allowed
+     * there, so that is the floor here too. An empty list falls back to 90 - polar
+     * tracking with no angles at all is a mode that cannot do anything.
+     */
+    @serialize()
+    get polarAngles(): number[] {
+        return this.getPrivateValue("polarAngles", [90]);
+    }
+    set polarAngles(value: number[]) {
+        const cleaned = [
+            ...new Set((value ?? []).filter(Number.isFinite).map((a) => MathUtils.clamp(a, 1, 90))),
+        ].sort((a, b) => b - a);
+        this.setProperty("polarAngles", cleaned.length > 0 ? cleaned : [90]);
+    }
+
+    /** AutoCAD's OSNAP (F3): the master switch over every object snap checked above. */
+    @serialize()
     get enableSnap() {
         return this.getPrivateValue("enableSnap", true);
     }
@@ -169,11 +232,21 @@ export class Config extends Observable {
      * axis running through the reference point, so every segment drawn comes out
      * horizontal or vertical. See OrthoSnap.
      */
+    @serialize()
     get enableOrtho() {
         return this.getPrivateValue("enableOrtho", false);
     }
     set enableOrtho(value: boolean) {
-        this.setProperty("enableOrtho", value);
+        // ORTHO and POLAR are mutually exclusive, as they are in AutoCAD, and for the
+        // same reason: ortho forces the point onto an axis, so while it is on there is no
+        // cursor position at which a polar ray could ever be offered. Leaving both lit
+        // would show a POLAR button that demonstrably does nothing.
+        //
+        // Only turning one ON turns the other off - switching one off leaves the other
+        // alone, which is also what stops these two setters calling each other.
+        this.setProperty("enableOrtho", value, () => {
+            if (value) this.enablePolarTracking = false;
+        });
     }
 
     /**

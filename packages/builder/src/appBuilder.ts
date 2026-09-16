@@ -1,4 +1,10 @@
-import { Application, CommandService, HotkeyService, ShowPropertyEventHandler } from "@draftworks/app";
+import {
+    Application,
+    CommandService,
+    FunctionKeyService,
+    HotkeyService,
+    ShowPropertyEventHandler,
+} from "@draftworks/app";
 import {
     AutosaveService,
     Config,
@@ -223,6 +229,6 @@ export class AppBuilder {
     }
 
     protected getServices(): IService[] {
-        return [new CommandService(), new HotkeyService(), new AutosaveService()];
+        return [new CommandService(), new HotkeyService(), new FunctionKeyService(), new AutosaveService()];
     }
 }

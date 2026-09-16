@@ -93,6 +93,17 @@ export interface PubSubEventMap {
      */
     focusDynamicInput: (text: string) => void;
     showFloatPanel: (options: FloatPanelOptions) => void;
+    /**
+     * F1: open the keyboard shortcut list, or close it if it is already up. A toggle
+     * rather than a plain "show" because F1 is how it is dismissed as well - the panel
+     * has no other home in the UI to go back to.
+     */
+    toggleShortcutPanel: () => void;
+    /**
+     * F2: AutoCAD's text window, as far as this app has one. The recent command lines
+     * normally fade a few seconds after they arrive; this pins them on screen instead.
+     */
+    toggleCommandHistory: () => void;
     showFloatTip: (dom: HTMLElement | { level: MessageType; msg: string }) => void;
     /** Opens AutoCAD's Layer Properties Manager (the LA command). */
     showLayerPanel: (document: IDocument) => void;

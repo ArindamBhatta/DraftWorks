@@ -23,3 +23,53 @@
         }
     }
 }
+
+/*
+ * The polar increments, sized to read as part of the POLAR button rather than as a
+ * separate control - they are that button's argument, not another setting.
+ */
+.angleWrap {
+    position: relative;
+}
+
+.angle {
+    background: transparent;
+    color: var(--foreground-color);
+    border: 1px solid var(--border-color);
+    border-radius: 2px;
+    font-size: 11px;
+    padding: 1px 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: default;
+    }
+}
+
+/*
+ * Opens upwards: this sits in the status bar at the bottom of the window, so a menu
+ * dropping down would open off the edge of the screen.
+ */
+.anglePopup {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    right: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    padding: 6px 8px;
+    background: var(--panel-background-color, var(--background-color));
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-shadow: var(--panel-shadow, 0 4px 16px rgb(0 0 0 / 35%));
+
+    div {
+        gap: 6px;
+        white-space: nowrap;
+    }
+}

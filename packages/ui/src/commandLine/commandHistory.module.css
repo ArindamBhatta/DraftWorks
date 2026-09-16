@@ -54,6 +54,17 @@
     }
 }
 
+/*
+ * Pinned by F2. A taller stack that is being read rather than glanced at, so it takes the
+ * pointer back - text nobody can select is not much of a transcript - and scrolls once it
+ * outgrows the room it is given.
+ */
+.pinned {
+    pointer-events: auto;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
 /* Fading out. Removed once the transition has had its time - see CommandHistory.show. */
 .leaving {
     opacity: 0;

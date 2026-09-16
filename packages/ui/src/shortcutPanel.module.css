@@ -1,0 +1,142 @@
+/*
+ * The F1 reference. A dimmed backdrop over the whole window rather than a docked panel,
+ * because it is read and dismissed within a few seconds and never worked alongside - the
+ * drafting aids it lists are all reachable from the status bar it is covering.
+ */
+.backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgb(0 0 0 / 45%);
+}
+
+.card {
+    background: var(--panel-background-color, var(--background-color));
+    color: var(--foreground-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 0 8px 32px rgb(0 0 0 / 40%);
+    /* Tall lists scroll inside the card rather than pushing it off the screen. */
+    max-height: 80vh;
+    max-width: min(760px, 92vw);
+    overflow-y: auto;
+    padding: 16px 20px 12px;
+}
+
+.header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 12px;
+}
+
+.title {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.close {
+    font-size: 11px;
+    color: var(--foreground-color);
+    opacity: 0.6;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    padding: 1px 6px;
+    cursor: pointer;
+    user-select: none;
+
+    &:hover {
+        opacity: 1;
+    }
+}
+
+/*
+ * Columns that reflow rather than a fixed count, so the card stays readable from a narrow
+ * laptop window up to a wide one without a media query per size.
+ */
+.groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 4px 28px;
+}
+
+.group {
+    break-inside: avoid;
+    margin-bottom: 10px;
+}
+
+.groupTitle {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    opacity: 0.55;
+    margin: 8px 0 4px;
+}
+
+.entry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 0;
+    font-size: 12px;
+}
+
+.keys {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    /* A fixed gutter lines every description up, so the list is scanned down one edge. */
+    flex: 0 0 96px;
+}
+
+.key {
+    font-family: monospace;
+    font-size: 11px;
+    border: 1px solid var(--border-color);
+    border-bottom-width: 2px;
+    border-radius: 3px;
+    padding: 0 4px;
+    white-space: nowrap;
+}
+
+.or {
+    opacity: 0.4;
+    font-size: 10px;
+}
+
+.name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.state {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    border-radius: 2px;
+    padding: 0 4px;
+}
+
+.on {
+    color: #33ff33;
+    background: rgb(51 255 51 / 12%);
+}
+
+.off {
+    opacity: 0.4;
+}
+
+.hint {
+    font-size: 11px;
+    opacity: 0.55;
+    border-top: 1px solid var(--border-color);
+    margin-top: 6px;
+    padding-top: 8px;
+}

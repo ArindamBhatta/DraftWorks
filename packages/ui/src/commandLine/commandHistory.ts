@@ -8,6 +8,13 @@ export type HistoryKind = "command" | "prompt" | "error";
 /** How many lines can be on screen at once. A fifth pushes the oldest off the top. */
 const MAX_VISIBLE = 4;
 
+/**
+ * How many are kept while the stack is pinned (F2). Larger because a pinned stack is
+ * being read back through rather than glanced at, but still bounded - this floats over
+ * the drawing, and a transcript that grows without limit ends up covering it.
+ */
+const MAX_VISIBLE_PINNED = 20;
+
 /** How long a line stays before it fades. Long enough to read, short enough to forget. */
 const LIFETIME = 3000;
 
@@ -38,6 +45,17 @@ export class CommandHistory extends HTMLElement {
     private static lastCommand: CommandKeys | undefined;
 
     /**
+     * AutoCAD's F2 text window, as much of one as a floating stack can be: while pinned,
+     * lines stop expiring and more of them are kept, so what was said a minute ago can be
+     * read back. Unpinning lets the backlog go rather than timing each line out from
+     * whenever it happened to arrive - the drafter has just said they are done with it.
+     */
+    private pinned = false;
+
+    /** Timers for the lines now on screen, so pinning can cancel the ones in flight. */
+    private readonly timers = new Map<HTMLElement, number>();
+
+    /**
      * Shows a line, unless it is the one already showing.
      *
      * A step republishes its prompt whenever anything it depends on changes - see
@@ -60,13 +78,32 @@ export class CommandHistory extends HTMLElement {
         CommandHistory.current = this;
         PubSub.default.sub("executeCommand", this.handleCommandStarted);
         PubSub.default.sub("statusBarTip", this.handleTip);
+        PubSub.default.sub("toggleCommandHistory", this.togglePinned);
     }
 
     disconnectedCallback() {
         if (CommandHistory.current === this) CommandHistory.current = undefined;
         PubSub.default.remove("executeCommand", this.handleCommandStarted);
         PubSub.default.remove("statusBarTip", this.handleTip);
+        PubSub.default.remove("toggleCommandHistory", this.togglePinned);
     }
+
+    private readonly togglePinned = () => {
+        this.pinned = !this.pinned;
+        this.classList.toggle(style.pinned, this.pinned);
+
+        if (this.pinned) {
+            // Lines already counting down would otherwise vanish out of a stack the user
+            // has just asked to hold still.
+            this.timers.forEach((id) => clearTimeout(id));
+            this.timers.clear();
+            return;
+        }
+
+        // Unpinned: drop what had accumulated and go back to showing only the recent few.
+        this.innerHTML = "";
+        this.timers.clear();
+    };
 
     /** `Command: LINE`, the way AutoCAD heads every command it runs. */
     private readonly handleCommandStarted = (command: CommandKeys) => {
@@ -87,14 +124,26 @@ export class CommandHistory extends HTMLElement {
     private show(text: string, kind: HistoryKind) {
         const line = div({ className: `${style.line} ${lineStyle(kind)}`, textContent: text });
         this.append(line);
-        while (this.childElementCount > MAX_VISIBLE) {
-            this.firstElementChild?.remove();
+        const limit = this.pinned ? MAX_VISIBLE_PINNED : MAX_VISIBLE;
+        while (this.childElementCount > limit) {
+            const oldest = this.firstElementChild as HTMLElement | null;
+            if (!oldest) break;
+            const timer = this.timers.get(oldest);
+            if (timer !== undefined) clearTimeout(timer);
+            this.timers.delete(oldest);
+            oldest.remove();
         }
 
-        setTimeout(() => {
+        // Pinned lines have no expiry at all - that is what pinning means. They go when
+        // the stack is unpinned, or when enough newer lines push them past the limit.
+        if (this.pinned) return;
+
+        const timer = window.setTimeout(() => {
+            this.timers.delete(line);
             line.classList.add(style.leaving);
             setTimeout(() => line.remove(), FADE);
         }, LIFETIME);
+        this.timers.set(line, timer);
     }
 }
 

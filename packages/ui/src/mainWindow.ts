@@ -17,6 +17,7 @@ import { showFloatPanel } from "./floatPanel";
 import { showLayerPanel } from "./layer";
 import { Permanent } from "./permanent";
 import { showPropertiesPanel } from "./property";
+import { ShortcutPanel } from "./shortcutPanel";
 import { Toast } from "./toast";
 
 export class MainWindow extends HTMLElement implements IWindow {
@@ -86,6 +87,7 @@ export class MainWindow extends HTMLElement implements IWindow {
         PubSub.default.sub("showPropertiesPanel", showPropertiesPanel);
         PubSub.default.sub("showLayerPanel", showLayerPanel);
         PubSub.default.sub("showPermanent", Permanent.show);
+        PubSub.default.sub("toggleShortcutPanel", ShortcutPanel.toggle);
 
         Config.instance.onPropertyChanged(this.handleConfigChanged);
         window.matchMedia?.("(prefers-color-scheme: dark)").addEventListener("change", () => {
@@ -121,7 +123,21 @@ export class MainWindow extends HTMLElement implements IWindow {
             I18n.changeLanguage(Config.instance.language);
         }
 
-        const shouldSaveProps: (keyof Config)[] = ["themeMode", "language", "enableGrid"];
+        // The drafting aids are all here because AutoCAD remembers every one of them
+        // between sessions, and a drafter who works with ortho on does not expect to
+        // turn it on again each morning. They are the @serialize()'d properties of
+        // Config; anything not listed is written only when something else is.
+        const shouldSaveProps: (keyof Config)[] = [
+            "themeMode",
+            "language",
+            "enableGrid",
+            "enableSnap",
+            "enableOrtho",
+            "enablePolarTracking",
+            "polarAngles",
+            "enableSnapTracking",
+            "enableDynamicInput",
+        ];
         if (shouldSaveProps.includes(prop)) {
             Config.instance.saveToStorage();
         }
