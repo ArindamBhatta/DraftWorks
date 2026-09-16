@@ -4,3 +4,4 @@ export * from "./aiPanel";
 export * from "./aiPreview";
 export * from "./aiRenderer";
 export * from "./aiSetupDialog";
+export * from "./elevationCommand";

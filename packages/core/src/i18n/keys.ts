@@ -5,6 +5,7 @@
 export const I18N_KEYS = [
     // AI
     "ai.adjust",
+    "elevation.unpaired:{0}",
     "ai.apply",
     "ai.draw",
     "ai.drawn",
@@ -72,6 +73,7 @@ export const I18N_KEYS = [
     "circle.radius",
     // Command
     "command.ai.draft",
+    "command.ai.elevation",
     "command.ai.setup",
     "command.convert.toFace",
     "command.convert.toWire",
@@ -180,7 +182,9 @@ export const I18N_KEYS = [
     "dialog.title.aiModel",
     "dialog.title.aiModelNote",
     "dialog.title.aiProvider",
+    "dialog.title.aiElevation",
     "dialog.title.aiSetup",
+    "dialog.title.elevationSide",
     "dialog.title.dimensionSetup",
     "dialog.title.dimGeometry",
     "dialog.title.dimPreview",
@@ -334,6 +338,8 @@ export const I18N_KEYS = [
     "error.default:{0}",
     "error.export.noNodeCanBeExported",
     "error.export.dwgFailed",
+    "error.elevation.noWall",
+    "error.elevation.nothing",
     "error.plot.nothingToPlot",
     "error.plot.unsupportedText:{0}",
     "error.fillet.zeroRadiusNeedsLines",
@@ -635,6 +641,8 @@ export const I18N_KEYS = [
     "prompt.pickCircleCenter",
     "prompt.pickDiameter",
     "prompt.pickFistPoint",
+    "prompt.elevation.pickFirstCorner",
+    "prompt.elevation.pickOppositeCorner",
     "prompt.plot.pickFirstCorner",
     "prompt.plot.pickOppositeCorner",
     "prompt.pickNextPoint",
@@ -750,6 +758,8 @@ export const I18N_KEYS = [
     "statusBar.cyclingPrompt",
     // Toast
     "toast.ai.drawn",
+    "toast.ai.elevationDrawn",
+    "toast.ai.elevationRefused:{0}",
     "toast.command.{0}excuting",
     "toast.converter.error",
     "toast.converter.invalidColor",

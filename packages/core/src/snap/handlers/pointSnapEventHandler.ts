@@ -24,6 +24,18 @@ export interface PointSnapData extends SnapData {
     dimension?: Dimension;
     refPoint?: () => XYZ;
     plane?: () => Plane;
+    /**
+     * For a pick whose answer is an area rather than a direction - the opposite corner of
+     * a selection window, a plot window, a region to read.
+     *
+     * Ortho and polar both work by pulling the point onto an axis through `refPoint`, and
+     * a corner dragged onto an axis through the first corner is a corner with no width or
+     * no height: the box collapses to a line, which is what the user sees and picks. So
+     * an area pick sits both of them out, exactly as AutoCAD's window selection does,
+     * while keeping everything that helps it - object snap, grid, and typed coordinates
+     * still measured from the first corner.
+     */
+    disableAxisLocks?: boolean;
 }
 
 export interface SnapPointOnCurveData extends PointSnapData {
@@ -59,7 +71,13 @@ export class PointSnapEventHandler extends SnapEventHandler<PointSnapData> {
         const workplaneSnap = pointData.plane
             ? new PlaneSnap(pointData.plane, pointData.refPoint)
             : new WorkplaneSnap(pointData.refPoint);
-        const trackingSnap = new TrackingSnap(pointData.refPoint, true);
+        // Object snap tracking stays useful for an area pick - lining a corner up with a
+        // wall already drawn is exactly what it is for - so only the reference point goes,
+        // which is what polar tracking would otherwise lock the corner to an angle from.
+        const trackingSnap = new TrackingSnap(
+            pointData.disableAxisLocks ? undefined : pointData.refPoint,
+            true,
+        );
         const surfaceSnap = new SurfaceSnap();
         // GridSnap sits last before the free workplane point: everything that snaps to
         // real geometry outranks the lattice, and the lattice outranks picking anywhere
@@ -81,7 +99,8 @@ export class PointSnapEventHandler extends SnapEventHandler<PointSnapData> {
      * snap, so toggling the status bar button mid-command takes effect immediately.
      */
     protected getOrthoSnaps(pointData: PointSnapData): ISnap[] {
-        return pointData.refPoint ? [new OrthoSnap(pointData.refPoint, pointData.plane)] : [];
+        if (!pointData.refPoint || pointData.disableAxisLocks) return [];
+        return [new OrthoSnap(pointData.refPoint, pointData.plane)];
     }
 
     protected getPointFromInput(view: IView, text: string): SnapResult {

@@ -5,6 +5,8 @@ export default {
     language: "en",
     translation: {
         // AI
+        "elevation.unpaired:{0}":
+            "{0} mark(s) in the picked area could not be read as an opening and were left out",
         "ai.adjust": "Adjust",
         "ai.apply": "Redraw",
         "ai.draw": "Draw",
@@ -75,6 +77,7 @@ export default {
         "circle.radius": "Radius",
         // Command
         "command.ai.draft": "AI Draft",
+        "command.ai.elevation": "AI Elevation",
         "command.ai.setup": "AI Setup",
         "command.convert.toFace": "To Face",
         "command.convert.toWire": "To Wire",
@@ -185,7 +188,9 @@ export default {
         "dialog.title.aiModel": "Model id",
         "dialog.title.aiModelNote": "Use the API model id, not the display name - lowercase with hyphens.",
         "dialog.title.aiProvider": "Provider",
+        "dialog.title.aiElevation": "Elevation from plan",
         "dialog.title.aiSetup": "AI Setup",
+        "dialog.title.elevationSide": "Viewed from",
         "dialog.title.dimensionSetup": "Dimension Style",
         "dialog.title.dimGeometry": "Lines and Arrows",
         "dialog.title.dimPreview": "Preview",
@@ -340,6 +345,9 @@ export default {
         "error.default:{0}": "error: {0}",
         "error.export.noNodeCanBeExported": "No node can be exported",
         "error.export.dwgFailed": "The drawing could not be written as DWG; try exporting DXF instead",
+        "error.elevation.noWall":
+            "No wall was found on that side of the picked area - nothing in it reads as two parallel faces a wall's thickness apart",
+        "error.elevation.nothing": "There is nothing in the picked area to read",
         "error.plot.nothingToPlot": "There is nothing in the plot area to plot",
         "error.plot.unsupportedText:{0}": "These characters cannot be written to PDF and were left out: {0}",
         "error.fillet.zeroRadiusNeedsLines": "A zero radius can only join two straight lines",
@@ -640,6 +648,8 @@ export default {
         "prompt.pickCircleCenter": "pick center, ESC key to cancel",
         "prompt.pickDiameter": "input diameter, ESC key to cancel",
         "prompt.pickFistPoint": "Pick first point, ESC key to cancel",
+        "prompt.elevation.pickFirstCorner": "Specify first corner of the plan to elevate",
+        "prompt.elevation.pickOppositeCorner": "Specify opposite corner",
         "prompt.plot.pickFirstCorner": "Specify first corner of plot window",
         "prompt.plot.pickOppositeCorner": "Specify opposite corner",
         "prompt.pickNextPoint": "pick next point, ESC key to cancel",
@@ -759,6 +769,8 @@ export default {
         "statusBar.cyclingPrompt": "Select an object",
         // Toast
         "toast.ai.drawn": "Drawing added",
+        "toast.ai.elevationDrawn": "Elevation added below the plan",
+        "toast.ai.elevationRefused:{0}": "The elevation was not drawn: {0}",
         "toast.command.{0}excuting": "Command {0} is runing",
         "toast.converter.error": "Converter error",
         "toast.converter.invalidColor": "The color is invalid",

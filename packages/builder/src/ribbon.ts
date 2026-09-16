@@ -194,10 +194,11 @@ export const DefaultRibbon: RibbonTabProfile[] = [
             //AI
             {
                 groupName: "ribbon.group.ai",
-                // Draft opens the prompt palette; Setup is where the API key goes, and it
-                // sits beside Draft rather than in Tools because a key is the first thing
-                // Draft asks for and the only thing that can stop it working.
-                items: ["ai.draft", "ai.setup"],
+                // Draft opens the prompt palette; Elevation works from the drawing
+                // instead, so it sits beside Draft rather than in a view group. Setup is
+                // where the API key goes, and it is last because it is the only one of
+                // the three that draws nothing.
+                items: ["ai.draft", "ai.elevation", "ai.setup"],
             },
         ],
     },

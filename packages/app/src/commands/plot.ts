@@ -31,6 +31,7 @@ import {
     type PointSnapData,
     PointStep,
     PubSub,
+    VisualConfig,
     VisualNode,
     type XYZ,
 } from "@draftworks/core";
@@ -171,6 +172,7 @@ async function pickWindow(document: IDocument): Promise<Window | undefined> {
     const opposite = (): PointSnapData => ({
         dimension: Dimensions.D1D2D3,
         refPoint: () => start,
+        disableAxisLocks: true,
         // The rubber band. Without it the second corner is picked blind, and the whole
         // point of picking on screen rather than typing coordinates is to see the box.
         preview: (point) => (point ? [windowOutline(start, point)] : []),
@@ -207,7 +209,16 @@ function windowOutline(start: XYZ, end: XYZ): EdgeMeshData {
         position.push(x1, y1, z, x2, y2, z);
     }
 
-    return { position: new Float32Array(position), lineType: "solid", range: [] };
+    return {
+        position: new Float32Array(position),
+        // Explicit, and theme-aware. ShapeMeshData.color is optional and
+        // ThreeGeometryFactory.setColor simply skips a mesh that has none - leaving the
+        // LineMaterial on its own default, which is white. On a light drawing background
+        // that is a rubber band nobody can see.
+        color: VisualConfig.defaultEdgeColor,
+        lineType: "solid",
+        range: [],
+    };
 }
 
 type Drawing = ReturnType<typeof nodesToDxf>["drawing"];

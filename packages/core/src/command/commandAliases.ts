@@ -14,6 +14,7 @@ import type { CommandKeys } from "./commandKeys";
 export const CommandAliases: Partial<Record<CommandKeys, string[]>> = {
     // AI
     "ai.draft": ["ai", "draft"],
+    "ai.elevation": ["elev", "elevation"],
     "ai.setup": ["aiset", "aisetup"],
     // Draw
     "create.line": ["l", "line"],
