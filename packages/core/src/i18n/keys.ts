@@ -332,6 +332,7 @@ export const I18N_KEYS = [
     // Error
     "error.default:{0}",
     "error.export.noNodeCanBeExported",
+    "error.export.dwgFailed",
     "error.fillet.zeroRadiusNeedsLines",
     "error.fillet.noCorner",
     "error.fillet.cornerAlreadySharp",

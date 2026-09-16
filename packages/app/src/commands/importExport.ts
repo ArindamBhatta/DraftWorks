@@ -10,9 +10,11 @@ import {
     I18n,
     type IApplication,
     type ICommand,
+    type IConverter,
     PropertyUtils,
     PubSub,
     property,
+    Result,
     readFilesAsync,
     SelectNodeStep,
 } from "@draftworks/core";
@@ -34,13 +36,34 @@ export class Import implements ICommand {
     }
 }
 
+/**
+ * How each export format is named in the dropdown.
+ *
+ * A bare ".dwg" would not say which DWG the user is getting, and the version is the thing
+ * they are usually being asked for - a client or an authority specifies a release, not
+ * just a format. Both are R2000 here, for unrelated reasons: the DXF writer targets it as
+ * the oldest revision that still carries everything a drawing holds, and DWG is pinned
+ * there because it is the newest release LibreDWG's encoder produces.
+ *
+ * Formats with no entry fall back to the extension itself, so an IDataExchange
+ * implementation offering something else still renders.
+ */
+const EXPORT_FORMAT_LABELS: Record<string, string> = {
+    ".dwg": "DWG (AutoCAD 2000)",
+    ".dxf": "DXF (AutoCAD 2000)",
+};
+
+const exportFormatConverter: IConverter<string> = {
+    convert: (format: string) => Result.ok(EXPORT_FORMAT_LABELS[format] ?? format),
+};
+
 @command({
     key: "file.export",
     icon: "icon-export",
 })
 export class Export extends CancelableCommand {
     @property("file.format", {
-        combobox: new Combobox<string>(),
+        combobox: new Combobox<string>(exportFormatConverter),
     })
     public get format() {
         return this.getPrivateValue("format", ".dxf");

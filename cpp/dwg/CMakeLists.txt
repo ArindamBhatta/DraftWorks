@@ -15,13 +15,15 @@ if (NOT EXISTS "${LIBREDWG_DIR}/CMakeLists.txt")
     message (FATAL_ERROR "libredwg not found at ${LIBREDWG_DIR}. Run `npm run setup:wasm` first.")
 endif()
 
-# Only the decoder and the DXF writer are wanted. Turning off write support
-# drops the DWG encoder and the DXF->DWG reader, and turning off JSON drops the
-# GeoJSON/JSON writers - none of which this bridge calls, and together they are
-# most of the binary. LTO is off because Emscripten reports IPO unsupported.
+# JSON is off: the GeoJSON/JSON writers are not called by this bridge and are a
+# large part of the binary. Write support has to stay on - it is what pulls in
+# encode.c and in_dxf.c, the DWG encoder and the DXF->DWG reader that export
+# goes through. That pair is why the module is as large as it is; it buys DWG
+# export, which is the format users are asked for their drawings in.
+# LTO is off because Emscripten reports IPO unsupported.
 set (BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set (LIBREDWG_LIBONLY ON CACHE BOOL "" FORCE)
-set (LIBREDWG_DISABLE_WRITE ON CACHE BOOL "" FORCE)
+set (LIBREDWG_DISABLE_WRITE OFF CACHE BOOL "" FORCE)
 set (LIBREDWG_DISABLE_JSON ON CACHE BOOL "" FORCE)
 set (DISABLE_WERROR ON CACHE BOOL "" FORCE)
 set (ENABLE_LTO OFF CACHE BOOL "" FORCE)
@@ -62,7 +64,7 @@ set (EmccFlags
     "-sFILESYSTEM=1"
     "-sINVOKE_RUN=0"
     "-sEXPORTED_RUNTIME_METHODS=['ccall','cwrap','HEAPU8','UTF8ToString']"
-    "-sEXPORTED_FUNCTIONS=['_dwg_wasm_convert','_dwg_wasm_result','_dwg_wasm_result_size','_dwg_wasm_release','_malloc','_free']"
+    "-sEXPORTED_FUNCTIONS=['_dwg_wasm_convert','_dwg_wasm_write','_dwg_wasm_result','_dwg_wasm_result_size','_dwg_wasm_release','_malloc','_free']"
     "--emit-tsd dwg-wasm.d.ts"
 )
 string (REPLACE ";" " " EmccFlags "${EmccFlags}")

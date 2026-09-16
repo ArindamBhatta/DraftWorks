@@ -338,6 +338,7 @@ export default {
         // Error
         "error.default:{0}": "error: {0}",
         "error.export.noNodeCanBeExported": "No node can be exported",
+        "error.export.dwgFailed": "The drawing could not be written as DWG; try exporting DXF instead",
         "error.fillet.zeroRadiusNeedsLines": "A zero radius can only join two straight lines",
         "error.fillet.noCorner": "The two lines never meet, so there is no corner to make",
         "error.fillet.cornerAlreadySharp": "These edges already meet at a sharp corner",

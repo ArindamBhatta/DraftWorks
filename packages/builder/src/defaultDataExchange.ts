@@ -11,17 +11,21 @@ import {
 import { I18n, type IDataExchange, type IDocument, PubSub, type VisualNode } from "@draftworks/core";
 
 /**
- * DWG and DXF in, DXF out.
+ * DWG and DXF, both directions.
  *
  * DWG is what drawings are actually exchanged as. It is AutoCAD's native format - closed
- * and undocumented, unlike DXF - but that is a fact about how it has to be read, not a
+ * and undocumented, unlike DXF - but that is a fact about how it has to be handled, not a
  * reason to refuse it. Telling a user to convert their DWG in AutoCAD first is not a
  * workaround, because anyone who has AutoCAD does not need this application. So DWG is
  * imported directly, converted to DXF by LibreDWG compiled to WebAssembly, and handed to
  * the DXF reader. The conversion is invisible and entirely local: nothing is uploaded.
  *
- * Export stays DXF-only. Writing DWG means matching an undocumented binary layout that
- * changes every few releases, and every CAD application reads the DXF we already emit.
+ * Export runs the same path backwards - our DXF writer's output goes through LibreDWG's
+ * encoder - and lands on AutoCAD R2000. That is not a default but the ceiling: LibreDWG
+ * writes R13-R2000 and nothing above it. The format is labelled with that version rather
+ * than left ambiguous, because a user choosing an export format is entitled to know which
+ * one they are getting. It costs them nothing, since DWG readers are backward compatible
+ * and an R2000 file opens in every AutoCAD released since.
  *
  * The solid-modelling exchange formats that used to be here (STEP, IGES, BREP) are gone:
  * they carry B-Rep solids and surfaces, which is the wrong shape of data for a drawing
@@ -39,7 +43,9 @@ export class DefaultDataExchange implements IDataExchange {
     }
 
     exportFormats(): string[] {
-        return [".dxf"];
+        // DWG first, for the same reason as import: it is what the drawing will be sent
+        // on as. The labels these map to live in EXPORT_FORMAT_LABELS.
+        return [".dwg", ".dxf"];
     }
 
     async import(document: IDocument, files: FileList | File[]): Promise<void> {
@@ -131,7 +137,7 @@ export class DefaultDataExchange implements IDataExchange {
     }
 
     async export(type: string, nodes: VisualNode[]): Promise<BlobPart[] | undefined> {
-        if (type !== ".dxf" || nodes.length === 0) return undefined;
+        if ((type !== ".dxf" && type !== ".dwg") || nodes.length === 0) return undefined;
 
         const document = nodes[0].document;
         const { drawing, skipped } = nodesToDxf(nodes, [...document.modelManager.layers]);
@@ -144,6 +150,35 @@ export class DefaultDataExchange implements IDataExchange {
             PubSub.default.pub("showToast", "toast.export.skippedNodes:{0}", String(skipped));
         }
 
-        return [writeDxf(drawing, { dimension: dimensionStyleForExport() })];
+        // Both formats are written by the DXF writer. DWG is that same text encoded a
+        // second time, so anything the writer cannot express is already lost before
+        // LibreDWG sees it - the round-trip notes in packages/app/src/io/dxf apply to
+        // DWG exactly as they do to DXF.
+        const dxf = writeDxf(drawing, { dimension: dimensionStyleForExport() });
+        if (type === ".dxf") return [dxf];
+
+        return this.encodeAsDwg(dxf);
+    }
+
+    /**
+     * Encodes finished DXF text as an R2000 DWG, or reports a toast and returns undefined.
+     *
+     * There is no fallback to handing back the DXF instead. The user picked DWG, and a
+     * file with a .dwg name that is really DXF inside is worse than a failed export: it
+     * gets forwarded to someone whose software opens it by extension.
+     */
+    private async encodeAsDwg(dxf: string): Promise<BlobPart[] | undefined> {
+        // Loaded on demand, the same module the import side uses - see the note in
+        // packages/wasm/src/dwg.ts. Encoding takes a moment on a large drawing, which is
+        // why export already runs behind the busy indicator.
+        const { DwgWriteError, dxfToDwg } = await import("@draftworks/wasm");
+        try {
+            return [await dxfToDwg(dxf)];
+        } catch (error) {
+            const message =
+                error instanceof DwgWriteError ? I18n.translate("error.export.dwgFailed") : String(error);
+            PubSub.default.pub("showToast", "error.default:{0}", message);
+            return undefined;
+        }
     }
 }

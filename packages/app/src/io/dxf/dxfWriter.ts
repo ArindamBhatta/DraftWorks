@@ -22,6 +22,8 @@ import {
     type DxfEntity,
     type DxfLayerRecord,
     type DxfVec,
+    dxfVec,
+    ocsToWorld,
     rgbToAci,
 } from "./dxfModel";
 
@@ -78,6 +80,20 @@ class TagWriter {
  * Hands out the unique handles R2000 requires. Starting above the handles AutoCAD
  * reserves for its own fixed objects keeps the file clear of them.
  */
+/**
+ * `*Model_Space`'s handle, fixed rather than allocated.
+ *
+ * AutoCAD gives the model space block record handle 1F in every file it writes, and
+ * readers have been built around that. LibreDWG's DXF reader - which every DWG export
+ * goes through - creates its own `*Model_Space` at 1F before parsing and merges ours into
+ * it only if the handles match. Under any other handle the file ends up with two model
+ * spaces, and the entities, owned by one of them, are dropped by the encoder: the export
+ * succeeds and produces a DWG containing no drawing.
+ *
+ * Below HandleAllocator's range, so nothing else can be given it.
+ */
+const MODEL_SPACE_HANDLE = "1F";
+
 class HandleAllocator {
     private next = 0x110;
 
@@ -139,7 +155,7 @@ export function writeDxf(drawing: DxfDrawing, options: DxfWriteOptions = {}): st
         groupDictionary: handles.take(),
         plotStyleDictionary: handles.take(),
         plotStylePlaceholder: handles.take(),
-        modelSpace: handles.take(),
+        modelSpace: MODEL_SPACE_HANDLE,
         paperSpace: handles.take(),
         blockRecords: new Map(),
     };
@@ -520,11 +536,12 @@ function writeEntity(out: TagWriter, entity: DxfEntity, owner: string, handles: 
             if (entity.multiline) {
                 writeEntityHeader(out, "MTEXT", entity, owner, handles);
                 out.tag(100, "AcDbMText").point(10, entity.position);
+                out.point(11, mtextXAxis(entity.rotation, entity.normal));
                 out.real(40, entity.height).real(41, entity.boxWidth);
                 // 1 = top-left attachment, matching how TextAnnotation hangs MTEXT.
                 out.tag(71, 1).tag(72, 1);
                 writeMTextContent(out, entity.content);
-                out.tag(7, "Standard").real(50, entity.rotation);
+                out.tag(7, "Standard");
                 out.point(210, entity.normal);
             } else {
                 writeEntityHeader(out, "TEXT", entity, owner, handles);
@@ -613,6 +630,23 @@ function writeDimensionSubclass(out: TagWriter, entity: DxfEntity & { type: "dim
 }
 
 /** MTEXT carries at most 250 characters per tag: group 3 for each full chunk, 1 for the tail. */
+/**
+ * MTEXT's rotation as the X-axis direction vector of group 11, in world space.
+ *
+ * TEXT states its rotation as an angle at group 50, and MTEXT looks like it should too -
+ * the specification does list a 50 for it. Nothing writes it that way: AutoCAD emits the
+ * direction vector, the specification has that 50 in radians while TEXT's is in degrees,
+ * and LibreDWG has no field for it at all, so a 50 on an MTEXT makes its DXF reader
+ * reject the whole file - which is the reader every DWG export goes through. The vector
+ * is unambiguous in a way the angle is not, so it is what gets written.
+ */
+function mtextXAxis(rotation: number, normal: DxfVec): DxfVec {
+    const radians = (rotation * Math.PI) / 180;
+    // Built in the entity's own plane, then placed in world space, because group 11 is a
+    // WCS direction even though the rotation it encodes is measured in that plane.
+    return ocsToWorld(dxfVec(Math.cos(radians), Math.sin(radians), 0), normal);
+}
+
 function writeMTextContent(out: TagWriter, content: string): void {
     const escaped = escapeMText(content);
     for (let i = 0; i < escaped.length - 250; i += 250) {

@@ -33,6 +33,7 @@ interface WasmModule {
   _dwg_wasm_convert(_0: number, _1: number): number;
   _free(_0: number): void;
   _malloc(_0: number): number;
+  _dwg_wasm_write(_0: number, _1: number): number;
   _dwg_wasm_result(): number;
   _dwg_wasm_result_size(): number;
   _dwg_wasm_release(): void;
