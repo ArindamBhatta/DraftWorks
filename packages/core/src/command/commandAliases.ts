@@ -32,6 +32,8 @@ export const CommandAliases: Partial<Record<CommandKeys, string[]>> = {
     "create.revisionCloud": ["revcloud", "cloud"],
     "create.bezier": ["spl", "spline", "bezier"],
     "create.hatch": ["h", "bh", "hatch", "bhatch"],
+    "create.gradient": ["gd", "gradient"],
+    "create.boundary": ["bo", "boundary", "bpoly"],
     "create.point": ["po", "point"],
     "create.text": ["dt", "text", "dtext"],
     "create.mtext": ["t", "mt", "mtext"],

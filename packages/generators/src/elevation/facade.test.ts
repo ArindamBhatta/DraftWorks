@@ -257,6 +257,47 @@ describe("extractFacade", () => {
         expect(result.error).toContain("No wall");
     });
 
+    test("the refusal quotes the faces it found and how far apart they are", () => {
+        // Which of the three tests failed is the whole of what is useful, and all three
+        // fail with the same word. Here it is the thickness: two good long faces, two
+        // metres apart, which is a room and not a wall.
+        const result = extractFacade([line(0, 0, 6000, 0), line(0, 2000, 6000, 2000)], {
+            side: "south",
+            window: box(-500, -500, 6500, 3000),
+        });
+        expect(result.isOk).toBe(false);
+        expect(result.error).toContain("0 in, 6000 long");
+        expect(result.error).toContain("2000 in, 6000 long");
+        expect(result.error).toContain("between 50 and 600 apart");
+    });
+
+    test("a plan read at the wrong scale is told so, rather than handed millimetre gaps", () => {
+        // The real shape of a units mismatch: a plan drawn in metres and read as
+        // millimetres. The wall is 9.144 across and 0.23 thick, so its two faces land
+        // inside the band tolerance and merge, and no arrangement of the rules can find a
+        // wall. The face list would be arithmetically perfect and no use to anybody.
+        const tiny = [line(0, 0, 9.144, 0), line(0, 0.23, 9.144, 0.23)];
+        const result = extractFacade(tiny, { side: "south", window: box(-1, -1, 10, 10) });
+
+        expect(result.isOk).toBe(false);
+        expect(result.error).toContain("too small to be a building");
+        expect(result.error).toContain("units");
+    });
+
+    test("a pick read from the wrong side says nothing runs along it, not that it is not a wall", () => {
+        // The commonest way to see this message is to have chosen the wrong side, and
+        // "no faces at all" is what tells that apart from a wall it could not measure.
+        // Two horizontal lines, read from the east. Nothing in the pick runs north-south,
+        // so there is not even a candidate face to measure - a different failure from a
+        // face that was found and rejected.
+        const result = extractFacade([line(0, 0, 6000, 0), line(0, 230, 6000, 230)], {
+            side: "east",
+            window: WINDOW,
+        });
+        expect(result.isOk).toBe(false);
+        expect(result.error).toContain("run along that side");
+    });
+
     test("polylines read the same as the lines they are made of", () => {
         const drawn: DrawItem[] = [
             {

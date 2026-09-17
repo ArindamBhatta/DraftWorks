@@ -86,6 +86,29 @@ export class Material extends HistoryObservable {
     @serialize()
     vertexColors = false;
 
+    /**
+     * Draw this material's colour as it is, ignoring the scene's lights.
+     *
+     * The viewport lights a face with an ambient and a head-on directional light, which
+     * together come to roughly three times the material's own colour - fine for the
+     * near-black ink a drawing is mostly made of, but it drives anything mid-toned to
+     * white. A fill whose colours the user chose, such as a gradient ramp, wants to
+     * arrive on screen unchanged, and that is what this is for. It decides which three
+     * material a save is rebuilt into rather than being a value on one, so changing it on
+     * a material already on screen does nothing until the drawing is reopened.
+     *
+     * An accessor rather than a plain field like `vertexColors` beside it, because that
+     * is what survives a round trip: a saved value is restored with `setPrivateValue`,
+     * which a field of the class never reads back - see Serializer.deserializeProperties.
+     */
+    @serialize()
+    get unlit(): boolean {
+        return this.getPrivateValue("unlit", false);
+    }
+    set unlit(value: boolean) {
+        this.setProperty("unlit", value);
+    }
+
     @serialize()
     transparent = true;
 
@@ -142,6 +165,7 @@ export class Material extends HistoryObservable {
             color: this.color,
         });
         material.setPrivateValue("map", this.map);
+        material.setPrivateValue("unlit", this.unlit);
 
         return material;
     }

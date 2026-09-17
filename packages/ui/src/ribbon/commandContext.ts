@@ -363,6 +363,8 @@ export class CommandContext extends HTMLElement implements IDisposable {
 
         if (g.type === "materialId") {
             return this.materialEditor(g, noType);
+        } else if (g.type === "color") {
+            return this.newColorInput(g, noType);
         } else if (g.combobox) {
             return this.newCombobox(g, g.combobox);
         }
@@ -417,6 +419,33 @@ export class CommandContext extends HTMLElement implements IDisposable {
         this.comboboxes.set(g.name, [combobox, selectEl]);
 
         return div(label({ textContent: new Localize(g.display) }), selectEl);
+    }
+
+    /**
+     * A colour setting, as the swatch the platform already knows how to pick one with.
+     * The hex the input hands back is what a command stores if it was holding a string
+     * (GRADIENT's ends, which go straight into a canvas fill); a command holding a
+     * number - the form every material and layer colour takes - gets a number back.
+     */
+    private newColorInput(g: Property, noType: any) {
+        const converter = new ColorConverter();
+        return div(
+            label({ textContent: new Localize(g.display) }),
+            input({
+                type: "color",
+                className: style.color,
+                value: new Binding(noType, g.name, converter),
+                onchange: (e) => {
+                    const value = (e.target as HTMLInputElement).value;
+                    if (typeof noType[g.name] !== "number") {
+                        noType[g.name] = value;
+                        return;
+                    }
+                    const parsed = converter.convertBack(value);
+                    if (parsed.isOk) noType[g.name] = parsed.value;
+                },
+            }),
+        );
     }
 
     private newInput(g: Property, noType: any, converter?: (v: string) => any) {

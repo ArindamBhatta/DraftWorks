@@ -68,6 +68,10 @@ export const I18N_KEYS = [
     "body.revisionCloud",
     "body.rect",
     "body.wire",
+    // Boundary
+    "boundary.objectType",
+    "boundary.type.polyline",
+    "boundary.type.region",
     // Circle
     "circle.center",
     "circle.radius",
@@ -81,9 +85,11 @@ export const I18N_KEYS = [
     "command.create.arc2point",
     "command.create.arc3point",
     "command.create.bezier",
+    "command.create.boundary",
     "command.create.circle",
     "command.create.ellipse",
     "command.create.folder",
+    "command.create.gradient",
     "command.create.hatch",
     "command.create.line",
     "command.create.offset",
@@ -379,6 +385,13 @@ export const I18N_KEYS = [
     "geometry.deltaZ",
     "geometry.diameter",
     "geometry.perimeter",
+    // Gradient
+    "gradient.angle",
+    "gradient.color1",
+    "gradient.color2",
+    "gradient.style",
+    "gradient.style.linear",
+    "gradient.style.radial",
     // Hatch
     "hatch.pattern",
     "hatch.pattern.brick",

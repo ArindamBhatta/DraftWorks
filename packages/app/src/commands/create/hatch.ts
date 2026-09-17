@@ -1,50 +1,36 @@
 import {
-    AsyncController,
-    CancelableCommand,
     Combobox,
     command,
     type GeometryNode,
     I18n,
     type I18nKeys,
-    type IEdge,
-    type IShapeFilter,
     Material,
-    PubSub,
     property,
-    SelectNodeStep,
-    type ShapeNode,
-    ShapeNodeFilter,
-    ShapeTypes,
-    Transaction,
     VisualConfig,
     XY,
 } from "@draftworks/core";
-import { FaceNode } from "../../bodys/face";
+import { FillCommand } from "./fillCommand";
 import { HATCH_BASE_TILE_SIZE, HatchPatterns, hatchPatternTexture } from "./hatchPatterns";
 
 /**
  * AutoCAD's HATCH (H/BH): pick a pattern, pick (or use the current selection of) a closed
  * region, and it fills it. The fill is a `Material` whose texture is a generated pattern
  * tile (see hatchPatterns.ts); "Solid" is the one exception, needing no texture at all,
- * since an untextured Material already is a solid fill. Re-running HATCH with the same
- * pattern and scale reuses that material rather than making a new one every time.
+ * since an untextured Material already is a solid fill.
  *
- * A boundary reaches this command in one of two shapes, and each is hatched differently:
- *
- * - Already a face - geometry that arrived that way, from a DXF/DWG import or a drawing
- *   made before the create commands stopped offering a face toggle. It has a fill
- *   already, so this repaints that fill; adding a second face on top would sit exactly
- *   coplanar with the first and z-fight with it. Nothing drawn here produces a face any
- *   more, so this is the rarer path of the two.
- * - Closed wires/edges - nothing is filling the region yet, so a new `Face` is created to
- *   do it, and the boundary curves are left in place. That is AutoCAD's own model: a
- *   hatch is a fill laid over a boundary, not a replacement for it.
+ * How a boundary is picked and turned into something paintable is FillCommand's job -
+ * GRADIENT answers those questions identically and differs only below, in what the
+ * region is painted with.
  */
 @command({
     key: "create.hatch",
     icon: "icon-toFace",
 })
-export class HatchCommand extends CancelableCommand {
+export class HatchCommand extends FillCommand {
+    protected override get fillName(): string {
+        return "hatch";
+    }
+
     @property("hatch.pattern", {
         combobox: Combobox.from(HatchPatterns.map((p) => p.display)),
     })
@@ -63,60 +49,12 @@ export class HatchCommand extends CancelableCommand {
         this.setProperty("scale", value);
     }
 
-    protected async executeAsync(): Promise<void> {
-        const models = await this.getOrPickBoundary();
-        if (!models || models.length === 0) {
-            PubSub.default.pub("showToast", "toast.select.noSelected");
-            return;
-        }
-
-        const faces = models.filter((x) => x.shape.value.shapeType === ShapeTypes.face);
-        const curves = models.filter((x) => x.shape.value.shapeType !== ShapeTypes.face);
-
-        // Built before the transaction opens: FaceNode throws outright on a boundary that
-        // does not close, and that belongs in a toast, not in a half-applied undo step.
-        const hatchFace = curves.length > 0 ? this.faceFromCurves(curves) : undefined;
-        if (curves.length > 0 && !hatchFace) {
-            PubSub.default.pub("showToast", "toast.converter.error");
-            return;
-        }
-
-        Transaction.execute(this.document, "hatch", () => {
-            faces.forEach((x) => {
-                x.materialId = this.createMaterial(x).id;
-                // Without this the material is applied to a face nobody draws: a 2D
-                // drawing is outlines by default, and `filled` is what opts a region
-                // into being painted. See GeometryNode.filled.
-                x.filled = true;
-            });
-            if (hatchFace) {
-                hatchFace.materialId = this.createMaterial(hatchFace).id;
-                hatchFace.filled = true;
-                this.document.modelManager.rootNode.add(hatchFace);
-            }
-            this.document.visual.update();
-            PubSub.default.pub("showToast", "toast.success");
-        });
-    }
-
-    /** A face spanning the picked curves, or undefined if they do not bound a region. */
-    private faceFromCurves(curves: ShapeNode[]): FaceNode | undefined {
-        const edges = curves.map((x) => x.shape.value.transformedMul(x.worldTransform())) as IEdge[];
-        try {
-            const face = new FaceNode({ document: this.document, shapes: edges });
-            return face.generateShape().isOk ? face : undefined;
-        } catch {
-            // FaceNode throws rather than returning an error when the edges are open.
-            return undefined;
-        }
-    }
-
     /**
      * The Material that paints `node` with the chosen pattern. One per hatched region
      * rather than one shared per pattern, because the tile count has to be worked out
      * from that region's own size - see textureRepeat.
      */
-    private createMaterial(node: GeometryNode): Material {
+    protected override createMaterial(node: GeometryNode): Material {
         const def = HatchPatterns.find((x) => x.display === this.pattern) ?? HatchPatterns[0];
         const scale = this.scale > 0 ? this.scale : 1;
 
@@ -158,39 +96,5 @@ export class HatchCommand extends CancelableCommand {
             (a, b) => b - a,
         );
         return new XY({ x: Math.max(1, Math.round(u / tile)), y: Math.max(1, Math.round(v / tile)) });
-    }
-
-    /**
-     * A hatch boundary is anything that can bound a region: a face (already one), a closed
-     * wire, or edges that join into one. Faces have to be in here - every shape the ribbon
-     * draws with "as face" on, which is its default, is one, so leaving them out made HATCH
-     * reject the rectangle a user had just drawn and selected.
-     */
-    private shapeFilter(): IShapeFilter {
-        return {
-            allow: (shape) =>
-                shape.shapeType === ShapeTypes.edge ||
-                shape.shapeType === ShapeTypes.wire ||
-                shape.shapeType === ShapeTypes.face,
-        };
-    }
-
-    private async getOrPickBoundary(): Promise<ShapeNode[] | undefined> {
-        const filter = this.shapeFilter();
-        const selected = this.document.selection
-            .getSelectedNodes()
-            .map((x) => x as ShapeNode)
-            .filter((x) => x?.shape?.isOk && filter.allow(x.shape.value, x.transform));
-        this.document.selection.clearSelection();
-        if (selected.length > 0) return selected;
-
-        const step = new SelectNodeStep("prompt.select.models", {
-            filter: new ShapeNodeFilter(filter),
-            multiple: true,
-        });
-        this.controller = new AsyncController();
-        const data = await step.execute(this.document, this.controller);
-        this.document.selection.clearSelection();
-        return data?.nodes as ShapeNode[] | undefined;
     }
 }

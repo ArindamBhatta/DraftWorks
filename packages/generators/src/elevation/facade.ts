@@ -509,6 +509,97 @@ function glazedBetween(
 // Extraction
 // ---------------------------------------------------------------------------
 
+/** How many faces the refusal lists before it stops. Enough to see the pattern. */
+const FACES_REPORTED = 6;
+
+/**
+ * The range a facade's length has to fall in to be a building at all, in millimetres.
+ *
+ * Deliberately far outside anything anyone would draw - a metre and a half is narrower
+ * than one room, a kilometre longer than any elevation - so these only ever catch a
+ * drawing being read at the wrong scale, never a real one that is merely unusual.
+ */
+const SMALLEST_BUILDING_MM = 1500;
+const LARGEST_BUILDING_MM = 1_000_000;
+
+/**
+ * Whether what was read is the wrong size to be a building at all.
+ *
+ * Everything in this package is millimetres, and the conversion into them is one
+ * multiplication by the drawing's base unit - so a base unit that does not match the
+ * coordinates the plan was drawn in scales the whole building by a thousand, and every
+ * rule here then fails on numbers that look almost reasonable. A plan drawn in metres and
+ * read as millimetres puts the two faces of a 230 wall 0.23 apart, which is inside the
+ * band tolerance, so they merge into one face and no wall can be found however the rest
+ * of the geometry is tested.
+ *
+ * Worth naming explicitly rather than leaving as a puzzle. It is the one failure here
+ * whose fix is not in the drawing or in the pick but in the drawing's unit setup, and
+ * nothing about the face list hints at that.
+ */
+function scaleComplaint(widestMm: number): string | undefined {
+    if (widestMm < SMALLEST_BUILDING_MM) {
+        return (
+            `but the longest face along it measures only ${widestMm.toFixed(widestMm < 10 ? 2 : 0)} mm, ` +
+            "which is far too small to be a building. That is what a drawing whose base unit does not " +
+            "match the coordinates it was drawn in looks like - a plan drawn in metres and read as " +
+            "millimetres comes out a thousand times too small. Check the drawing's units and try again."
+        );
+    }
+
+    if (widestMm > LARGEST_BUILDING_MM) {
+        return (
+            `but the longest face along it measures ${Math.round(widestMm)} mm, which is far too large ` +
+            "to be a building. That is what a drawing whose base unit does not match the coordinates it " +
+            "was drawn in looks like. Check the drawing's units and try again."
+        );
+    }
+
+    return undefined;
+}
+/**
+ * Says what was actually found, rather than only that it was not a wall.
+ *
+ * The three tests a wall has to pass - long enough, a plausible thickness apart, running
+ * alongside each other - all fail with the same word, and which one failed is the whole
+ * of what the draftsman needs to know. A plan whose faces come back 1450 apart has walls
+ * thicker than this was told to expect; one that lists dozens of faces a few millimetres
+ * apart was drawn with its wall lines not quite collinear; one that lists none at all was
+ * read from the wrong side. Guessing between those from the outside is hopeless, and the
+ * numbers are right here.
+ *
+ * Distances are quoted inward from the outermost face rather than as raw coordinates,
+ * because the gaps between the faces are what the rules actually test.
+ */
+function explainNoWall(bands: Band[], segmentCount: number, resolved: Tolerances): string {
+    const lead = `No wall was found on that side. ${segmentCount} line${segmentCount === 1 ? "" : "s"} lay inside the picked area`;
+
+    if (bands.length === 0) {
+        return `${lead}, but none of them run along that side at all - so either the building faces another way, or the picked area missed it.`;
+    }
+
+    // Checked before the face list, because when the scale is wrong the face list is
+    // arithmetically correct and completely useless - millimetre gaps between the walls
+    // of a house, which tells the draftsman nothing about what to do next.
+    const widest = Math.max(...bands.map((band) => band.span.hi - band.span.lo));
+    const scale = scaleComplaint(widest);
+    if (scale) return `${lead}, ${scale}`;
+
+    const outermost = bands[0].offset;
+    const listed = bands.slice(0, FACES_REPORTED).map((band) => {
+        const inward = Math.round(outermost - band.offset);
+        return `${inward} in, ${Math.round(band.coverage)} long`;
+    });
+    const more = bands.length > FACES_REPORTED ? `, and ${bands.length - FACES_REPORTED} more` : "";
+
+    return (
+        `${lead}. Working in from the outside, the faces along that side are: ${listed.join("; ")}${more}. ` +
+        `A wall is two of those between ${resolved.minThickness} and ${resolved.maxThickness} apart, ` +
+        `each at least ${resolved.minFaceLength} long, running alongside each other for most of their length. ` +
+        "All lengths are millimetres."
+    );
+}
+
 export function extractFacade(items: DrawItem[], options: FacadeOptions): Result<Facade, string> {
     const frame = FRAMES[options.side];
     const resolved = resolveTolerances(options);
@@ -518,11 +609,7 @@ export function extractFacade(items: DrawItem[], options: FacadeOptions): Result
 
     const bands = bandsOf(segments, frame, resolved.bandTolerance, resolved.angleTolerance);
     const wall = findWall(bands, resolved);
-    if (!wall) {
-        return Result.err(
-            "No wall was found on that side - nothing in the picked area reads as two parallel faces a wall's thickness apart.",
-        );
-    }
+    if (!wall) return Result.err(explainNoWall(bands, segments.length, resolved));
 
     const span = wall.outer.span;
     const jambs = jambsOf(segments, frame, wall, resolved);

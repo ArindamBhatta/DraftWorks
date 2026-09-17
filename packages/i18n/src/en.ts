@@ -72,6 +72,10 @@ export default {
         "body.revisionCloud": "Revision Cloud",
         "body.rect": "Rectangle",
         "body.wire": "Wire",
+        // Boundary
+        "boundary.objectType": "Object Type",
+        "boundary.type.polyline": "Polyline",
+        "boundary.type.region": "Region",
         // Circle
         "circle.center": "Center",
         "circle.radius": "Radius",
@@ -85,9 +89,11 @@ export default {
         "command.create.arc2point": "2-Point Arc",
         "command.create.arc3point": "3-Point Arc",
         "command.create.bezier": "Bezier",
+        "command.create.boundary": "Boundary",
         "command.create.circle": "Circle",
         "command.create.ellipse": "Ellipse",
         "command.create.folder": "Folder",
+        "command.create.gradient": "Gradient",
         "command.create.hatch": "Hatch",
         "command.create.line": "Line",
         "command.create.mtext": "Multiline Text",
@@ -387,6 +393,13 @@ export default {
         "geometry.deltaZ": "Delta Z",
         "geometry.diameter": "Diameter",
         "geometry.perimeter": "Perimeter",
+        // Gradient
+        "gradient.angle": "Angle",
+        "gradient.color1": "Color 1",
+        "gradient.color2": "Color 2",
+        "gradient.style": "Style",
+        "gradient.style.linear": "Linear",
+        "gradient.style.radial": "Radial",
         // Hatch
         "hatch.pattern": "Pattern",
         "hatch.pattern.brick": "Brick",

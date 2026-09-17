@@ -237,9 +237,11 @@ function promptElevation(items: DrawItem[], window: Bounds): Promise<Answer | un
         const reread = () => {
             const read = extractFacade(items, { side, window });
             facade = read.isOk ? read.value : undefined;
-            summary.textContent = read.isOk
-                ? summarizeElevation(read.value, defaults(), ctx)
-                : I18n.translate("error.elevation.noWall");
+            // The extractor's own words when it refuses, not a translated stand-in. It
+            // knows which of its three tests the geometry failed and quotes the numbers
+            // that failed them, and that is the whole of what is useful here - "no wall
+            // was found" on its own leaves the draftsman with nothing to act on.
+            summary.textContent = read.isOk ? summarizeElevation(read.value, defaults(), ctx) : read.error;
             // Said rather than hidden. A facade the extractor only half understood still
             // draws, and the draftsman is the one who can look at the plan and tell
             // whether the thing it could not pair matters.

@@ -84,8 +84,8 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                     { type: "split", items: ["create.arc", "create.arc2point", "create.arc3point"] },
                     // The stacked column - each row keeps its own arrow, so Rectangle can
                     // reach Regular Polygon without the user going near the panel's
-                    // overflow. Ellipse and Hatch have no variant to offer yet; they keep
-                    // an arrow of their own so the column stays one shape as they grow.
+                    // overflow. Ellipse has no variant to offer yet; it keeps an arrow of
+                    // its own so the column stays one shape as it grows.
                     // Three rows is the column's limit: .content is a fixed 72px with
                     // overflow hidden, so a fourth row would be clipped rather than
                     // wrapped - a second column is how the panel grows from here.
@@ -119,7 +119,14 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                                 },
                             ],
                         },
-                        { type: "split", items: ["create.hatch"] },
+                        // AutoCAD's Hatch row, with the two commands that share its
+                        // boundary question behind the same arrow: Gradient fills the
+                        // region with a colour ramp instead of a pattern, and Boundary
+                        // draws the region itself as an object.
+                        {
+                            type: "split",
+                            items: ["create.hatch", "create.gradient", "create.boundary"],
+                        },
                     ],
                 ],
                 // Point and Bezier are the only tools with no natural parent flyout, so

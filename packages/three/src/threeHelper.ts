@@ -15,7 +15,9 @@ import {
     type OrthographicCamera,
     type PerspectiveCamera,
     RepeatWrapping,
+    SRGBColorSpace,
     TextureLoader,
+    MeshBasicMaterial as ThreeBasicMaterial,
     Color as ThreeColor,
     MeshLambertMaterial as ThreeLambertMaterial,
     Matrix4 as ThreeMatrix4,
@@ -105,6 +107,11 @@ export class ThreeHelper {
         }
 
         const map = new TextureLoader().load(item.image);
+        // Image data is authored in sRGB - a hex colour picked in the palette, a PNG from
+        // disk - and three needs telling, or it reads those bytes as linear and converts
+        // them on the way out, which lightens every mid-tone. Masks like the hatch tiles
+        // are white on transparent and come out the same either way.
+        map.colorSpace = SRGBColorSpace;
         map.wrapS = RepeatWrapping;
         map.wrapT = RepeatWrapping;
         map.center.set(0.5, 0.5);
@@ -147,6 +154,19 @@ export class ThreeHelper {
     }
 
     static parseBasicMaterial(material: Material) {
+        // See Material.unlit: the lights are what a fill opts out of, so the way out is
+        // a material that has none - three has no "ignore lights" switch on a lit one.
+        if (material.unlit) {
+            return new ThreeBasicMaterial({
+                color: material.color,
+                side: DoubleSide,
+                transparent: true,
+                name: material.name,
+                opacity: material.opacity,
+                map: ThreeHelper.loadTexture(material.map),
+            });
+        }
+
         return new ThreeLambertMaterial({
             color: material.color,
             side: DoubleSide,
