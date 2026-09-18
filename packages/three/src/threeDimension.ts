@@ -6,7 +6,9 @@ import {
     DimensionSetup,
     type IVisualObject,
     Matrix4,
+    pixelsForLineWeight,
     resolveDimensionColor,
+    resolveDimensionLineType,
 } from "@draftworks/core";
 import { BufferAttribute, BufferGeometry, DoubleSide, Mesh, MeshBasicMaterial, Object3D } from "three";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
@@ -15,7 +17,7 @@ import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeome
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { Constants } from "./constants";
 import type { IHighlightable } from "./highlightable";
-import { selectedEdgeMaterial } from "./materials";
+import { applyLineType, selectedEdgeMaterial } from "./materials";
 import { ThreeHelper } from "./threeHelper";
 import type { ThreeVisualContext } from "./threeVisualContext";
 
@@ -155,16 +157,23 @@ export class ThreeDimension extends Object3D implements IVisualObject, IHighligh
         }
     }
 
-    /** DIMCLRD/DIMCLRE/DIMLWD/DIMLWE - the colours and weights of the line work. */
+    /** DIMCLRD/DIMCLRE/DIMLWD/DIMLWE/DIMLTYPE/DIMLTEX1 - how the line work is drawn. */
     private applyStyle(style: DimensionSettings) {
         this._dimColor = resolveDimensionColor(style.dimLineColor) ?? NORMAL_COLOR;
         this._extColor = resolveDimensionColor(style.extLineColor) ?? NORMAL_COLOR;
         this._textColor = resolveDimensionColor(style.textColor) ?? NORMAL_COLOR;
 
         this._lineMaterial.color.set(this._dimColor);
-        this._lineMaterial.linewidth = style.dimLineWeight;
+        this._lineMaterial.linewidth = pixelsForLineWeight(style.dimLineWeight);
+        applyLineType(this._lineMaterial, resolveDimensionLineType(style.dimLineType));
         this._extensionMaterial.color.set(this._extColor);
-        this._extensionMaterial.linewidth = style.extLineWeight;
+        this._extensionMaterial.linewidth = pixelsForLineWeight(style.extLineWeight);
+        // Both extension lines share one geometry buffer and so one material, which is
+        // why only DIMLTEX1 reaches the screen: drawing the two sides in different
+        // patterns would mean splitting `extensionLines` into two sets the way the
+        // dimension line is already split from them. DIMLTEX2 is stored and exported
+        // faithfully meanwhile, so nothing is lost on a round trip.
+        applyLineType(this._extensionMaterial, resolveDimensionLineType(style.extLineType1));
         this._arrowMaterial.color.set(this._dimColor);
         this._labelElement.style.color = this._textColor;
     }

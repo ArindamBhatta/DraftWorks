@@ -142,6 +142,13 @@ export interface DxfWriteOptions {
         arrowSize: number;
         extensionOffset: number;
         decimals: number;
+        /** Group 371/372, in hundredths of a millimetre or a negative inherited value. */
+        dimLineWeight?: number;
+        extLineWeight?: number;
+        /** Groups 345/346/347: LTYPE names for the dimension and the two extension lines. */
+        dimLineType?: string;
+        extLineType1?: string;
+        extLineType2?: string;
     }[];
 }
 
@@ -369,6 +376,15 @@ function writeTables(
         out.real(141, dimension.arrowSize);
         out.real(147, 0.625);
         out.tag(271, dimension.decimals).tag(272, dimension.decimals);
+        // DIMLWD/DIMLWE. Written after the decimals so the record keeps DXF's ascending
+        // group order, which some stricter readers rely on.
+        if (dimension.dimLineWeight !== undefined) out.tag(371, dimension.dimLineWeight);
+        if (dimension.extLineWeight !== undefined) out.tag(372, dimension.extLineWeight);
+        // DIMLTYPE/DIMLTEX1/DIMLTEX2. Names rather than handles: a handle would have to
+        // point at an LTYPE record, and these are written before that table is laid out.
+        if (dimension.dimLineType) out.tag(345, dimension.dimLineType);
+        if (dimension.extLineType1) out.tag(346, dimension.extLineType1);
+        if (dimension.extLineType2) out.tag(347, dimension.extLineType2);
     }
     out.tag(0, "ENDTAB");
 

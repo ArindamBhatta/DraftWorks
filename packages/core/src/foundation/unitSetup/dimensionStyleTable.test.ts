@@ -5,7 +5,17 @@
 
 import { expect, test } from "@rstest/core";
 import { ObjectStorage } from "../objectStorage";
-import { DEFAULT_DIMENSION_SETTINGS, uniqueStyleName, validateStyleName } from "./dimensionStyle";
+import {
+    DECIMAL_SEPARATORS,
+    DEFAULT_DIMENSION_SETTINGS,
+    LINE_WEIGHT_BY_BLOCK,
+    LINE_WEIGHT_BY_LAYER,
+    LINE_WEIGHT_DEFAULT,
+    pixelsForLineWeight,
+    resolveDimensionLineType,
+    uniqueStyleName,
+    validateStyleName,
+} from "./dimensionStyle";
 import { DimensionSetup } from "./drawingSetup";
 
 /** A table holding nothing but a default Standard, as a fresh drawing has. */
@@ -253,4 +263,76 @@ test("a copy is named after its parent, and numbered once that is taken", () => 
     expect(uniqueStyleName("Standard", ["Standard", "Standard copy", "Standard copy 2"])).toBe(
         "Standard copy 3",
     );
+});
+
+test("a lineweight off the ladder snaps to the nearest rung", () => {
+    resetTable();
+
+    // What an imported DXF can carry: a width no AutoCAD dropdown offers.
+    DimensionSetup.configure({ dimLineWeight: 0.135 });
+    expect(DimensionSetup.settings.dimLineWeight).toBe(0.13);
+
+    DimensionSetup.configure({ dimLineWeight: 0.33 });
+    expect(DimensionSetup.settings.dimLineWeight).toBe(0.35);
+
+    // Above the top rung it lands on the top rung rather than running off the end.
+    DimensionSetup.configure({ dimLineWeight: 50 });
+    expect(DimensionSetup.settings.dimLineWeight).toBe(2.11);
+});
+
+test("the inherited lineweights survive validation rather than being snapped away", () => {
+    resetTable();
+
+    // -1/-2/-3 are meaningful, not malformed - a `positive` check would have eaten them.
+    for (const inherited of [LINE_WEIGHT_BY_LAYER, LINE_WEIGHT_BY_BLOCK, LINE_WEIGHT_DEFAULT]) {
+        DimensionSetup.configure({ dimLineWeight: inherited });
+        expect(DimensionSetup.settings.dimLineWeight).toBe(inherited);
+    }
+
+    // Any other negative is nonsense and falls back to what was there.
+    DimensionSetup.configure({ dimLineWeight: 0.25 });
+    DimensionSetup.configure({ dimLineWeight: -99 });
+    expect(DimensionSetup.settings.dimLineWeight).toBe(0.25);
+});
+
+test("inherited lineweights all draw at the same default width", () => {
+    // Nothing here has a block or a layer to inherit from, so all three resolve alike -
+    // and to the one-pixel line the renderer drew before lineweights existed.
+    expect(pixelsForLineWeight(LINE_WEIGHT_BY_BLOCK)).toBe(1);
+    expect(pixelsForLineWeight(LINE_WEIGHT_BY_LAYER)).toBe(1);
+    expect(pixelsForLineWeight(LINE_WEIGHT_DEFAULT)).toBe(1);
+    // A real width scales from there: 0.50mm is twice 0.25mm.
+    expect(pixelsForLineWeight(0.5)).toBe(2);
+});
+
+test("the inherited linetypes draw as a continuous line", () => {
+    expect(resolveDimensionLineType("byBlock")).toBe("solid");
+    expect(resolveDimensionLineType("byLayer")).toBe("solid");
+    // The concrete ones pass through as the renderer's own names.
+    expect(resolveDimensionLineType("hidden")).toBe("hidden");
+});
+
+test("a bad linetype falls back rather than landing on a pattern nobody chose", () => {
+    resetTable();
+
+    DimensionSetup.configure({ dimLineType: "dash" });
+    DimensionSetup.configure({ dimLineType: "squiggle" as never });
+
+    expect(DimensionSetup.settings.dimLineType).toBe("dash");
+});
+
+test("the decimal separator takes only the three the dropdown offers", () => {
+    resetTable();
+
+    for (const separator of DECIMAL_SEPARATORS) {
+        DimensionSetup.configure({ decimalSeparator: separator });
+        expect(DimensionSetup.settings.decimalSeparator).toBe(separator);
+    }
+
+    // A single character that is not one of the three - which a style saved while this
+    // was a free-text box could well hold - falls back rather than sticking around as a
+    // value the dropdown cannot show.
+    DimensionSetup.configure({ decimalSeparator: "." });
+    DimensionSetup.configure({ decimalSeparator: "Z" as never });
+    expect(DimensionSetup.settings.decimalSeparator).toBe(".");
 });

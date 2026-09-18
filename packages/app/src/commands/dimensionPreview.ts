@@ -3,10 +3,13 @@ import {
     type DimensionGeometry,
     type DimensionInput,
     type DimensionLabel,
+    type DimensionLineType,
     type DimensionSettings,
     DimensionSetup,
     type I18nKeys,
+    pixelsForLineWeight,
     resolveDimensionColor,
+    resolveDimensionLineType,
     XYZ,
 } from "@draftworks/core";
 
@@ -311,6 +314,27 @@ const DIMENSION_STROKE_RATIO = 0.22 / 66;
 /** Matches the width estimate the Fit rules use, so the two agree about what fits. */
 const TEXT_WIDTH_RATIO = 0.6;
 
+/**
+ * Dash and gap lengths per linetype, as multiples of the dimension stroke width. The
+ * proportions match `LineDashPatterns` in the three renderer - the sample has to show
+ * the same pattern the viewport will draw, or it is not a preview of anything.
+ */
+const PREVIEW_DASH_PATTERNS: Record<string, [number, number]> = {
+    dash: [10, 10],
+    hidden: [5, 5],
+    dot: [1, 5],
+};
+
+/**
+ * The SVG dash attribute for a linetype, or nothing at all for a continuous one -
+ * `stroke-dasharray` has no "off" value, so a solid line omits the attribute entirely.
+ */
+function dashAttribute(lineType: DimensionLineType, stroke: number): { "stroke-dasharray"?: string } {
+    const pattern = PREVIEW_DASH_PATTERNS[resolveDimensionLineType(lineType)];
+    if (pattern === undefined) return {};
+    return { "stroke-dasharray": `${pattern[0] * stroke} ${pattern[1] * stroke}` };
+}
+
 function element<K extends keyof SVGElementTagNameMap>(
     tag: K,
     attributes: Record<string, string | number>,
@@ -511,13 +535,15 @@ export function renderDimensionPreview(settings: Partial<DimensionSettings>, ind
                 d: linePath(geometry.extensionLines),
                 fill: "none",
                 stroke: extColor,
-                "stroke-width": dimensionStroke * style.extLineWeight,
+                "stroke-width": dimensionStroke * pixelsForLineWeight(style.extLineWeight),
+                ...dashAttribute(style.extLineType1, dimensionStroke),
             }),
             element("path", {
                 d: linePath(geometry.dimensionLines),
                 fill: "none",
                 stroke: dimColor,
-                "stroke-width": dimensionStroke * style.dimLineWeight,
+                "stroke-width": dimensionStroke * pixelsForLineWeight(style.dimLineWeight),
+                ...dashAttribute(style.dimLineType, dimensionStroke),
             }),
             element("path", { d: arrowPaths(geometry.arrows), fill: dimColor }),
         );

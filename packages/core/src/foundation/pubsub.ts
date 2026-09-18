@@ -80,7 +80,17 @@ export interface PubSubEventMap {
      * changed - the command's observable property stays the single source of truth.
      */
     refreshStepPrompt: () => void;
-    showDialog: (title: I18nKeys, content: HTMLElement, buttons?: DialogButton[] | (() => void)) => void;
+    /**
+     * `titleArgs` fills a parameterised title key's `{0}`, `{1}`, ... - wanted where the
+     * dialog is about a named thing and the name belongs in the title bar rather than
+     * repeated inside the form (DIMSTYLE's "Modify Dimension Style: ISO-25").
+     */
+    showDialog: (
+        title: I18nKeys,
+        content: HTMLElement,
+        buttons?: DialogButton[] | (() => void),
+        titleArgs?: unknown[],
+    ) => void;
     /**
      * The cursor's live distance/angle boxes. Published on every mouse move while a
      * point with a reference is being picked, so the boxes read the point the snap

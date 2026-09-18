@@ -285,3 +285,110 @@
         min-height: 260px;
     }
 }
+
+/* --- Picture pickers: linetype, lineweight, arrowhead, center mark ---------------
+
+   AutoCAD shows these four as lists of pictures with the names beside them, because
+   the picture is the setting: "Closed filled" and "Closed blank" are one word apart
+   and two quite different arrowheads. A native <select> can only hold text in its
+   options, so the list below is built from divs and the popup is positioned by the
+   field itself - the dialog is opened with showModal(), and anything appended to the
+   body would be painted behind its top layer. */
+
+.picker {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--panel-background-color);
+    color: var(--foreground-color);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.picker:hover:not(:disabled) {
+    border-color: var(--foreground-secondary-color);
+}
+
+.picker:focus-visible {
+    outline: 1px solid var(--primary-color, #3b82f6);
+}
+
+.picker:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+/* The closed state: the chosen value, drawn and named, with the caret at the end. */
+.pickerFace {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    min-width: 0;
+}
+
+.pickerIcon {
+    flex: none;
+    width: 48px;
+    height: 12px;
+    color: currentColor;
+    /* Stops a 2.11mm line or a tall arrowhead from pushing the row taller than its
+       neighbours - the sample is a thumbnail, not a to-scale drawing. */
+    overflow: visible;
+}
+
+.pickerLabel {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pickerCaret {
+    flex: none;
+    color: var(--foreground-secondary-color);
+    font-size: 10px;
+}
+
+.pickerList {
+    display: none;
+    position: absolute;
+    z-index: 10;
+    top: calc(100% + 2px);
+    left: -1px;
+    right: -1px;
+    /* Ten arrowheads fit without scrolling; the lineweight list's 27 entries scroll,
+       which is what AutoCAD's does too. */
+    max-height: 264px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--panel-background-color);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 25%);
+}
+
+.pickerOpen .pickerList {
+    display: block;
+}
+
+.pickerItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    cursor: pointer;
+}
+
+.pickerItem:hover {
+    background-color: var(--hover-background-color);
+}
+
+.pickerCurrent {
+    background-color: var(--primary-color, #3b82f6);
+    color: #fff;
+}

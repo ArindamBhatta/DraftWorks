@@ -64,7 +64,10 @@ function openDialog(): OpenDialog {
             return control as T;
         },
         get preview() {
-            return dialog.content.querySelector("svg")?.outerHTML ?? "";
+            // `role="img"` picks out the sample drawing specifically. A plain "svg"
+            // would now match the first linetype/lineweight swatch on the Lines tab,
+            // which is an SVG too and is not what any of these assertions are about.
+            return dialog.content.querySelector('svg[role="img"]')?.outerHTML ?? "";
         },
     };
 }

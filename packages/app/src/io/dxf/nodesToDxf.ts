@@ -18,6 +18,7 @@
 import {
     type CurveType,
     DimensionAnnotation,
+    type DimensionLineType,
     DimensionSetup,
     type ICircle,
     type IEdge,
@@ -35,6 +36,7 @@ import {
     type XYZ,
 } from "@draftworks/core";
 import {
+    DXF_LINETYPE_BYLAYER,
     DXF_LINETYPE_CONTINUOUS,
     DXF_UNITS,
     type DxfDrawing,
@@ -524,6 +526,19 @@ function linearRotation(node: DimensionAnnotation): number {
 }
 
 /**
+ * A lineweight as DXF group 370 wants it: hundredths of a millimetre, or one of the
+ * negative inherited values passed straight through.
+ */
+const dxfLineWeight = (mm: number) => (mm < 0 ? mm : Math.round(mm * 100));
+
+/** A dimension linetype as a DXF LTYPE name. */
+const dxfLineTypeName = (lineType: DimensionLineType): string => {
+    if (lineType === "byLayer") return DXF_LINETYPE_BYLAYER;
+    if (lineType === "byBlock") return "ByBlock";
+    return LINE_TYPE_TO_DXF[lineType] ?? DXF_LINETYPE_CONTINUOUS;
+};
+
+/**
  * Every style the DIMSTYLE table should carry, so plots match the screen and a dimension's
  * group 3 has a record to point at. Sizes have DIMSCALE folded in, as they do everywhere
  * else a style is drawn.
@@ -537,6 +552,17 @@ export function dimensionStylesForExport() {
             arrowSize: settings.arrowSize * scale,
             extensionOffset: settings.extensionOffset * scale,
             decimals: DimensionSetup.decimalPlaces(settings.precision),
+            // DXF carries a lineweight as hundredths of a millimetre, with the inherited
+            // values kept as their own negatives - which is the same encoding the model
+            // stores, just scaled.
+            dimLineWeight: dxfLineWeight(settings.dimLineWeight),
+            extLineWeight: dxfLineWeight(settings.extLineWeight),
+            // The inherited linetypes have DXF names of their own; the four concrete
+            // patterns go through the same acad.lin names the layer table uses, so a
+            // dimension and a layer asking for HIDDEN name the same LTYPE record.
+            dimLineType: dxfLineTypeName(settings.dimLineType),
+            extLineType1: dxfLineTypeName(settings.extLineType1),
+            extLineType2: dxfLineTypeName(settings.extLineType2),
         };
     });
 }

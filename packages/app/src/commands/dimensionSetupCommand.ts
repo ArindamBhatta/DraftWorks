@@ -138,9 +138,13 @@ export function promptDimensionSetup(options: DimensionSetupOptions = {}): Promi
         refreshPreview();
         show(0);
 
+        // The style being edited goes in the title bar, as AutoCAD does - with several
+        // styles in a drawing, "Dimension Style" alone does not say which one this is
+        // about, and getting that wrong means editing the wrong style.
+        const editing = draft.name;
         PubSub.default.pub(
             "showDialog",
-            override ? "dialog.title.dimensionStyleOverride" : "dialog.title.dimensionSetup",
+            override ? "dialog.title.dimensionStyleOverride:{0}" : "dialog.title.dimensionStyleModify:{0}",
             content,
             [
                 {
@@ -157,6 +161,7 @@ export function promptDimensionSetup(options: DimensionSetupOptions = {}): Promi
                     onclick: () => resolve(),
                 },
             ],
+            [editing],
         );
     });
 }

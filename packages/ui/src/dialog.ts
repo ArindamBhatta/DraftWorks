@@ -29,11 +29,12 @@ export function showDialog(
     title: I18nKeys,
     content: HTMLElement,
     buttons?: DialogButton[] | (() => void),
+    titleArgs?: unknown[],
 ): DialogHandle {
     const dialog = document.createElement("dialog");
     const host = app.mainWindow ?? document.body;
     host.appendChild(dialog);
-    const close = renderDialog(dialog, title, content, combineButtons(buttons));
+    const close = renderDialog(dialog, title, content, combineButtons(buttons), titleArgs);
     dialog.showModal();
     return { close };
 }
@@ -43,6 +44,7 @@ function renderDialog(
     title: I18nKeys,
     content: HTMLElement,
     combinedButtons: DialogButton[],
+    titleArgs?: unknown[],
 ): () => void {
     const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Enter") {
@@ -70,7 +72,7 @@ function renderDialog(
     dialog.append(
         div(
             { className: style.root },
-            div({ className: style.title }, I18n.translate(title) ?? "chili3d"),
+            div({ className: style.title }, I18n.translate(title, ...(titleArgs ?? [])) ?? "chili3d"),
             div({ className: style.content }, content),
             div(
                 { className: style.buttons },

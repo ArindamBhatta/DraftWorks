@@ -43,7 +43,12 @@ const LineDashPatterns: Partial<Record<LineType, { dashSize: number; gapSize: nu
     dot: { dashSize: 3, gapSize: 15 },
 };
 
-function applyLineType(material: LineMaterial, lineType: LineType) {
+/**
+ * Sets a material's dash pattern from a linetype. Exported because dimensions build
+ * their own materials rather than taking one from the layer cache - a dimension's line
+ * work carries the *style's* linetype, not its layer's.
+ */
+export function applyLineType(material: LineMaterial, lineType: LineType) {
     const pattern = LineDashPatterns[lineType];
     material.dashed = pattern !== undefined;
     if (pattern) {

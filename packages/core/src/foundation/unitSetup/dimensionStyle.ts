@@ -99,6 +99,87 @@ export const resolveDimensionColor = (color: DimensionColor): string | undefined
 export const TEXT_FILL_TYPES = ["none", "background", "color"] as const;
 export type TextFillType = (typeof TEXT_FILL_TYPES)[number];
 
+/**
+ * DIMDSEP: the three separators AutoCAD's Decimal separator dropdown offers, in its
+ * order - comma, period, space.
+ *
+ * A fixed list rather than any single character: DIMDSEP is stored as one character and
+ * anything at all would fit, but a measurement written with a `Z` between its parts is
+ * not a decimal number, and offering the whole keyboard invites exactly that. The three
+ * here are what a drafting standard ever actually calls for.
+ */
+export const DECIMAL_SEPARATORS = [",", ".", " "] as const;
+export type DecimalSeparator = (typeof DECIMAL_SEPARATORS)[number];
+
+/**
+ * DIMLTYPE/DIMLTEX1/DIMLTEX2: the linetype a dimension's own line work is drawn in.
+ *
+ * The four concrete patterns are the renderer's `LineType` values under AutoCAD's names
+ * for them (`solid` is CONTINUOUS), plus the two inherited values every AutoCAD linetype
+ * dropdown carries. `byBlock` and `byLayer` both resolve to a continuous line here, the
+ * same way the colour fields treat them - kept distinct so a drawing round-trips through
+ * DXF with the author's choice intact.
+ */
+export const DIMENSION_LINE_TYPES = ["byBlock", "byLayer", "solid", "dash", "hidden", "dot"] as const;
+export type DimensionLineType = (typeof DIMENSION_LINE_TYPES)[number];
+
+/**
+ * AutoCAD's lineweight ladder in millimetres, thinnest first.
+ *
+ * Millimetres rather than the pixel widths the layer panel uses, because a lineweight is
+ * a *plotted* width: 0.13mm means 0.13mm on paper whatever the zoom, which is the whole
+ * reason a drafter picks one. `pixelsForLineWeight` converts for the screen.
+ */
+export const DIMENSION_LINE_WEIGHTS = [
+    0, 0.05, 0.09, 0.13, 0.15, 0.18, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5, 0.53, 0.6, 0.7, 0.8, 0.9, 1.0, 1.06, 1.2,
+    1.4, 1.58, 2.0, 2.11,
+] as const;
+
+/**
+ * The inherited lineweight values, which are not widths at all.
+ *
+ * Stored as negatives so one number can carry either a width or an inherited value,
+ * which is exactly how AutoCAD's DIMLWD/DIMLWE do it (-1 ByLayer, -2 ByBlock,
+ * -3 Default). Anything else is a width in millimetres.
+ */
+export const LINE_WEIGHT_BY_LAYER = -1;
+export const LINE_WEIGHT_BY_BLOCK = -2;
+export const LINE_WEIGHT_DEFAULT = -3;
+
+/** The width an inherited or Default lineweight is drawn at, in millimetres. */
+const DEFAULT_LINE_WEIGHT_MM = 0.25;
+
+/**
+ * Millimetres of plotted lineweight per screen pixel at 1:1.
+ *
+ * A 0.25mm line - AutoCAD's default - comes out at one pixel, which is what the renderer
+ * drew before lineweights existed. That keeps every drawing made under the old
+ * pixel-valued settings looking the same after the migration.
+ */
+const MM_PER_PIXEL = 0.25;
+
+/**
+ * The screen width, in pixels, for a stored lineweight. Inherited values and Default all
+ * resolve to the same one-pixel line, since this renderer has no plot-style table to
+ * look a real width up in.
+ */
+export function pixelsForLineWeight(weight: number): number {
+    if (weight < 0 || weight === 0) return DEFAULT_LINE_WEIGHT_MM / MM_PER_PIXEL;
+    return weight / MM_PER_PIXEL;
+}
+
+/**
+ * The concrete pattern a dimension linetype draws as. The two inherited values resolve
+ * to a continuous line, matching how `resolveDimensionColor` treats their colour
+ * equivalents - this app has no block or layer to inherit a dimension's linetype from.
+ *
+ * The return values are the renderer's own `LineType` names, so the result can be handed
+ * straight to `applyLineType` without a second mapping.
+ */
+export function resolveDimensionLineType(lineType: DimensionLineType): "solid" | "dash" | "hidden" | "dot" {
+    return lineType === "byBlock" || lineType === "byLayer" ? "solid" : lineType;
+}
+
 export interface DimensionSettings {
     /**
      * The style's name in the style table, unique case-insensitively - AutoCAD compares
@@ -114,7 +195,9 @@ export interface DimensionSettings {
     // ---- Lines --------------------------------------------------------------------
     /** DIMCLRD. */
     dimLineColor: DimensionColor;
-    /** DIMLWD, in pixels - the renderer's line width, not a plotted lineweight. */
+    /** DIMLTYPE: the dimension line's own linetype. */
+    dimLineType: DimensionLineType;
+    /** DIMLWD, in millimetres of plotted width - see DIMENSION_LINE_WEIGHTS. */
     dimLineWeight: number;
     /** DIMDLE: how far the dimension line runs past the extension lines. */
     dimLineExtend: number;
@@ -123,7 +206,14 @@ export interface DimensionSettings {
     suppressDimLine2: boolean;
     /** DIMCLRE. */
     extLineColor: DimensionColor;
-    /** DIMLWE, in pixels. */
+    /**
+     * DIMLTEX1/DIMLTEX2. The two extension lines carry their own linetypes because
+     * AutoCAD lets them differ - on a section where one side of a measurement is a cut
+     * edge and the other is hidden behind it, they are not drawn the same.
+     */
+    extLineType1: DimensionLineType;
+    extLineType2: DimensionLineType;
+    /** DIMLWE, in millimetres - see dimLineWeight. */
     extLineWeight: number;
     /** DIMEXE: how far an extension line runs past the dimension line. */
     extensionBeyondDimLine: number;
@@ -186,7 +276,7 @@ export interface DimensionSettings {
      */
     precision: number;
     /** DIMDSEP: the character standing in for the decimal point. */
-    decimalSeparator: string;
+    decimalSeparator: DecimalSeparator;
     /** DIMRND: round every measurement to this increment; 0 disables rounding. */
     roundOff: number;
     /** DIMPOST: text placed before/after the measurement. */
@@ -305,12 +395,15 @@ export function uniqueStyleName(base: string, existing: readonly string[]): stri
 export const DEFAULT_DIMENSION_SETTINGS: DimensionSettings = {
     name: STANDARD_STYLE_NAME,
     dimLineColor: "byBlock",
-    dimLineWeight: 1,
+    dimLineType: "byBlock",
+    dimLineWeight: LINE_WEIGHT_BY_BLOCK,
     dimLineExtend: 0,
     suppressDimLine1: false,
     suppressDimLine2: false,
     extLineColor: "byBlock",
-    extLineWeight: 1,
+    extLineType1: "byBlock",
+    extLineType2: "byBlock",
+    extLineWeight: LINE_WEIGHT_BY_BLOCK,
     extensionBeyondDimLine: 1.25,
     extensionOffset: 0.625,
     suppressExtLine1: false,
@@ -390,6 +483,26 @@ const decimals = (value: unknown, fallback: number) =>
 
 const flag = (value: unknown, fallback: boolean) => (typeof value === "boolean" ? value : fallback);
 
+/**
+ * A lineweight: one of the ladder's millimetre widths, or one of the three negative
+ * inherited values. `positive` cannot be used here precisely because -1/-2/-3 are
+ * meaningful rather than malformed.
+ *
+ * A width off the ladder snaps to the nearest rung rather than falling back, since an
+ * imported DXF may carry a value AutoCAD's own list does not have (its lineweights are
+ * stored as hundredths of a millimetre, and other applications round them differently).
+ */
+const lineWeight = (value: unknown, fallback: number) => {
+    if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
+    if (value === LINE_WEIGHT_BY_LAYER || value === LINE_WEIGHT_BY_BLOCK || value === LINE_WEIGHT_DEFAULT) {
+        return value;
+    }
+    if (value < 0) return fallback;
+    return DIMENSION_LINE_WEIGHTS.reduce((best, rung) =>
+        Math.abs(rung - value) < Math.abs(best - value) ? rung : best,
+    );
+};
+
 const text = (value: unknown, fallback: string) => (typeof value === "string" ? value : fallback);
 
 /** A value that must come from a fixed list, e.g. an arrowhead name or a placement. */
@@ -418,12 +531,15 @@ export function validateDimensionSettings(
                 ? settings.name.trim()
                 : current.name,
         dimLineColor: oneOf(COLOR_NAMES, settings.dimLineColor, current.dimLineColor),
-        dimLineWeight: positive(settings.dimLineWeight, current.dimLineWeight),
+        dimLineType: oneOf(DIMENSION_LINE_TYPES, settings.dimLineType, current.dimLineType),
+        dimLineWeight: lineWeight(settings.dimLineWeight, current.dimLineWeight),
         dimLineExtend: nonNegative(settings.dimLineExtend, current.dimLineExtend),
         suppressDimLine1: flag(settings.suppressDimLine1, current.suppressDimLine1),
         suppressDimLine2: flag(settings.suppressDimLine2, current.suppressDimLine2),
         extLineColor: oneOf(COLOR_NAMES, settings.extLineColor, current.extLineColor),
-        extLineWeight: positive(settings.extLineWeight, current.extLineWeight),
+        extLineType1: oneOf(DIMENSION_LINE_TYPES, settings.extLineType1, current.extLineType1),
+        extLineType2: oneOf(DIMENSION_LINE_TYPES, settings.extLineType2, current.extLineType2),
+        extLineWeight: lineWeight(settings.extLineWeight, current.extLineWeight),
         extensionBeyondDimLine: nonNegative(settings.extensionBeyondDimLine, current.extensionBeyondDimLine),
         // 0 is a legitimate offset, so this one is not clamped away from zero.
         extensionOffset: nonNegative(settings.extensionOffset, current.extensionOffset),
@@ -462,12 +578,10 @@ export function validateDimensionSettings(
             typeof settings.precision === "number" && Number.isFinite(settings.precision)
                 ? Math.max(0, Math.round(settings.precision))
                 : current.precision,
-        // A separator has to be exactly one character or it would be spliced into the
-        // number as a substring; anything else falls back rather than corrupting the text.
-        decimalSeparator:
-            typeof settings.decimalSeparator === "string" && settings.decimalSeparator.length === 1
-                ? settings.decimalSeparator
-                : current.decimalSeparator,
+        // One of the three the dropdown offers. A saved style from before that dropdown
+        // existed could hold any single character - it was a free-text box - so anything
+        // else falls back rather than being kept and then not appearing in the list.
+        decimalSeparator: oneOf(DECIMAL_SEPARATORS, settings.decimalSeparator, current.decimalSeparator),
         roundOff: nonNegative(settings.roundOff, current.roundOff),
         prefix: text(settings.prefix, current.prefix),
         suffix: text(settings.suffix, current.suffix),

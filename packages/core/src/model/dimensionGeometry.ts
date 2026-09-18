@@ -798,3 +798,28 @@ export function buildDimensionGeometry(input: DimensionInput): DimensionGeometry
             return undefined;
     }
 }
+
+/** One arrowhead's line work, for a picker that draws each shape as itself. */
+export interface ArrowheadSample {
+    /** Filled triangles, 3 vertices each - the same layout as `DimensionGeometry.arrows`. */
+    triangles: number[];
+    /** Stroked segments, point pairs - the same layout as `dimensionLines`. */
+    strokes: number[];
+}
+
+/**
+ * Draws one arrowhead on its own, pointing left along +X, with its tip at the origin.
+ *
+ * This exists for the Symbols and Arrows tab's swatches, which have to show each shape
+ * as itself - "Closed filled" and "Closed blank" are not distinguishable by name. It
+ * calls the same `arrowHead` the real dimensions are built from rather than redrawing
+ * the shapes, so a swatch cannot end up showing something the drawing would not.
+ */
+export function arrowheadSample(type: ArrowheadType, size = 1): ArrowheadSample {
+    const triangles: number[] = [];
+    const strokes: number[] = [];
+    // +X is "back along the dimension line" here, so the head points at -X and the
+    // swatch reads left-to-right like the end of a dimension line.
+    arrowHead(triangles, strokes, type, XYZ.zero, XYZ.unitX, XYZ.unitZ, size);
+    return { triangles, strokes };
+}
