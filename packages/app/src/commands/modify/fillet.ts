@@ -1,15 +1,21 @@
 import {
+    AsyncController,
     CurveUtils,
     command,
     I18n,
+    type I18nKeys,
     type ICurve,
     type IEdge,
     type IFace,
     type IShape,
     type ITrimmedCurve,
     Precision,
+    PubSub,
+    promptForValue,
     property,
     Result,
+    type StepOption,
+    UnitSetup,
     type XYZ,
 } from "@draftworks/core";
 import { EdgeCornerCommand } from "./edgeCornerCommand";
@@ -152,6 +158,57 @@ export class FilletCommand extends EdgeCornerCommand {
      */
     private get isSharpCorner() {
         return Math.abs(this.radius) < Precision.Distance;
+    }
+
+    /**
+     * `Select first object or [Radius]:` - the same radius the ribbon's property panel
+     * edits, so the prompt, the command line and the panel are three ways into one
+     * value rather than three copies of it.
+     */
+    protected override selectionOptions(): StepOption[] {
+        return [
+            {
+                key: "R",
+                name: "prompt.optionName.radius",
+                display: "prompt.option.radius",
+                onSelect: () => {
+                    void this.askRadius();
+                },
+            },
+        ];
+    }
+
+    /**
+     * The radius sub-prompt, with the current value as the `<...>` Enter takes - which
+     * is how AutoCAD lets you confirm the remembered radius without retyping it.
+     *
+     * The selection prompt stays up underneath and is answered afterwards, so this only
+     * changes the setting; it never finishes the pick. Backing out with Escape leaves
+     * the radius as it was.
+     */
+    private async askRadius() {
+        const controller = new AsyncController();
+        this.disposeStack.add(controller);
+
+        const radius = await promptForValue<number>({
+            controller,
+            statusTip: "prompt.fillet.radius",
+            defaultAnswer: UnitSetup.formatLength(this.radius),
+            parse: (text) => {
+                const parsed = UnitSetup.tryParseLength(text);
+                // Zero is a real answer - it is how a sharp corner is asked for - so
+                // only a negative or unreadable radius is refused.
+                if (parsed === undefined || Number.isNaN(parsed) || parsed < 0) {
+                    return Result.err<I18nKeys>("error.input.invalidNumber");
+                }
+                return Result.ok(parsed);
+            },
+        });
+
+        if (radius !== undefined) this.radius = radius;
+        // Whether it was answered or backed out of, the selection prompt is what the
+        // user is looking at again - so it republishes its own tip and options.
+        PubSub.default.pub("refreshStepPrompt");
     }
 
     protected override applyToBody(shape: IShape, edgeIndexes: number[]): Result<IShape> {

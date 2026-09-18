@@ -13,6 +13,7 @@ import {
     type ShapeNode,
     type ShapeType,
     ShapeTypes,
+    type StepOption,
     Transaction,
     type VisualShapeData,
 } from "@draftworks/core";
@@ -273,12 +274,24 @@ export abstract class EdgeCornerCommand extends MultiStepCommand {
         return parent.shapeType !== ShapeTypes.edge && parent.isPartner(firstParent);
     }
 
+    /**
+     * The settings this command offers at its selection prompt, AutoCAD-style:
+     * `FILLET Select first object or [Radius]:`. Nothing by default - a subclass with a
+     * setting worth changing mid-command overrides this.
+     */
+    protected selectionOptions(): StepOption[] {
+        return [];
+    }
+
     protected override getSteps() {
         return [
             new SelectShapeStep(ShapeTypes.edge, "prompt.select.edges", {
                 multiple: true,
                 shapeFilter: this._edgeFilter,
                 canFinish: this._canFinish,
+                // A provider, not a snapshot: the radius shown between the brackets has
+                // to be the radius now, including one just typed at this same prompt.
+                stepOptions: () => this.selectionOptions(),
             }),
         ];
     }

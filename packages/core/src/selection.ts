@@ -3,6 +3,7 @@ import type { I18nKeys } from "./i18n";
 import type { INode, VisualNode } from "./model";
 import type { INodeFilter, IShapeFilter } from "./selectionFilter";
 import type { ShapeType } from "./shape";
+import type { StepOptions } from "./snap";
 import type { CursorType, IEventHandler, VisualShapeData, VisualState } from "./visual";
 
 export interface PickShapeOptions {
@@ -14,6 +15,11 @@ export interface PickShapeOptions {
     highlightState?: VisualState;
     /** In multi mode, finish the pick automatically once this returns true. */
     canFinish?: (selected: VisualShapeData[]) => boolean;
+    /**
+     * The prompt's bracketed alternatives, so a letter typed during the pick can choose
+     * one - the command line half of what the status bar is already showing.
+     */
+    stepOptions?: StepOptions;
 }
 
 export interface PickNodeOptions {

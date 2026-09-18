@@ -585,6 +585,7 @@ export default {
         "prompt.circle.firstDiameterPoint": "Specify first end point of circle's diameter",
         "prompt.circle.firstPoint": "Specify first point on circle",
         "prompt.circle.radius": "Specify radius of circle",
+        "prompt.fillet.radius": "Specify fillet radius",
         "prompt.circle.secondDiameterPoint": "Specify second end point of circle's diameter",
         "prompt.circle.secondPoint": "Specify second point on circle",
         "prompt.circle.thirdPoint": "Specify third point on circle",

@@ -1,10 +1,10 @@
 import type { IDocument } from "../document";
-import type { AsyncController } from "../foundation";
+import { type AsyncController, PubSub } from "../foundation";
 import type { I18nKeys } from "../i18n";
 import type { ShapeNode } from "../model";
 import type { INodeFilter, IShapeFilter } from "../selectionFilter";
 import { type ShapeType, ShapeTypeUtils } from "../shape";
-import type { SnapResult } from "../snap";
+import { resolveStepOptions, type SnapResult, type StepOptions } from "../snap";
 import type { VisualShapeData, VisualState } from "../visual";
 import type { IStep } from "./step";
 
@@ -19,6 +19,16 @@ export interface SelectShapeOptions {
     canFinish?: (selected: VisualShapeData[]) => boolean;
     beforeSelection?: () => void;
     afterSelection?: () => void;
+    /**
+     * The bracketed alternatives this prompt offers, exactly as a point step's are:
+     * `FILLET Select first object or [Radius]:`.
+     *
+     * A selection prompt is still a prompt, and AutoCAD offers settings at plenty of
+     * them. Without this a command like Fillet can only put its radius in the ribbon's
+     * property panel, so the status bar says one thing, the command line takes another,
+     * and typing `R` at the prompt does nothing at all.
+     */
+    stepOptions?: StepOptions;
 }
 
 export interface SelectNodeOptions {
@@ -40,7 +50,18 @@ export abstract class SelectStep implements IStep {
         }
 
         this.options?.beforeSelection?.();
+        // Re-derived rather than published once, for the same reason a point step does
+        // it: an option that reports a value - Fillet's `[Radius]` - has to say the new
+        // one the moment it changes, wherever it was changed from.
+        const refresh = () => {
+            PubSub.default.pub("showStepOptions", resolveStepOptions(this.options?.stepOptions));
+        };
+        PubSub.default.sub("refreshStepPrompt", refresh);
+        refresh();
+
         return Promise.try(this.select.bind(this), document, controller).finally(() => {
+            PubSub.default.remove("refreshStepPrompt", refresh);
+            PubSub.default.pub("clearStepOptions");
             this.options?.afterSelection?.();
         });
     }
@@ -58,6 +79,7 @@ export class SelectShapeStep extends SelectStep {
             selectedState: this.options?.selectedState,
             highlightState: this.options?.highlightState,
             canFinish: this.options?.canFinish,
+            stepOptions: this.options?.stepOptions,
         });
         if (shapes.length === 0) return undefined;
         return {

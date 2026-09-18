@@ -1,5 +1,6 @@
 import type { IDocument } from "../document";
 import type { AsyncController } from "../foundation";
+import { matchStepOption, type StepOptions } from "../snap";
 import { type IEventHandler, type IView, type RectSelectMode, rectSelectMode } from "../visual";
 
 const MOUSE_MIDDLE = 4;
@@ -46,6 +47,16 @@ export abstract class SelectionHandler implements IEventHandler {
     protected showRect = true;
     protected mouse = { isDown: false, x: 0, y: 0 };
     protected readonly pointerEventMap: Map<number, PointerEvent> = new Map();
+
+    /**
+     * The bracketed alternatives this prompt offers, so a letter typed during the pick
+     * chooses one - `R` at Fillet's `Select first object or [Radius]:`.
+     *
+     * A selection prompt used to take no typed input at all, which left a command with
+     * a setting able to show it on the status bar but with no way to answer there. See
+     * SelectShapeOptions.stepOptions.
+     */
+    stepOptions?: StepOptions;
 
     isEnabled = true;
 
@@ -188,6 +199,8 @@ export abstract class SelectionHandler implements IEventHandler {
     }
 
     keyDown(view: IView, event: KeyboardEvent): void {
+        if (this.handleOptionKey(event)) return;
+
         if (event.key === "Escape") {
             this.controller ? this.controller.cancel() : this.clearSelected(view.document.visual.document);
             this.cleanHighlights();
@@ -203,5 +216,23 @@ export abstract class SelectionHandler implements IEventHandler {
             event.preventDefault();
             this.highlightNext(view);
         }
+    }
+
+    /**
+     * A single letter naming one of the prompt's options runs it, the way it does at a
+     * point prompt. Only a letter this prompt actually offers is taken, so every other
+     * key keeps whatever meaning it had - the selection keys above, and the hotkeys
+     * beyond them.
+     */
+    private handleOptionKey(event: KeyboardEvent): boolean {
+        if (event.key.length !== 1 || !/[a-z]/i.test(event.key)) return false;
+
+        const option = matchStepOption(this.stepOptions, event.key);
+        if (!option) return false;
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        option.onSelect();
+        return true;
     }
 }
