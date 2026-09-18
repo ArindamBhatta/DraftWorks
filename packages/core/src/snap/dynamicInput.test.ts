@@ -19,6 +19,7 @@ import {
     polarOf,
     protractorSegments,
     readingOf,
+    rectDimensionAnchors,
 } from "./dynamicInput";
 
 const origin = XYZ.zero;
@@ -325,4 +326,47 @@ test("a protractor with no radius draws nothing", () => {
     // The caller floors the radius, but a degenerate view scale could still reach zero -
     // and a zero-radius arc is a pile of coincident points, not a hint.
     expect(protractorSegments(origin, 45, Plane.XY, 0)).toHaveLength(0);
+});
+
+// A rectangle is answered as two lengths along the axes - `@10,6` - so it gets a
+// dimension along each side rather than one across the diagonal, which would be
+// measuring a distance nobody typed.
+
+test("a rectangle dimensions its width and its height, not its diagonal", () => {
+    const sides = rectDimensionAnchors(origin, at(10, 6), Plane.XY);
+
+    // The width runs along x from the first corner, the height along y.
+    expect(sides.width![0].isEqualTo(origin)).toBe(true);
+    expect(sides.width![1].isEqualTo(at(10, 0))).toBe(true);
+    expect(sides.height![0].isEqualTo(origin)).toBe(true);
+    expect(sides.height![1].isEqualTo(at(0, 6))).toBe(true);
+});
+
+test("each side measures its own length, whichever way the rectangle is dragged", () => {
+    // Dragged down and to the left, the sides still measure 10 and 6 - the sign says
+    // which way it went, and the box shows the length either way.
+    const sides = rectDimensionAnchors(origin, at(-10, -6), Plane.XY);
+
+    expect(sides.width![1].distanceTo(origin)).toBeCloseTo(10);
+    expect(sides.height![1].distanceTo(origin)).toBeCloseTo(6);
+});
+
+test("a side with no length yet has no dimension to hang a figure on", () => {
+    // Dragged straight along x: there is no height to measure, so that box waits at the
+    // crosshair rather than sitting on a line of no length.
+    const flat = rectDimensionAnchors(origin, at(10, 0), Plane.XY);
+    expect(flat.width).toBeDefined();
+    expect(flat.height).toBeUndefined();
+
+    const upright = rectDimensionAnchors(origin, at(0, 6), Plane.XY);
+    expect(upright.width).toBeUndefined();
+    expect(upright.height).toBeDefined();
+});
+
+test("the sides are measured along the plane's axes, not the world's", () => {
+    const sides = rectDimensionAnchors(origin, origin.add(Plane.ZX.xvec.multiply(8)), Plane.ZX);
+
+    expect(sides.width![1].distanceTo(origin)).toBeCloseTo(8);
+    // Nothing leaves the plane the rectangle is being drawn on.
+    expect(sides.width![1].sub(origin).dot(Plane.ZX.normal)).toBeCloseTo(0);
 });

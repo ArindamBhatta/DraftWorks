@@ -89,6 +89,19 @@ export interface DimensionAnchor {
 }
 
 /**
+ * Where each of the dynamic input boxes goes.
+ *
+ * A polar prompt has one dimension to sit on - the segment's own length - and the angle
+ * stays at the crosshair. A cartesian one has two, the rectangle's width and its height,
+ * and each box belongs on the side it measures. Either may be absent when that side has
+ * no length yet, and the box then waits at the crosshair.
+ */
+export interface DimensionAnchors {
+    first?: DimensionAnchor;
+    second?: DimensionAnchor;
+}
+
+/**
  * The dimension guide: the segment shifted sideways by `gap`, to be drawn parallel to
  * the line being measured with the length written on it.
  *
@@ -130,6 +143,34 @@ export function dimensionGuideSegments(
     if (!guide) return undefined;
 
     return [guide, [start, guide[0]], [end, guide[1]]];
+}
+
+/**
+ * The two sides of the rectangle `refPoint` and `corner` span, each as its own
+ * dimension: the width along the plane's x axis and the height along its y.
+ *
+ * A rectangle is answered as two lengths along the axes rather than as a distance at an
+ * angle - `@10,6` - so one dimension line across the diagonal would be measuring
+ * something nobody typed. These are the two the boxes hold.
+ *
+ * Each runs outwards from the corner it belongs to, so the pair meet at `refPoint` and
+ * frame the rectangle rather than crossing it. A side of no length gets no dimension:
+ * there is nothing to measure and nowhere to hang the figure.
+ */
+export function rectDimensionAnchors(
+    refPoint: XYZ,
+    corner: XYZ,
+    plane: Plane,
+): { width?: [XYZ, XYZ]; height?: [XYZ, XYZ] } {
+    const { dx, dy } = cartesianOf(refPoint, corner, plane);
+    // The two other corners of the rectangle, which are where each side ends.
+    const alongX = refPoint.add(plane.xvec.multiply(dx));
+    const alongY = refPoint.add(plane.yvec.multiply(dy));
+
+    return {
+        width: Math.abs(dx) > 0 ? [refPoint, alongX] : undefined,
+        height: Math.abs(dy) > 0 ? [refPoint, alongY] : undefined,
+    };
 }
 
 /** Segments in a full turn of the protractor arc - its smoothness at any sweep. */

@@ -19,7 +19,10 @@ export class Flyout extends HTMLElement {
     private _tip: HTMLElement | undefined;
     private _dynamicInput: DynamicInput | undefined;
 
-    constructor(private readonly dimensionHost?: DimensionHost) {
+    constructor(
+        private readonly dimensionHost?: DimensionHost,
+        private readonly secondHost?: DimensionHost,
+    ) {
         super();
         this.className = style.root;
     }
@@ -51,7 +54,7 @@ export class Flyout extends HTMLElement {
      */
     private readonly showDynamicInput = (state: DynamicInputState) => {
         if (this._dynamicInput === undefined) {
-            this._dynamicInput = new DynamicInput(this.dimensionHost);
+            this._dynamicInput = new DynamicInput(this.dimensionHost, this.secondHost);
             // Ahead of the tip, so the boxes sit closest to the crosshair.
             this.prepend(this._dynamicInput);
         }

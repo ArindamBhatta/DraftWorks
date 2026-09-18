@@ -14,6 +14,8 @@ export class Viewport extends HTMLElement {
      * it - the flyout is moved to the pointer on every move.
      */
     private readonly _dimensionHost: DimensionHost;
+    /** The second box's own line - a rectangle's height, beside the width's. */
+    private readonly _secondDimensionHost: DimensionHost;
     private readonly _eventCaches: [keyof HTMLElementEventMap, (e: any) => void][] = [];
 
     constructor(
@@ -22,10 +24,11 @@ export class Viewport extends HTMLElement {
     ) {
         super();
         this.className = style.root;
-        this._dimensionHost = new DimensionHost();
+        this._dimensionHost = new DimensionHost("first");
+        this._secondDimensionHost = new DimensionHost("second");
         // Handed over rather than looked up: the viewport builds both, so the flyout
         // never has to go hunting through the DOM for where to send its field.
-        this._flyout = new Flyout(this._dimensionHost);
+        this._flyout = new Flyout(this._dimensionHost, this._secondDimensionHost);
         this.render();
         view.setDom(this);
     }
@@ -122,12 +125,14 @@ export class Viewport extends HTMLElement {
         this.initEvent();
         this.appendChild(this._flyout);
         this.appendChild(this._dimensionHost);
+        this.appendChild(this._secondDimensionHost);
     }
 
     disconnectedCallback() {
         this.removeEvents();
         this._flyout.remove();
         this._dimensionHost.remove();
+        this._secondDimensionHost.remove();
     }
 
     dispose() {

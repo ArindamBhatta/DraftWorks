@@ -13,6 +13,7 @@ import {
 } from "../../visual";
 import {
     applyDynamicLocks,
+    type DimensionAnchors,
     type DynamicInputLocks,
     dimensionGuideLine,
     dimensionGuideSegments,
@@ -20,6 +21,7 @@ import {
     polarOf,
     protractorSegments,
     readingOf,
+    rectDimensionAnchors,
 } from "../dynamicInput";
 import {
     hasStepOptions,
@@ -211,32 +213,70 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
     }
 
     /**
-     * Sends the distance box out to the dimension guide - the second line running
-     * parallel to the one being drawn.
+     * Sends the dimension boxes out to the guides they measure along.
      *
-     * The length belongs beside the geometry it measures, not at the crosshair where it
-     * covers whatever the line is being drawn against. So the box rides the guide and
-     * only the angle stays at the cursor, which is how AutoCAD splits the pair.
+     * A length belongs beside the geometry it measures, not at the crosshair where it
+     * covers whatever is being drawn against. A polar prompt has one such length - the
+     * segment's own - and its angle stays at the cursor, which is how AutoCAD splits
+     * that pair. A cartesian prompt has two, a rectangle's width and its height, and
+     * each box goes on the side it is measuring.
      *
-     * A segment too short to dimension sends the box home rather than putting it on a
+     * A side too short to dimension sends its box home rather than putting it on a
      * guide collapsed onto its own start point.
      */
     private moveDistanceInput(start: XYZ, end: XYZ, distance: number) {
         const view = this._snaped?.view ?? this.document.application.activeView;
         const plane = this.dynamicInputPlane();
-        if (!view || !plane || distance <= 0) {
+        if (!view || !plane) {
             this.restoreDistanceInput();
             return;
         }
 
-        const guide = this.dimensionGuide(view, plane, start, end);
-        if (!guide) {
+        const anchors =
+            this.data.dynamicInputMode === "cartesian"
+                ? this.cartesianAnchors(view, plane, start, end)
+                : this.polarAnchors(view, plane, start, end, distance);
+
+        if (!anchors.first && !anchors.second) {
             this.restoreDistanceInput();
             return;
         }
 
         this._distanceInputMoved = true;
-        PubSub.default.pub("moveDistanceInput", { start: guide[0], end: guide[1] }, view);
+        PubSub.default.pub("moveDistanceInput", anchors, view);
+    }
+
+    /** One guide beside the segment; the angle box stays at the crosshair. */
+    private polarAnchors(
+        view: IView,
+        plane: Plane,
+        start: XYZ,
+        end: XYZ,
+        distance: number,
+    ): DimensionAnchors {
+        if (distance <= 0) return {};
+        const guide = this.dimensionGuide(view, plane, start, end);
+        return guide ? { first: { start: guide[0], end: guide[1] } } : {};
+    }
+
+    /**
+     * A guide along each side of the rectangle. Each is offset outwards from the side it
+     * measures, the way the polar one is offset from its segment, so the figures sit
+     * clear of the shape instead of inside it.
+     */
+    private cartesianAnchors(view: IView, plane: Plane, start: XYZ, end: XYZ): DimensionAnchors {
+        const scale = worldUnitsPerPixel(view);
+        if (scale <= 0) return {};
+
+        const sides = rectDimensionAnchors(start, end, plane);
+        const gap = DIMENSION_GUIDE_GAP * scale;
+        const offset = (side: [XYZ, XYZ] | undefined) => {
+            if (!side) return undefined;
+            const guide = dimensionGuideLine(side[0], side[1], plane, gap);
+            return guide ? { start: guide[0], end: guide[1] } : undefined;
+        };
+
+        return { first: offset(sides.width), second: offset(sides.height) };
     }
 
     /**
@@ -272,13 +312,30 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
         const scale = worldUnitsPerPixel(view);
         if (scale <= 0) return [];
 
-        const segments = [
-            ...(dimensionGuideSegments(refPoint, point, plane, DIMENSION_GUIDE_GAP * scale) ?? []),
-            ...this.protractorFor(refPoint, point, plane, scale),
-        ];
+        const gap = DIMENSION_GUIDE_GAP * scale;
+        // A cartesian prompt is answered as two lengths along the axes, so it gets a
+        // dimension along each side rather than one across the diagonal - which would be
+        // measuring a distance nobody typed.
+        const guides =
+            this.data.dynamicInputMode === "cartesian"
+                ? this.rectGuideSegments(refPoint, point, plane, gap)
+                : (dimensionGuideSegments(refPoint, point, plane, gap) ?? []);
+
+        const segments = [...guides, ...this.protractorFor(refPoint, point, plane, scale)];
 
         return segments.map(([from, to]) =>
             MeshDataUtils.createEdgeMesh(from, to, VisualConfig.temporaryEdgeColor, "dash"),
+        );
+    }
+
+    /**
+     * A dimension along each side of the rectangle, with its ticks - the two lengths a
+     * cartesian prompt is actually asking for.
+     */
+    private rectGuideSegments(refPoint: XYZ, point: XYZ, plane: Plane, gap: number): [XYZ, XYZ][] {
+        const sides = rectDimensionAnchors(refPoint, point, plane);
+        return [sides.width, sides.height].flatMap((side) =>
+            side ? (dimensionGuideSegments(side[0], side[1], plane, gap) ?? []) : [],
         );
     }
 

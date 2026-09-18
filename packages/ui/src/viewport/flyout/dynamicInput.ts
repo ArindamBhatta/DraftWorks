@@ -64,7 +64,10 @@ export class DynamicInput extends HTMLElement implements IDisposable {
      */
     private hasDimension = false;
 
-    constructor(private readonly dimensionHost?: DimensionHost) {
+    constructor(
+        private readonly dimensionHost?: DimensionHost,
+        private readonly secondHost?: DimensionHost,
+    ) {
         super();
         this.className = style.panel;
 
@@ -94,7 +97,9 @@ export class DynamicInput extends HTMLElement implements IDisposable {
         // The field is a child of the host, not of this element, so removing the widget
         // would leave it behind on screen with nothing driving it. Take it back first.
         this.prepend(this.firstField);
+        this.append(this.secondField);
         this.dimensionHost?.setOccupied(false);
+        this.secondHost?.setOccupied(false);
     }
 
     private newBox(which: Field) {
@@ -136,37 +141,51 @@ export class DynamicInput extends HTMLElement implements IDisposable {
         this.firstLock.textContent = this.pinned.first ? "\u{1F512}" : "";
         this.secondLock.textContent = this.pinned.second ? "\u{1F512}" : "";
 
-        this.placeFirstField();
+        this.placeFields();
     };
 
     /**
-     * Sends the distance field out to the dimension line, or brings it home.
+     * Sends each field out to the line it measures, or brings it home.
      *
-     * Only a polar pick has a distance to dimension - the cartesian pair are two
-     * lengths along the axes, neither of which is the length of the segment - so X and
-     * Y stay together at the crosshair where the answer is typed as a pair.
+     * A polar pick dimensions one thing - the segment's length - so the distance box
+     * goes out and the angle stays at the crosshair, which is how AutoCAD splits that
+     * pair. A cartesian pick dimensions two, the rectangle's width and its height, and
+     * both boxes go out to their own sides.
      *
-     * The element is moved rather than copied. A second box mirroring the first would
+     * The elements are moved rather than copied. A second box mirroring the first would
      * be two inputs holding one value, and every keystroke would have to be forwarded
      * between them; moving it keeps one field, and an element carries its focus,
      * selection and half-typed text across a re-parent.
      */
-    private placeFirstField() {
-        const host = this.dimensionHost;
-        if (!host) return;
+    private placeFields() {
+        this.placeField("first", this.firstField, this.dimensionHost);
+        // The angle has no line of its own to sit on, so it stays at the crosshair; only
+        // a cartesian prompt's second box measures a side.
+        const secondGoesOut = this.mode === "cartesian";
+        this.placeField("second", this.secondField, secondGoesOut ? this.secondHost : undefined);
+    }
 
-        // A pick with no guide to sit on keeps the field at the crosshair, however
-        // polar the prompt is - see bringDistanceHome.
-        const onDimension = this.mode === "polar" && this.hasDimension;
+    private placeField(which: Field, field: HTMLElement, host: DimensionHost | undefined) {
+        if (!host) {
+            // No host for this field in this mode - make sure it is at the crosshair.
+            if (field.parentElement !== this) this.append(field);
+            return;
+        }
+
+        // A pick with no guide to sit on keeps the field at the crosshair - a side of no
+        // length yet has no line to hang a figure on. See bringDistanceHome.
+        const onDimension = this.hasDimension && host.hasAnchor;
         const parent = onDimension ? host : this;
-        if (this.firstField.parentElement === parent) return;
-
-        // Back into its original slot, ahead of the angle field, so the pair reads in
-        // the order it is typed.
-        if (onDimension) {
-            host.append(this.firstField);
-        } else {
-            this.prepend(this.firstField);
+        if (field.parentElement !== parent) {
+            if (onDimension) {
+                host.append(field);
+            } else if (which === "first") {
+                // Back into its original slot, ahead of the other field, so the pair
+                // reads in the order it is typed.
+                this.prepend(field);
+            } else {
+                this.append(field);
+            }
         }
         host.setOccupied(onDimension);
     }
@@ -178,13 +197,13 @@ export class DynamicInput extends HTMLElement implements IDisposable {
      */
     readonly bringDistanceHome = () => {
         this.hasDimension = false;
-        this.placeFirstField();
+        this.placeFields();
     };
 
     /** The counterpart: a guide exists, so the distance box can go and sit on it. */
     readonly sendDistanceToDimension = () => {
         this.hasDimension = true;
-        this.placeFirstField();
+        this.placeFields();
     };
 
     private readingText(state: DynamicInputState): [string, string] {
