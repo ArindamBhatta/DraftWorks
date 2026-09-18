@@ -1,0 +1,17 @@
+/*
+ * Where the distance field goes while it is riding the dimension line. It is a
+ * position only - the field keeps its own look from dynamicInput.module.css, so the
+ * two boxes stay visibly one pair however far apart they are put.
+ */
+.host {
+    position: absolute;
+    /* Anchored on the midpoint of the guide, so the box sits centred on the line the
+       way a dimension figure sits on its own dimension line. */
+    transform: translate(-50%, -50%);
+    display: flex;
+    z-index: 889;
+}
+
+.hidden {
+    display: none;
+}

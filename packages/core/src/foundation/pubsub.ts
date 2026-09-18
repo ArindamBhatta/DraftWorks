@@ -29,7 +29,7 @@ import type { IDocument } from "../document";
 import type { I18nKeys } from "../i18n";
 import type { Material } from "../material";
 import type { INode } from "../model";
-import type { DynamicInputState, StepOption, StepOptionsPrompt } from "../snap";
+import type { DimensionAnchor, DynamicInputState, StepOption, StepOptionsPrompt } from "../snap";
 import type { DialogButton, FloatPanelOptions, SelectionCycleOptions } from "../ui";
 import type { CursorType, IView } from "../visual";
 import type { AsyncController } from "./asyncController";
@@ -42,6 +42,7 @@ export interface PubSubEventMap {
     clearFloatTip: () => void;
     clearInput: () => void;
     clearDynamicInput: () => void;
+    restoreDistanceInput: () => void;
     clearSelectionControl: () => void;
     clearStatusBarTip: () => void;
     clearStepOptions: () => void;
@@ -86,6 +87,13 @@ export interface PubSubEventMap {
      * layer actually settled on rather than the raw cursor.
      */
     showDynamicInput: (state: DynamicInputState) => void;
+    /**
+     * "The distance box belongs here" - the dimension guide the box rides while a
+     * segment is being dragged out. Published with world points and the view rather
+     * than screen coordinates, so the box re-projects itself and stays on the line
+     * while the view pans or zooms under it.
+     */
+    moveDistanceInput: (anchor: DimensionAnchor, view: IView) => void;
     /**
      * "The user has started typing at the crosshair" - focus the distance box and
      * seed it with `text`. Keeps the first keystroke from being swallowed, the same

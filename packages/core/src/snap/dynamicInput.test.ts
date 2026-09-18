@@ -10,11 +10,14 @@ import { Plane, XYZ } from "../math";
 import {
     applyDynamicLocks,
     cartesianOf,
+    dimensionGuideLine,
+    dimensionGuideSegments,
     hasAnyLock,
     normalizeAngle,
     pointFromCartesian,
     pointFromPolar,
     polarOf,
+    protractorSegments,
     readingOf,
 } from "./dynamicInput";
 
@@ -174,4 +177,152 @@ test("a cartesian lock decides the answer even if a polar one is left over", () 
     const result = applyDynamicLocks(origin, at(3, 4), { dx: 10, distance: 99 }, Plane.XY);
     expect(result.x).toBeCloseTo(10);
     expect(result.y).toBeCloseTo(4);
+});
+
+// The dimension guide - the second, parallel line the length is written on. A sign
+// error here puts the guide on the wrong side, and a flip puts it on a different side
+// depending on which way the user happens to be drawing.
+
+test("the guide runs parallel to the segment, offset by the gap", () => {
+    const guide = dimensionGuideLine(origin, at(10, 0), Plane.XY, 2)!;
+
+    // Same direction and length as the segment it measures.
+    expect(guide[1].sub(guide[0]).length()).toBeCloseTo(10);
+    // Shifted perpendicular, so both ends move by the gap and neither along the line.
+    expect(guide[0].x).toBeCloseTo(0);
+    expect(guide[1].x).toBeCloseTo(10);
+    expect(Math.abs(guide[0].y)).toBeCloseTo(2);
+    expect(guide[0].y).toBeCloseTo(guide[1].y);
+});
+
+test("the guide keeps to one side however the segment is pointing", () => {
+    // Drawing right then drawing left must not put the guide above the line one moment
+    // and below it the next - it is the same side of the direction of travel both times.
+    const rightward = dimensionGuideLine(origin, at(10, 0), Plane.XY, 2)!;
+    const leftward = dimensionGuideLine(origin, at(-10, 0), Plane.XY, 2)!;
+
+    expect(Math.sign(rightward[0].y)).toBe(-Math.sign(leftward[0].y));
+});
+
+test("the gap is measured from the segment, not from the origin", () => {
+    const guide = dimensionGuideLine(at(5, 5), at(15, 5), Plane.XY, 3)!;
+
+    expect(guide[0].x).toBeCloseTo(5);
+    expect(guide[1].x).toBeCloseTo(15);
+    expect(Math.abs(guide[0].y - 5)).toBeCloseTo(3);
+});
+
+test("the guide is offset in the plane, not the world", () => {
+    // On ZX the offset has to leave the plane's own normal alone, or the guide floats
+    // off the drawing it belongs to.
+    const guide = dimensionGuideLine(origin, origin.add(Plane.ZX.xvec.multiply(10)), Plane.ZX, 2)!;
+
+    expect(guide[0].sub(origin).dot(Plane.ZX.normal)).toBeCloseTo(0);
+    expect(guide[1].sub(guide[0]).length()).toBeCloseTo(10);
+});
+
+test("a segment with no length has no guide", () => {
+    // Nothing to be parallel to, so there is nothing to draw - the caller falls back to
+    // showing no dimension at all rather than a zero-length line at an arbitrary angle.
+    expect(dimensionGuideLine(origin, origin, Plane.XY, 2)).toBeUndefined();
+});
+
+test("the guide comes with ticks closing it onto the measured line", () => {
+    const segments = dimensionGuideSegments(origin, at(10, 0), Plane.XY, 2)!;
+
+    // The guide itself, plus one tick at each end.
+    expect(segments).toHaveLength(3);
+
+    const [guide, startTick, endTick] = segments;
+    // Each tick spans the gap, from the real line's endpoint out to the guide's.
+    expect(startTick[0].isEqualTo(origin)).toBe(true);
+    expect(startTick[1].isEqualTo(guide[0])).toBe(true);
+    expect(endTick[0].isEqualTo(at(10, 0))).toBe(true);
+    expect(endTick[1].isEqualTo(guide[1])).toBe(true);
+    expect(startTick[1].sub(startTick[0]).length()).toBeCloseTo(2);
+});
+
+test("a segment with no length has no guide and so no ticks", () => {
+    expect(dimensionGuideSegments(origin, origin, Plane.XY, 2)).toBeUndefined();
+});
+
+// The protractor - the arc that says which angle, from where, and which way round.
+
+test("the protractor sweeps from zero round to the line's angle", () => {
+    const segments = protractorSegments(origin, 90, Plane.XY, 10);
+
+    // The baseline along zero, then the arc.
+    const [baseline] = segments;
+    expect(baseline[0].isEqualTo(origin)).toBe(true);
+    expect(baseline[1].isEqualTo(at(10, 0))).toBe(true);
+
+    // The arc ends on the line's own direction, at the protractor's radius.
+    const last = segments[segments.length - 1][1];
+    expect(last.x).toBeCloseTo(0);
+    expect(last.y).toBeCloseTo(10);
+});
+
+test("every point of the arc sits at the radius", () => {
+    const segments = protractorSegments(origin, 217, Plane.XY, 7);
+
+    // The baseline aside, each vertex is on the circle - a flat spot would read as a
+    // dent in the instrument.
+    for (const [, end] of segments) {
+        expect(end.distanceTo(origin)).toBeCloseTo(7);
+    }
+});
+
+test("the arc is smoother for a wider sweep, not uniformly chopped", () => {
+    const small = protractorSegments(origin, 10, Plane.XY, 10);
+    const large = protractorSegments(origin, 350, Plane.XY, 10);
+
+    // A ten degree turn does not need the segment count a near-full circle does.
+    expect(large.length).toBeGreaterThan(small.length);
+});
+
+test("a line along the zero direction gets no protractor at all", () => {
+    // ORTHO pins every segment to an axis, so this is the ordinary case. The leg on its
+    // own would be a stray line drawn straight down the geometry, saying nothing the
+    // line does not already say.
+    expect(protractorSegments(origin, 0, Plane.XY, 10)).toHaveLength(0);
+    expect(protractorSegments(origin, 180, Plane.XY, 10)).toHaveLength(0);
+    expect(protractorSegments(origin, 360, Plane.XY, 10)).toHaveLength(0);
+});
+
+test("collinear is judged by eye, not by arithmetic", () => {
+    // An angle read off a cursor position is never a whole number; these are all
+    // straight as far as anyone looking at the screen is concerned.
+    for (const angle of [0.0001, 179.999, 180.001, 359.9999]) {
+        expect(protractorSegments(origin, angle, Plane.XY, 10)).toHaveLength(0);
+    }
+});
+
+test("a line just off the axis still gets its arc", () => {
+    // The cutoff has to be tight enough that a real turn is never swallowed by it.
+    expect(protractorSegments(origin, 2, Plane.XY, 10).length).toBeGreaterThan(1);
+    expect(protractorSegments(origin, 178, Plane.XY, 10).length).toBeGreaterThan(1);
+});
+
+test("the protractor is measured in the plane, not the world", () => {
+    const segments = protractorSegments(origin, 90, Plane.ZX, 10);
+
+    for (const [, end] of segments) {
+        expect(end.sub(origin).dot(Plane.ZX.normal)).toBeCloseTo(0);
+    }
+});
+
+test("the protractor is centred on the point the angle is measured from", () => {
+    const center = at(30, -12);
+    const segments = protractorSegments(center, 45, Plane.XY, 5);
+
+    expect(segments[0][0].isEqualTo(center)).toBe(true);
+    for (const [, end] of segments) {
+        expect(end.distanceTo(center)).toBeCloseTo(5);
+    }
+});
+
+test("a protractor with no radius draws nothing", () => {
+    // The caller floors the radius, but a degenerate view scale could still reach zero -
+    // and a zero-radius arc is a pile of coincident points, not a hint.
+    expect(protractorSegments(origin, 45, Plane.XY, 0)).toHaveLength(0);
 });

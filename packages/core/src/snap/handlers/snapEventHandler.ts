@@ -4,8 +4,23 @@ import { type AsyncController, type MessageType, PubSub, Result, UnitSetup } fro
 import type { I18nKeys } from "../../i18n";
 import type { Plane, XYZ } from "../../math";
 import { MeshDataUtils, type ShapeMeshData, type ShapeType, ShapeTypes } from "../../shape";
-import { type IEventHandler, type IView, type MeshOption, screenDistance } from "../../visual";
-import { applyDynamicLocks, type DynamicInputLocks, hasAnyLock, readingOf } from "../dynamicInput";
+import {
+    type IEventHandler,
+    type IView,
+    type MeshOption,
+    screenDistance,
+    worldUnitsPerPixel,
+} from "../../visual";
+import {
+    applyDynamicLocks,
+    type DynamicInputLocks,
+    dimensionGuideLine,
+    dimensionGuideSegments,
+    hasAnyLock,
+    polarOf,
+    protractorSegments,
+    readingOf,
+} from "../dynamicInput";
 import {
     hasStepOptions,
     type ISnap,
@@ -18,6 +33,26 @@ import { snapMarkerMesh } from "../snapMarker";
 
 type SnapState = "idle" | "snapping" | "inputing" | "cancelled" | "completed";
 
+/**
+ * How far the dimension guide sits from the line being drawn, in pixels. Wide enough
+ * that the label between them clears the line at any zoom, close enough that the two
+ * still read as one measurement rather than two unrelated lines.
+ */
+const DIMENSION_GUIDE_GAP = 22;
+
+/**
+ * How far out the protractor arc is struck, as a fraction of the line's own length.
+ * Short of the cursor, so the arc reads against the line it measures without the two
+ * ends meeting in a tangle under the crosshair.
+ */
+const PROTRACTOR_RADIUS_RATIO = 0.75;
+
+/**
+ * The smallest the arc is allowed to get, in pixels. A line just begun would otherwise
+ * carry an arc too small to read the direction off at all.
+ */
+const PROTRACTOR_MIN_RADIUS = 34;
+
 export abstract class SnapEventHandler<D extends SnapData = SnapData> implements IEventHandler {
     private _tempPoint?: number;
     private _tempShapes?: number[];
@@ -27,6 +62,17 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
     /** What the user has pinned in the cursor's distance/angle boxes. */
     private _locks: DynamicInputLocks = {};
     private _dynamicShown = false;
+    private _distanceInputMoved = false;
+    /**
+     * The point snapping settled on before any lock bent it.
+     *
+     * The locks are re-applied whenever one of them changes, not only on mouse move, so
+     * the bent point cannot be what the next application reads from: with a distance
+     * pinned, bending an already-bent point is harmless, but pinning the angle after it
+     * would measure the cursor's direction off a point that has already been swung onto
+     * that direction, and the reading the user is about to lock would be the lock itself.
+     */
+    private _rawPoint?: XYZ;
 
     facePreviewOpion: MeshOption = { meshOpacity: 1 };
     isEnabled: boolean = true;
@@ -74,7 +120,9 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
         this.clearSnapPrompt();
         this.clearInput();
         this.clearDynamicInput();
+        this.restoreDistanceInput();
         this._locks = {};
+        this._rawPoint = undefined;
         this.removeTempVisuals();
         this.snaps.forEach((snap) => snap.clear());
     }
@@ -92,6 +140,9 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
 
     private updateSnapPoint(view: IView, event: PointerEvent) {
         this.setSnaped(view, event);
+        // Taken before the locks get their say, so a later lock still measures the
+        // cursor's own direction rather than one a previous lock imposed.
+        this._rawPoint = this._snaped?.point;
         this.applyDynamicInput();
         if (this._snaped) {
             this.showSnapPrompt(this._snaped);
@@ -129,6 +180,7 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
             // Genuinely not applicable here - the first point of a command, or DYN
             // switched off - so take the boxes down.
             this.clearDynamicInput();
+            this.restoreDistanceInput();
             return;
         }
         // No snap for an instant (the cursor left the view, say). Leave the boxes
@@ -137,17 +189,109 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
         if (!this._snaped?.point) return;
 
         if (hasAnyLock(this._locks)) {
-            this._snaped.point = applyDynamicLocks(refPoint, this._snaped.point, this._locks, plane);
+            this._snaped.point = applyDynamicLocks(
+                refPoint,
+                this._rawPoint ?? this._snaped.point,
+                this._locks,
+                plane,
+            );
         }
+
+        const reading = readingOf(refPoint, this._snaped.point, plane);
 
         this._dynamicShown = true;
         PubSub.default.pub("showDynamicInput", {
-            reading: readingOf(refPoint, this._snaped.point, plane),
+            reading,
             mode: this.data.dynamicInputMode ?? "polar",
             locks: this._locks,
             setLocks: this.setDynamicLocks,
             commit: this.commitDynamicInput,
         });
+        this.moveDistanceInput(refPoint, this._snaped.point, reading.distance);
+    }
+
+    /**
+     * Sends the distance box out to the dimension guide - the second line running
+     * parallel to the one being drawn.
+     *
+     * The length belongs beside the geometry it measures, not at the crosshair where it
+     * covers whatever the line is being drawn against. So the box rides the guide and
+     * only the angle stays at the cursor, which is how AutoCAD splits the pair.
+     *
+     * A segment too short to dimension sends the box home rather than putting it on a
+     * guide collapsed onto its own start point.
+     */
+    private moveDistanceInput(start: XYZ, end: XYZ, distance: number) {
+        const view = this._snaped?.view ?? this.document.application.activeView;
+        const plane = this.dynamicInputPlane();
+        if (!view || !plane || distance <= 0) {
+            this.restoreDistanceInput();
+            return;
+        }
+
+        const guide = this.dimensionGuide(view, plane, start, end);
+        if (!guide) {
+            this.restoreDistanceInput();
+            return;
+        }
+
+        this._distanceInputMoved = true;
+        PubSub.default.pub("moveDistanceInput", { start: guide[0], end: guide[1] }, view);
+    }
+
+    /**
+     * Where the guide line sits. The gap is in pixels rather than drawing units, so it
+     * stays the same distance from the line at every zoom - a world-space gap would
+     * swallow the line when zoomed out and fly off screen when zoomed in.
+     */
+    private dimensionGuide(view: IView, plane: Plane, start: XYZ, end: XYZ): [XYZ, XYZ] | undefined {
+        const scale = worldUnitsPerPixel(view);
+        if (scale <= 0) return undefined;
+        return dimensionGuideLine(start, end, plane, DIMENSION_GUIDE_GAP * scale);
+    }
+
+    /**
+     * Everything the live pick draws to explain itself: the dimension guide with its
+     * ticks, and the protractor arc reading the angle off from zero.
+     *
+     * All dashed, like the tracking lines - this is scaffolding for the pick, not edges
+     * that will survive it.
+     */
+    private dimensionGuideMeshes(): ShapeMeshData[] {
+        // There is nothing to dimension before a point has been acquired, and asking the
+        // subclass hooks first would run them on a half-built object during the base
+        // constructor - so this test comes before dynamicInputPlane(), not after.
+        const point = this._snaped?.point;
+        if (!point) return [];
+
+        const plane = this.dynamicInputPlane();
+        const refPoint = this.dynamicInputRefPoint();
+        const view = this._snaped?.view ?? this.document.application.activeView;
+        if (!plane || !refPoint || !view || refPoint.isEqualTo(point)) return [];
+
+        const scale = worldUnitsPerPixel(view);
+        if (scale <= 0) return [];
+
+        const reading = polarOf(refPoint, point, plane);
+        // Struck from the line's own length, so the arc grows with the segment and keeps
+        // reading as a measurement of it - but never so small on a line just begun that
+        // the direction cannot be read off it.
+        const radius = Math.max(reading.distance * PROTRACTOR_RADIUS_RATIO, PROTRACTOR_MIN_RADIUS * scale);
+
+        const segments = [
+            ...(dimensionGuideSegments(refPoint, point, plane, DIMENSION_GUIDE_GAP * scale) ?? []),
+            ...protractorSegments(refPoint, reading.angle, plane, radius),
+        ];
+
+        return segments.map(([from, to]) =>
+            MeshDataUtils.createEdgeMesh(from, to, VisualConfig.temporaryEdgeColor, "dash"),
+        );
+    }
+
+    private restoreDistanceInput() {
+        if (!this._distanceInputMoved) return;
+        this._distanceInputMoved = false;
+        PubSub.default.pub("restoreDistanceInput");
     }
 
     private clearDynamicInput() {
@@ -169,7 +313,15 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
 
         this._snaped = {
             view,
-            point: applyDynamicLocks(refPoint, this._snaped?.point ?? refPoint, locks, plane),
+            // From the raw cursor point for the same reason applyDynamicInput is: the
+            // live point has already been swung onto whatever was pinned first, so a
+            // second lock read off it would be reading back its own constraint.
+            point: applyDynamicLocks(
+                refPoint,
+                this._rawPoint ?? this._snaped?.point ?? refPoint,
+                locks,
+                plane,
+            ),
             shapes: [],
             type: "dynamic",
             refPoint,
@@ -181,9 +333,24 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
         this.handleSuccess();
     };
 
-    /** Pins or releases one of the two boxes without committing the point. */
+    /**
+     * Pins or releases one of the two boxes without committing the point.
+     *
+     * Typing a value moves the point as surely as moving the mouse does, so the preview
+     * has to be rebuilt here too: type 456 at a line's second point and the rubber band
+     * jumps out to 456mm along the direction the cursor is holding, the way AutoCAD's
+     * does. Without this the ghost segment sits back at the cursor while the boxes claim
+     * something else, and only catches up on the next mouse move.
+     */
     private readonly setDynamicLocks = (locks: DynamicInputLocks) => {
         this._locks = locks;
+
+        const view = this._snaped?.view ?? this.document.application.activeView;
+        if (!view) return;
+
+        this.removeTempVisuals();
+        this.applyDynamicInput();
+        this.updateVisualFeedback(view);
     };
 
     private updateVisualFeedback(view: IView) {
@@ -299,6 +466,26 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
         this._tempShapes = this.data
             .preview?.(point)
             ?.map((shape) => this.document.visual.context.displayMesh([shape], this.facePreviewOpion));
+
+        // Nothing acquired yet, so there is no segment to dimension - and this runs once
+        // from the base constructor, before a subclass has assigned the fields its own
+        // dynamicInputPlane() reads. Leaving early keeps that hook from being called on a
+        // half-built object (see SnapLengthAtPlaneHandler, whose lengthData is a
+        // parameter property and so is still undefined at that point).
+        if (!point) return;
+
+        // Drawn with the preview rather than beside it, so the guide is torn down by the
+        // same removeTempShapes that clears everything else the pick put on screen. All
+        // of it goes in one call: the protractor alone is dozens of segments, and one
+        // group per segment would be dozens of scene objects built and thrown away on
+        // every mouse move.
+        const guides = this.dimensionGuideMeshes();
+        if (guides.length > 0) {
+            this._tempShapes = [
+                ...(this._tempShapes ?? []),
+                this.document.visual.context.displayMesh(guides),
+            ];
+        }
     }
 
     /**

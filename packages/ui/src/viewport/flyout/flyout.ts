@@ -2,6 +2,7 @@
 // See LICENSE file in the project root for full license information.
 
 import { type DynamicInputState, type MessageType, PubSub } from "@draftworks/core";
+import type { DimensionHost } from "./dimensionHost";
 import { DynamicInput } from "./dynamicInput";
 import style from "./flyout.module.css";
 import { Tip } from "./tip";
@@ -18,7 +19,7 @@ export class Flyout extends HTMLElement {
     private _tip: HTMLElement | undefined;
     private _dynamicInput: DynamicInput | undefined;
 
-    constructor() {
+    constructor(private readonly dimensionHost?: DimensionHost) {
         super();
         this.className = style.root;
     }
@@ -28,6 +29,8 @@ export class Flyout extends HTMLElement {
         PubSub.default.sub("clearFloatTip", this.clearTip);
         PubSub.default.sub("showDynamicInput", this.showDynamicInput);
         PubSub.default.sub("clearDynamicInput", this.clearDynamicInput);
+        PubSub.default.sub("moveDistanceInput", this.moveDistanceInput);
+        PubSub.default.sub("restoreDistanceInput", this.restoreDistanceInput);
         PubSub.default.sub("focusDynamicInput", this.focusDynamicInput);
     }
 
@@ -36,6 +39,8 @@ export class Flyout extends HTMLElement {
         PubSub.default.remove("clearFloatTip", this.clearTip);
         PubSub.default.remove("showDynamicInput", this.showDynamicInput);
         PubSub.default.remove("clearDynamicInput", this.clearDynamicInput);
+        PubSub.default.remove("moveDistanceInput", this.moveDistanceInput);
+        PubSub.default.remove("restoreDistanceInput", this.restoreDistanceInput);
         PubSub.default.remove("focusDynamicInput", this.focusDynamicInput);
     }
 
@@ -46,7 +51,7 @@ export class Flyout extends HTMLElement {
      */
     private readonly showDynamicInput = (state: DynamicInputState) => {
         if (this._dynamicInput === undefined) {
-            this._dynamicInput = new DynamicInput();
+            this._dynamicInput = new DynamicInput(this.dimensionHost);
             // Ahead of the tip, so the boxes sit closest to the crosshair.
             this.prepend(this._dynamicInput);
         }
@@ -59,6 +64,22 @@ export class Flyout extends HTMLElement {
         this._dynamicInput.remove();
         this._dynamicInput.dispose();
         this._dynamicInput = undefined;
+    };
+
+    /**
+     * There is a dimension line now. The host has already been positioned by its own
+     * subscription; this only tells the widget its field has somewhere to go.
+     */
+    private readonly moveDistanceInput = () => {
+        this._dynamicInput?.sendDistanceToDimension();
+    };
+
+    /**
+     * The segment got too short to dimension - no guide to sit on, so the distance box
+     * comes back to the crosshair rather than hanging at a stale position.
+     */
+    private readonly restoreDistanceInput = () => {
+        this._dynamicInput?.bringDistanceHome();
     };
 
     private readonly focusDynamicInput = (text: string) => {

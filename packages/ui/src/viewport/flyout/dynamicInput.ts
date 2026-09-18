@@ -9,6 +9,7 @@ import {
     UnitSetup,
 } from "@draftworks/core";
 import { div, input, span } from "@draftworks/element";
+import type { DimensionHost } from "./dimensionHost";
 import style from "./dynamicInput.module.css";
 
 /** Which of the two boxes a keystroke is aimed at - what each holds depends on the mode. */
@@ -46,8 +47,24 @@ export class DynamicInput extends HTMLElement implements IDisposable {
     private mode: DynamicInputMode = "polar";
     /** Which boxes the user has typed into. Editing is what pins a box. */
     private pinned = { first: false, second: false };
+    /**
+     * Which pinned boxes the geometry is actually obeying.
+     *
+     * Typing is not the same as answering. `1000` passes through `1`, `10` and `100` on
+     * the way, and a point that obeyed each of those in turn would collapse the line to
+     * a millimetre under the cursor and grow it back - the drawing jumping about while
+     * the user is still mid-number, and vanishing entirely at the first keystroke. So a
+     * box being edited shows what is being typed and leaves the rubber band at the
+     * cursor; only Tab or Enter hands the value to the geometry.
+     */
+    private applied = { first: false, second: false };
+    /**
+     * Whether the pick currently has a dimension line for the distance box to ride.
+     * Set by the anchor the handler publishes, cleared when it says there is none.
+     */
+    private hasDimension = false;
 
-    constructor() {
+    constructor(private readonly dimensionHost?: DimensionHost) {
         super();
         this.className = style.panel;
 
@@ -74,6 +91,10 @@ export class DynamicInput extends HTMLElement implements IDisposable {
 
     dispose() {
         this.state = undefined;
+        // The field is a child of the host, not of this element, so removing the widget
+        // would leave it behind on screen with nothing driving it. Take it back first.
+        this.prepend(this.firstField);
+        this.dimensionHost?.setOccupied(false);
     }
 
     private newBox(which: Field) {
@@ -98,6 +119,7 @@ export class DynamicInput extends HTMLElement implements IDisposable {
             // one still means anything.
             this.mode = state.mode;
             this.pinned = { first: false, second: false };
+            this.applied = { first: false, second: false };
             this.applyMode();
         }
 
@@ -113,6 +135,56 @@ export class DynamicInput extends HTMLElement implements IDisposable {
         this.secondField.classList.toggle(style.locked, this.pinned.second);
         this.firstLock.textContent = this.pinned.first ? "\u{1F512}" : "";
         this.secondLock.textContent = this.pinned.second ? "\u{1F512}" : "";
+
+        this.placeFirstField();
+    };
+
+    /**
+     * Sends the distance field out to the dimension line, or brings it home.
+     *
+     * Only a polar pick has a distance to dimension - the cartesian pair are two
+     * lengths along the axes, neither of which is the length of the segment - so X and
+     * Y stay together at the crosshair where the answer is typed as a pair.
+     *
+     * The element is moved rather than copied. A second box mirroring the first would
+     * be two inputs holding one value, and every keystroke would have to be forwarded
+     * between them; moving it keeps one field, and an element carries its focus,
+     * selection and half-typed text across a re-parent.
+     */
+    private placeFirstField() {
+        const host = this.dimensionHost;
+        if (!host) return;
+
+        // A pick with no guide to sit on keeps the field at the crosshair, however
+        // polar the prompt is - see bringDistanceHome.
+        const onDimension = this.mode === "polar" && this.hasDimension;
+        const parent = onDimension ? host : this;
+        if (this.firstField.parentElement === parent) return;
+
+        // Back into its original slot, ahead of the angle field, so the pair reads in
+        // the order it is typed.
+        if (onDimension) {
+            host.append(this.firstField);
+        } else {
+            this.prepend(this.firstField);
+        }
+        host.setOccupied(onDimension);
+    }
+
+    /**
+     * Called when the pick has no dimension line to offer - a segment of no length, so
+     * nothing to measure or to hang the box on. The field waits at the crosshair and
+     * goes back out on the next reading that does have a guide.
+     */
+    readonly bringDistanceHome = () => {
+        this.hasDimension = false;
+        this.placeFirstField();
+    };
+
+    /** The counterpart: a guide exists, so the distance box can go and sit on it. */
+    readonly sendDistanceToDimension = () => {
+        this.hasDimension = true;
+        this.placeFirstField();
     };
 
     private readingText(state: DynamicInputState): [string, string] {
@@ -141,20 +213,32 @@ export class DynamicInput extends HTMLElement implements IDisposable {
         this.pin("first");
     };
 
+    /**
+     * Marks a box as being typed into. The value is held, not yet obeyed - see
+     * `applied`; `commitBox` is what hands it to the geometry.
+     */
     private pin(which: Field) {
         this.pinned[which] = true;
         this.state?.setLocks(this.readLocks());
         this.update(this.state!);
     }
 
+    /** Tab or Enter: the value in this box is an answer now, so the point obeys it. */
+    private commitBox(which: Field) {
+        this.pinned[which] = true;
+        this.applied[which] = true;
+        this.state?.setLocks(this.readLocks());
+        this.update(this.state!);
+    }
+
     /**
-     * What the boxes currently constrain. A box the user never touched is not a
-     * lock, and neither is one holding something unreadable - in both cases the
-     * value keeps coming from the cursor.
+     * What the boxes currently constrain. A box the user never touched is not a lock,
+     * and neither is one holding something unreadable or one still being typed into -
+     * in all three cases the value keeps coming from the cursor.
      */
     private readLocks(): DynamicInputLocks {
         const length = (which: Field, box: HTMLInputElement) =>
-            this.pinned[which] ? numberOr(UnitSetup.tryParseLength(box.value)) : undefined;
+            this.applied[which] ? numberOr(UnitSetup.tryParseLength(box.value)) : undefined;
 
         if (this.mode === "cartesian") {
             return {
@@ -164,7 +248,7 @@ export class DynamicInput extends HTMLElement implements IDisposable {
         }
         return {
             distance: length("first", this.firstBox),
-            angle: this.pinned.second ? numberOr(Number.parseFloat(this.secondBox.value)) : undefined,
+            angle: this.applied.second ? numberOr(Number.parseFloat(this.secondBox.value)) : undefined,
         };
     }
 
@@ -178,16 +262,17 @@ export class DynamicInput extends HTMLElement implements IDisposable {
         const isSeparator = e.key === "," && this.mode === "cartesian";
         if (e.key === "Tab" || isSeparator) {
             e.preventDefault();
-            // Typing a value and tabbing on pins it, which is what makes
-            // `10 Tab 45 Enter` land an exact segment.
-            this.pin(which);
+            // Tabbing on is how a typed value becomes an answer, which is what makes
+            // `10 Tab 45 Enter` land an exact segment: the distance takes hold here,
+            // and the angle follows in the box Tab moves to.
+            this.commitBox(which);
             this.moveTo(which === "first" ? "second" : "first");
             return;
         }
 
         if (e.key === "Enter") {
             e.preventDefault();
-            this.pin(which);
+            this.commitBox(which);
             this.state?.commit(this.readLocks());
             return;
         }
@@ -197,6 +282,7 @@ export class DynamicInput extends HTMLElement implements IDisposable {
             // Escape releases the boxes and hands the point back to the mouse; a
             // second Escape reaches the canvas and cancels the command itself.
             this.pinned = { first: false, second: false };
+            this.applied = { first: false, second: false };
             this.state?.setLocks({});
             this.blurBoxes();
         }
@@ -216,6 +302,7 @@ export class DynamicInput extends HTMLElement implements IDisposable {
     /** Cleared between picks, so the next segment does not inherit a stale pin. */
     readonly reset = () => {
         this.pinned = { first: false, second: false };
+        this.applied = { first: false, second: false };
         this.blurBoxes();
     };
 }

@@ -3,11 +3,17 @@
 
 import { Binding, type IEventHandler, type IView, Localize } from "@draftworks/core";
 import { div, span, svg } from "@draftworks/element";
-import { Flyout } from "./flyout";
+import { DimensionHost, Flyout } from "./flyout";
 import style from "./viewport.module.css";
 
 export class Viewport extends HTMLElement {
     private readonly _flyout: Flyout;
+    /**
+     * Where the distance box goes while it rides the dimension line. Anchored to the
+     * geometry rather than the cursor, so it sits beside the flyout instead of inside
+     * it - the flyout is moved to the pointer on every move.
+     */
+    private readonly _dimensionHost: DimensionHost;
     private readonly _eventCaches: [keyof HTMLElementEventMap, (e: any) => void][] = [];
 
     constructor(
@@ -16,7 +22,10 @@ export class Viewport extends HTMLElement {
     ) {
         super();
         this.className = style.root;
-        this._flyout = new Flyout();
+        this._dimensionHost = new DimensionHost();
+        // Handed over rather than looked up: the viewport builds both, so the flyout
+        // never has to go hunting through the DOM for where to send its field.
+        this._flyout = new Flyout(this._dimensionHost);
         this.render();
         view.setDom(this);
     }
@@ -112,11 +121,13 @@ export class Viewport extends HTMLElement {
     connectedCallback() {
         this.initEvent();
         this.appendChild(this._flyout);
+        this.appendChild(this._dimensionHost);
     }
 
     disconnectedCallback() {
         this.removeEvents();
         this._flyout.remove();
+        this._dimensionHost.remove();
     }
 
     dispose() {

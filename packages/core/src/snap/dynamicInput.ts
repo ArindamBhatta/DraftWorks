@@ -74,6 +74,128 @@ export interface DynamicInputState {
     commit: (locks: DynamicInputLocks) => void;
 }
 
+/**
+ * Where the distance box sits while a segment is being dragged out: the two ends of
+ * the dimension guide, in world space.
+ *
+ * The box rides the dimension line rather than the crosshair, the way AutoCAD's does -
+ * the length belongs beside the geometry it measures, and leaving it at the cursor
+ * puts it on top of whatever the line is being drawn against. World points rather than
+ * screen ones so the box can re-project itself and stay on the line as the view moves.
+ */
+export interface DimensionAnchor {
+    start: XYZ;
+    end: XYZ;
+}
+
+/**
+ * The dimension guide: the segment shifted sideways by `gap`, to be drawn parallel to
+ * the line being measured with the length written on it.
+ *
+ * The shift is perpendicular to the segment within the plane, and always the same way
+ * round that perpendicular, so the guide keeps to one side of the direction of travel
+ * rather than flipping across the line as the cursor swings past an axis. `gap` is a
+ * world distance; the caller scales a pixel gap by worldUnitsPerPixel to keep it the
+ * same on screen at every zoom.
+ *
+ * A segment with no length has no perpendicular to offset along, so it gets no guide.
+ */
+export function dimensionGuideLine(start: XYZ, end: XYZ, plane: Plane, gap: number): [XYZ, XYZ] | undefined {
+    const direction = end.sub(start).normalize();
+    if (!direction) return undefined;
+
+    const offset = plane.normal.cross(direction).normalize();
+    if (!offset) return undefined;
+
+    const shift = offset.multiply(gap);
+    return [start.add(shift), end.add(shift)];
+}
+
+/**
+ * The guide line plus the short ticks that tie its ends back to the line being
+ * measured, as a list of segments to draw.
+ *
+ * Without the ticks the guide reads as an unrelated second line that happens to be
+ * nearby; closing the ends is what makes the pair read as one dimension, the way it
+ * does on a finished drawing. The ticks run the whole gap, from the real line's
+ * endpoints out to the guide's, so there is nothing between the two to fall through.
+ */
+export function dimensionGuideSegments(
+    start: XYZ,
+    end: XYZ,
+    plane: Plane,
+    gap: number,
+): [XYZ, XYZ][] | undefined {
+    const guide = dimensionGuideLine(start, end, plane, gap);
+    if (!guide) return undefined;
+
+    return [guide, [start, guide[0]], [end, guide[1]]];
+}
+
+/** Segments in a full turn of the protractor arc - its smoothness at any sweep. */
+const PROTRACTOR_STEPS = 72;
+
+/**
+ * How near the zero direction a line counts as lying along it, in degrees. Below this
+ * the protractor has nothing to show that the line is not already showing.
+ */
+const COLLINEAR_TOLERANCE = 0.5;
+
+/**
+ * The protractor: the arc swept at `center` from the plane's zero direction round to
+ * the line being drawn, as a polyline, plus the zero leg it is measured against.
+ *
+ * It is the hint that makes an angle legible while it is still being chosen - the
+ * figure in the box says 140, and this says which 140, from where, and which way
+ * round. The two legs of the angle are the line itself and the zero direction, so only
+ * the zero leg is drawn: the other is already on screen, and drawing it again would
+ * lay a second line over the one being dragged.
+ *
+ * `radius` is a world distance. The caller takes it from the segment's own length, so
+ * the arc reaches out towards the cursor the way a protractor laid on the drawing
+ * would - a fixed screen radius stays a tidy badge near the start point but stops
+ * reading as a measurement of *this* line once the line is long.
+ *
+ * A line lying along the zero direction, either way round, gets nothing at all: there
+ * is no turn to describe, and the leg alone would be a stray line down the geometry.
+ */
+export function protractorSegments(
+    center: XYZ,
+    angle: number,
+    plane: Plane,
+    radius: number,
+    steps: number = PROTRACTOR_STEPS,
+): [XYZ, XYZ][] {
+    const sweep = normalizeAngle(angle);
+    if (radius <= 0) return [];
+
+    // A line already lying along the zero direction has turned through nothing, and a
+    // protractor for it would be the zero leg drawn straight down the line itself -
+    // clutter on top of the geometry rather than a hint about it. The same goes for a
+    // half turn, where the leg runs back along the line the other way. Both are exactly
+    // what ORTHO produces, so this is the common case, not a corner one.
+    //
+    // Compared with a tolerance rather than exactly: an angle derived from a cursor
+    // position is rarely a whole number, and 359.9999 is collinear by eye whatever it
+    // is arithmetically.
+    if (sweep < COLLINEAR_TOLERANCE) return [];
+    if (Math.abs(sweep - 180) < COLLINEAR_TOLERANCE) return [];
+    if (sweep > 360 - COLLINEAR_TOLERANCE) return [];
+
+    const zeroLeg: [XYZ, XYZ] = [center, pointFromPolar(center, radius, 0, plane)];
+    const segments: [XYZ, XYZ][] = [zeroLeg];
+    // Enough steps that the arc reads as curved at any sweep, without emitting a
+    // segment per degree for a turn of two.
+    const count = Math.max(2, Math.ceil((steps * sweep) / 360));
+    let previous = zeroLeg[1];
+    for (let i = 1; i <= count; i++) {
+        const next = pointFromPolar(center, radius, (sweep * i) / count, plane);
+        segments.push([previous, next]);
+        previous = next;
+    }
+    return segments;
+}
+
 /** Degrees into [0, 360), so 361 reads as 1 and -90 as 270 - AutoCAD's convention. */
 export function normalizeAngle(degrees: number): number {
     const wrapped = degrees % 360;
