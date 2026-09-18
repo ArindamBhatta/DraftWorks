@@ -151,8 +151,21 @@ export class CurveUtils {
         return circle.center !== undefined && circle.radius !== undefined;
     }
 
+    /**
+     * Whether this curve is an ILine - a line primitive, whose `direction` is a vector.
+     *
+     * The test is that `direction` is a vector rather than merely present, because an
+     * offset curve exposes a `direction()` *method*: a bare "is it defined" check
+     * accepted one and handed the caller a function where it expected an XYZ, which then
+     * failed in whatever used it as a vector, a long way from here.
+     *
+     * Note this asks what the curve *is*, not whether it runs straight. An offset of a
+     * line is straight and is not an ILine, so a caller that only needs straightness
+     * should measure it instead - see straightDirection in the fillet command.
+     */
     static isLine(curve: ICurve): curve is ILine {
-        return (curve as ILine).direction !== undefined;
+        const direction = (curve as ILine).direction;
+        return direction !== undefined && typeof direction !== "function";
     }
 
     static isTrimmed(curve: ICurve): curve is ITrimmedCurve {

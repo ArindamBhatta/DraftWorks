@@ -88,6 +88,8 @@ export class Line extends CreateCommand {
         return {
             refPoint: () => this.stepDatas[0].point!,
             dimension: Dimensions.D1D2D3,
+            // This prompt is choosing a direction, which is what the arc explains.
+            showProtractor: true,
             options: this.#runOptions,
             validator: (point: XYZ) => {
                 return this.stepDatas[0].point!.distanceTo(point) > Precision.Distance;

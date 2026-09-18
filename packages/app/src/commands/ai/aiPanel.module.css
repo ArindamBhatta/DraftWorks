@@ -61,12 +61,60 @@
     gap: 4px;
 }
 
-.request {
+/* The pencil sits outside the bubble, left of it, so it never covers the words. */
+.requestRow {
+    display: flex;
     align-self: flex-end;
+    align-items: center;
+    gap: 4px;
     max-width: 85%;
+}
+
+.request {
     padding: 5px 9px;
     border-radius: 10px;
     background-color: var(--panel-background-color, rgba(127, 127, 127, 0.16));
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/* Hidden until the row is hovered: every past message would otherwise carry a pencil,
+   and the transcript should read as a conversation rather than as a list of controls. */
+.edit {
+    flex: 0 0 auto;
+    padding: 0 4px;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    line-height: 1;
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity 0.12s;
+}
+
+.requestRow:hover .edit,
+.edit:focus-visible {
+    opacity: 0.65;
+}
+
+.edit:hover {
+    opacity: 1;
+}
+
+.editor {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.editBox {
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+    min-height: 56px;
+    padding: 6px;
+    font: inherit;
 }
 
 .label {
@@ -173,13 +221,18 @@
     gap: 6px;
 }
 
+/* Tall enough to hold a whole brief without scrolling - these prompts are sentences
+   about rooms and dimensions, not search terms. Capped so a long one grows the box
+   rather than eating the transcript above it. */
 .input {
     width: 100%;
     box-sizing: border-box;
     resize: vertical;
-    min-height: 52px;
-    padding: 6px;
+    min-height: 110px;
+    max-height: 40vh;
+    padding: 8px;
     font: inherit;
+    line-height: 1.45;
 }
 
 .actions {
@@ -193,8 +246,13 @@
     cursor: pointer;
 }
 
-.link {
+/* The first link in a row pushes itself and everything after it to the right, so the
+   buttons stay left and the quiet links stay right however many of them there are. */
+.link:not(.link ~ .link) {
     margin-left: auto;
+}
+
+.link {
     background: none;
     border: none;
     padding: 0;

@@ -80,6 +80,7 @@ export class AppBuilder {
                 Constants.RecentTable,
                 Constants.DocumentBackupTable,
                 Constants.SyncQueueTable,
+                Constants.AiChatTable,
             ]);
         });
         return this;

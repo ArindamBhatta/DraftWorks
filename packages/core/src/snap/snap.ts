@@ -123,6 +123,16 @@ export interface SnapData {
      */
     dynamicInputMode?: DynamicInputMode;
     /**
+     * Whether to draw the protractor - the arc from the zero direction round to the
+     * segment being dragged out, with the dimension guide alongside it.
+     *
+     * Off unless asked for. It explains the *direction of a segment*, which is the
+     * question LINE and PLINE are asking; a prompt picking a rectangle's far corner or
+     * a circle's centre is not laying down a direction, and an arc sweeping off its
+     * start point there is drawing an angle nobody is choosing.
+     */
+    showProtractor?: boolean;
+    /**
      * What bare Enter means here - AutoCAD's `<...>` default, as in MOVE's "Specify
      * second point or <use first point as displacement>". Return the point to finish
      * the pick with; return undefined to leave Enter its usual meaning of backing out

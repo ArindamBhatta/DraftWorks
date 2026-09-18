@@ -1,6 +1,5 @@
 import {
     AsyncController,
-    CurveUtils,
     command,
     I18n,
     type I18nKeys,
@@ -99,6 +98,34 @@ export function cornerSpan(first: number, last: number, corner: number): { start
 }
 
 /**
+ * The direction of a curve that runs straight, however it is wrapped.
+ *
+ * A plain line says so outright. An offset of a line does not - it is a Geom_OffsetCurve
+ * whose direction is a method, not a vector - but it is every bit as straight, and a line
+ * drawn with OFFSET is an ordinary thing to want a sharp corner between. So straightness
+ * is measured rather than asked about: sample the curve at three parameters and see
+ * whether the middle one lies on the chord between the other two.
+ *
+ * Undefined for anything genuinely curved, and for a curve too short to take a direction
+ * from.
+ *
+ * Exported for testing.
+ */
+export function straightDirection(curve: ICurve, first: number, last: number): XYZ | undefined {
+    const start = curve.value(first);
+    const end = curve.value(last);
+    const direction = end.sub(start).normalize();
+    if (!direction) return undefined;
+
+    // The midpoint is the most demanding single sample: on any curve that bows away from
+    // its chord, that is where it bows furthest.
+    const middle = curve.value((first + last) / 2);
+    const along = middle.sub(start).dot(direction);
+    const offChord = middle.sub(start.add(direction.multiply(along))).length();
+    return offChord <= Precision.Distance ? direction : undefined;
+}
+
+/**
  * Runs two straight edges out to where their lines cross and leaves them there, with
  * nothing between them - AutoCAD's FILLET at radius 0.
  *
@@ -108,13 +135,17 @@ export function cornerSpan(first: number, last: number, corner: number): { start
 function sharpCorner(edge1: IEdge, edge2: IEdge): Result<IEdge[]> {
     const line1 = supportCurve(edge1.curve);
     const line2 = supportCurve(edge2.curve);
-    if (!CurveUtils.isLine(line1) || !CurveUtils.isLine(line2)) {
+    // Measured from the edge's own span: an unbounded line's first/last parameters run to
+    // infinity, which no midpoint can be taken between.
+    const direction1 = straightDirection(line1, edge1.curve.firstParameter(), edge1.curve.lastParameter());
+    const direction2 = straightDirection(line2, edge2.curve.firstParameter(), edge2.curve.lastParameter());
+    if (!direction1 || !direction2) {
         return Result.err(I18n.translate("error.fillet.zeroRadiusNeedsLines"));
     }
 
     // A line curve's origin is the point at parameter 0, which is the one point on it
     // every kind of curve can be asked for.
-    const crossing = crossingParameters(line1.value(0), line1.direction, line2.value(0), line2.direction);
+    const crossing = crossingParameters(line1.value(0), direction1, line2.value(0), direction2);
     if (crossing === undefined) {
         return Result.err(I18n.translate("error.fillet.noCorner"));
     }
@@ -158,6 +189,19 @@ export class FilletCommand extends EdgeCornerCommand {
      */
     private get isSharpCorner() {
         return Math.abs(this.radius) < Precision.Distance;
+    }
+
+    // "object" rather than "line", as AutoCAD words it: a fillet rounds a corner between
+    // arcs and circles too, where a chamfer needs two straight lines.
+    protected override firstPrompt(): I18nKeys {
+        return "prompt.corner.selectFirstObject";
+    }
+
+    protected override secondPrompt(): I18nKeys {
+        const inherited = super.secondPrompt();
+        // The solid case keeps whatever the base class chose for it - only the corner
+        // wording differs between the two commands.
+        return inherited === "prompt.corner.selectSecond" ? "prompt.corner.selectSecondObject" : inherited;
     }
 
     /**

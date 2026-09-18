@@ -19,6 +19,7 @@ import {
     isTechnicalMode,
     type ParamDef,
 } from "@draftworks/generators";
+import { AiChatStore, type StoredChats } from "./aiChatStore";
 import { generatorContext } from "./aiContext";
 import style from "./aiPanel.module.css";
 import { renderPreview } from "./aiPreview";
@@ -41,6 +42,13 @@ interface ModeState {
     turns: ConversationTurn[];
     folder: FolderNode | undefined;
     greeted: boolean;
+    /**
+     * Every prompt sent from this tab, oldest first, in step with the `.entry` elements
+     * carrying `data-prompt`. Editing prompt *n* truncates both this list and the
+     * transcript to *n*, which is also how the model's `turns` get rewound - a revised
+     * question must not arrive after the answer to the question it replaces.
+     */
+    prompts: string[];
 }
 
 /**
@@ -62,16 +70,21 @@ export class AiPanel {
     readonly #draw: HTMLButtonElement;
     readonly #states = new Map<DrawingMode, ModeState>();
     readonly #tabs = new Map<DrawingMode, HTMLButtonElement>();
+    readonly #store: AiChatStore;
     #active: DrawingMode = "architectural";
     #busy = false;
+    /** The drawing whose history is loaded, so a save cannot land on a different one. */
+    #documentId: string | undefined;
 
     constructor(readonly application: IApplication) {
+        this.#store = new AiChatStore(application.storage);
         for (const mode of DRAWING_MODES) {
             this.#states.set(mode, {
                 transcript: div({ className: style.transcript }),
                 turns: [],
                 folder: undefined,
                 greeted: false,
+                prompts: [],
             });
         }
 
@@ -117,6 +130,11 @@ export class AiPanel {
                     this.#draw,
                     button({
                         className: style.link,
+                        textContent: I18n.translate("ai.clearChat"),
+                        onclick: () => void this.#clear(),
+                    }),
+                    button({
+                        className: style.link,
                         textContent: I18n.translate("ai.openSettings"),
                         onclick: () => void promptAiSetup(),
                     }),
@@ -125,6 +143,54 @@ export class AiPanel {
         );
 
         this.#activate(this.#active);
+        void this.#restore();
+    }
+
+    /**
+     * Brings back the conversation this drawing was made with.
+     *
+     * Only the prompts come back, as plain text - see `aiChatStore`. They are laid out
+     * before the greeting so a reopened panel reads top-to-bottom the way it was left,
+     * and each one is still editable, so a reload is a fine place to revise from.
+     */
+    async #restore() {
+        const id = this.application.activeView?.document?.id;
+        if (!id) return;
+        this.#documentId = id;
+
+        const stored: StoredChats = await this.#store.read(id);
+        for (const mode of DRAWING_MODES) {
+            const chat = stored[mode];
+            if (!chat?.prompts.length) continue;
+            const state = this.#states.get(mode)!;
+            state.turns = chat.turns;
+            for (const prompt of chat.prompts) this.#appendPrompt(state, prompt);
+        }
+    }
+
+    /** Saves every tab's history for the open drawing. Called after anything that changes it. */
+    #persist() {
+        const id = this.#documentId ?? this.application.activeView?.document?.id;
+        if (!id) return;
+        this.#documentId = id;
+
+        const modes: StoredChats = {};
+        for (const [mode, state] of this.#states) {
+            if (state.prompts.length) modes[mode] = { prompts: [...state.prompts], turns: state.turns };
+        }
+        void this.#store.write(id, modes);
+    }
+
+    /** Empties the active tab, on screen, in the model's history, and on disk. */
+    async #clear() {
+        if (this.#busy) return;
+        const state = this.#state;
+        state.transcript.replaceChildren();
+        state.prompts = [];
+        state.turns = [];
+        state.greeted = true;
+        this.#greet();
+        this.#persist();
     }
 
     get #state(): ModeState {
@@ -179,6 +245,115 @@ export class AiPanel {
         transcript.scrollTop = transcript.scrollHeight;
     }
 
+    /**
+     * One prompt as it was said, with the pencil that reopens it.
+     *
+     * The entry is tagged `data-prompt` so `#rewind` can count prompts and cut the
+     * transcript at one without holding a parallel array of nodes - the DOM is already
+     * the list, and one source of truth for the order is enough.
+     */
+    #appendPrompt(state: ModeState, text: string) {
+        const bubble = p({ className: style.request, textContent: text });
+        const edit = button({
+            className: style.edit,
+            title: I18n.translate("ai.editPrompt"),
+            textContent: "✎",
+            onclick: () => this.#edit(entry, bubble),
+        });
+        const entry = div({ className: style.entry }, div({ className: style.requestRow }, edit, bubble));
+        entry.setAttribute("data-prompt", "");
+
+        const { transcript } = state;
+        transcript.append(entry);
+        transcript.scrollTop = transcript.scrollHeight;
+    }
+
+    /**
+     * Swaps the bubble for a box holding the same words.
+     *
+     * Saving re-sends, which means dropping everything below: the answers under an edited
+     * prompt were replies to what it used to say, and leaving them would put a drawing in
+     * the transcript that nothing above it asks for. The model's history is rewound to the
+     * same point for the same reason. Cancel restores the bubble untouched.
+     */
+    #edit(entry: HTMLElement, bubble: HTMLElement) {
+        if (this.#busy || entry.querySelector("textarea")) return;
+        const original = bubble.textContent ?? "";
+
+        const box = textarea({
+            className: style.editBox,
+            value: original,
+            onkeydown: (e) => {
+                e.stopPropagation();
+                if (e.key === "Escape") close();
+                if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    save();
+                }
+            },
+        });
+
+        const editor = div({ className: style.editor }, box);
+        const close = () => {
+            editor.replaceWith(row);
+        };
+        const save = () => {
+            const text = box.value.trim();
+            if (!text) return;
+            if (text === original) {
+                close();
+                return;
+            }
+            const index = this.#rewind(entry);
+            if (index < 0) return;
+            void this.#send(text);
+        };
+
+        editor.append(
+            div(
+                { className: style.actions },
+                button({ textContent: I18n.translate("ai.save"), onclick: save }),
+                button({
+                    className: style.link,
+                    textContent: I18n.translate("common.cancel"),
+                    onclick: close,
+                }),
+            ),
+        );
+
+        const row = entry.firstElementChild as HTMLElement;
+        row.replaceWith(editor);
+        box.focus();
+        box.setSelectionRange(box.value.length, box.value.length);
+    }
+
+    /**
+     * Cuts the active tab back to just before `entry`, and returns where that was.
+     *
+     * The model's transcript is trimmed to the turns that preceded that prompt, counted
+     * by user turns rather than by position: a single prompt can leave a `call` turn
+     * behind it, so the two lists do not advance in step.
+     */
+    #rewind(entry: HTMLElement): number {
+        const state = this.#state;
+        const entries = [...state.transcript.querySelectorAll<HTMLElement>("[data-prompt]")];
+        const index = entries.indexOf(entry);
+        if (index < 0) return -1;
+
+        // Everything from the edited prompt down, the prompt itself included - #send
+        // re-appends it with the new words.
+        let node: Element | null = entry;
+        while (node) {
+            const next: Element | null = node.nextElementSibling;
+            node.remove();
+            node = next;
+        }
+
+        state.prompts.length = index;
+        state.turns.length = turnsBefore(state.turns, index);
+        return index;
+    }
+
     #say(className: string, text: string): HTMLElement {
         const entry = div({ className: style.entry }, p({ className, textContent: text }));
         this.#push(entry);
@@ -204,7 +379,9 @@ export class AiPanel {
             return;
         }
 
-        this.#push(div({ className: style.entry }, p({ className: style.request, textContent: text })));
+        this.#state.prompts.push(text);
+        this.#appendPrompt(this.#state, text);
+        this.#persist();
 
         if (!AiSetup.isConfigured) {
             const entry = this.#say(style.note, I18n.translate("ai.needsKey"));
@@ -258,6 +435,10 @@ export class AiPanel {
             this.#say(style.error, error instanceof Error ? error.message : String(error));
         } finally {
             this.#setBusy(false);
+            // After the reply, so what is stored is a transcript the model can be handed
+            // back - a user turn saved without the call it provoked would replay as an
+            // unanswered question.
+            this.#persist();
         }
     }
 
@@ -454,6 +635,24 @@ export class AiPanel {
     }
 }
 
+/**
+ * How much of a transcript precedes the *n*th thing the draftsman said.
+ *
+ * Counted in user turns rather than array positions: one prompt can leave a `call` turn
+ * behind it and a round of questions adds a user turn of its own, so the transcript and
+ * the prompt list do not advance in step. An index past the end keeps the whole
+ * transcript, which is what a prompt whose turns never made it into history should do -
+ * an unconfigured key, or a request that failed before the call.
+ */
+export function turnsBefore(turns: readonly ConversationTurn[], index: number): number {
+    if (index <= 0) return 0;
+    let seen = 0;
+    for (const [at, turn] of turns.entries()) {
+        if (turn.role === "user" && seen++ === index) return at;
+    }
+    return turns.length;
+}
+
 function labelFor(param: ParamDef): string {
     // Parameter names are written for the model; the form wants them readable.
     return param.name
@@ -473,11 +672,13 @@ export function showAiPanel(application: IApplication): void {
         title: "ai.header",
         content: panel.root,
         x: 16,
-        y: 120,
-        width: 400,
-        height: 520,
-        minWidth: 320,
-        minHeight: 320,
+        y: 100,
+        // Roomy by default: the prompt box alone is ~110px, and below that a transcript
+        // that has to show a drawing preview at a size worth looking at.
+        width: 460,
+        height: 660,
+        minWidth: 340,
+        minHeight: 420,
         onClose: () => {
             panel = undefined;
         },

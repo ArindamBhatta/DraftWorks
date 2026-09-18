@@ -69,6 +69,8 @@ export class Polygon extends CreateCommand {
         return {
             refPoint: () => this.stepDatas.at(-1)!.point!,
             dimension: Dimensions.D1D2D3,
+            // Each segment of the run is choosing a direction, as LINE's is.
+            showProtractor: true,
             validator: this.validator,
             preview: this.preview,
             featurePoints: [

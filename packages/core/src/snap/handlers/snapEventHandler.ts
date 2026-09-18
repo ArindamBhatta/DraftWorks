@@ -272,20 +272,33 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
         const scale = worldUnitsPerPixel(view);
         if (scale <= 0) return [];
 
-        const reading = polarOf(refPoint, point, plane);
-        // Struck from the line's own length, so the arc grows with the segment and keeps
-        // reading as a measurement of it - but never so small on a line just begun that
-        // the direction cannot be read off it.
-        const radius = Math.max(reading.distance * PROTRACTOR_RADIUS_RATIO, PROTRACTOR_MIN_RADIUS * scale);
-
         const segments = [
             ...(dimensionGuideSegments(refPoint, point, plane, DIMENSION_GUIDE_GAP * scale) ?? []),
-            ...protractorSegments(refPoint, reading.angle, plane, radius),
+            ...this.protractorFor(refPoint, point, plane, scale),
         ];
 
         return segments.map(([from, to]) =>
             MeshDataUtils.createEdgeMesh(from, to, VisualConfig.temporaryEdgeColor, "dash"),
         );
+    }
+
+    /**
+     * The protractor arc, for the prompts that are actually choosing a direction.
+     *
+     * Only where the prompt asked for it (see SnapData.showProtractor): LINE and PLINE
+     * are laying down a segment at an angle, while a rectangle's far corner or a move's
+     * destination is not, and an arc swept off the reference point there measures an
+     * angle the user is not choosing.
+     */
+    private protractorFor(refPoint: XYZ, point: XYZ, plane: Plane, scale: number): [XYZ, XYZ][] {
+        if (!this.data.showProtractor) return [];
+
+        const reading = polarOf(refPoint, point, plane);
+        // Struck from the line's own length, so the arc grows with the segment and keeps
+        // reading as a measurement of it - but never so small on a line just begun that
+        // the direction cannot be read off it.
+        const radius = Math.max(reading.distance * PROTRACTOR_RADIUS_RATIO, PROTRACTOR_MIN_RADIUS * scale);
+        return protractorSegments(refPoint, reading.angle, plane, radius);
     }
 
     private restoreDistanceInput() {

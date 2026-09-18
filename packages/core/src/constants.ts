@@ -15,4 +15,10 @@ export class Constants {
      * geometry per queued change would be the expensive way to remember one bit.
      */
     static readonly SyncQueueTable = "autosave-queue";
+    /**
+     * One AI Draft conversation per drawing, keyed by document id. Kept out of the
+     * document itself: the transcript is how the drawing was arrived at, not part of it,
+     * and nobody opening a shared file wants someone else's prompts inside their geometry.
+     */
+    static readonly AiChatTable = "ai-chats";
 }

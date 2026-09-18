@@ -40,9 +40,22 @@ export interface SelectNodeOptions {
 export abstract class SelectStep implements IStep {
     constructor(
         readonly snapeType: ShapeType,
-        readonly prompt: I18nKeys,
+        /**
+         * The prompt line, or a function returning it.
+         *
+         * A function is for a prompt that cannot be worded until an earlier step has
+         * been answered - a corner command asks for a second *line* or for a set of
+         * edges depending on what the first pick landed on, and the steps are all built
+         * before any of them runs.
+         */
+        readonly prompt: I18nKeys | (() => I18nKeys),
         readonly options?: SelectShapeOptions,
     ) {}
+
+    /** The prompt as it reads now, which is what the pick is actually labelled with. */
+    protected resolvePrompt(): I18nKeys {
+        return typeof this.prompt === "function" ? this.prompt() : this.prompt;
+    }
 
     async execute(document: IDocument, controller: AsyncController): Promise<SnapResult | undefined> {
         if (!this.options?.keepSelection) {
@@ -54,6 +67,11 @@ export abstract class SelectStep implements IStep {
         // it: an option that reports a value - Fillet's `[Radius]` - has to say the new
         // one the moment it changes, wherever it was changed from.
         const refresh = () => {
+            // The tip as well as the options: an option can change what the prompt is
+            // asking for, not just what it offers - CHAMFER's Polyline turns "Select
+            // first line" into "Select 2D polyline" - and a tip left behind would be
+            // asking the old question.
+            PubSub.default.pub("statusBarTip", this.resolvePrompt());
             PubSub.default.pub("showStepOptions", resolveStepOptions(this.options?.stepOptions));
         };
         PubSub.default.sub("refreshStepPrompt", refresh);
@@ -71,7 +89,7 @@ export abstract class SelectStep implements IStep {
 
 export class SelectShapeStep extends SelectStep {
     override async select(document: IDocument, controller: AsyncController): Promise<SnapResult | undefined> {
-        const shapes = await document.picker.pickShape(this.prompt, controller, {
+        const shapes = await document.picker.pickShape(this.resolvePrompt(), controller, {
             shapeType: this.snapeType,
             shapeFilter: this.options?.shapeFilter,
             nodeFilter: this.options?.nodeFilter,

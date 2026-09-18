@@ -90,6 +90,10 @@ export class Ellipse extends CreateCommand {
         return {
             refPoint: () => start,
             dimension: Dimensions.D1D2D3,
+            // The axis is a direction as much as a length - which way the ellipse lies
+            // is this pick's whole answer - so the arc reads it off the same way LINE's
+            // does.
+            showProtractor: true,
             validator: (p: XYZ) => p.distanceTo(start) > Precision.Distance,
             preview: (end: XYZ | undefined) =>
                 end
@@ -103,6 +107,9 @@ export class Ellipse extends CreateCommand {
         return {
             point: () => point,
             preview: this.previewCircle,
+            // Centre mode asks the same question from the middle out: this pick sets
+            // which way the axis runs, not only how long it is.
+            showProtractor: true,
             plane: (tmp: XYZ | undefined) => this.findPlane(this.stepDatas[0].view, point, tmp),
             validator: this.validatePoint,
         };
