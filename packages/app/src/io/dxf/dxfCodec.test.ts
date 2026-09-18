@@ -506,6 +506,46 @@ describe("round trip", () => {
         expect(drawing.blocks.find((b) => b.name === "*D1")?.entities).toHaveLength(1);
         expect(drawing.entities).toHaveLength(1);
     });
+
+    test("a dimension keeps the style it names", () => {
+        const drawing = readDxf(
+            writeDxf(
+                drawingWith({
+                    type: "dimension",
+                    layer: "0",
+                    dimensionType: "linear",
+                    definitionPoint: dxfVec(5, 10, 0),
+                    textMidPoint: dxfVec(5, 11, 0),
+                    point1: dxfVec(0, 0, 0),
+                    point2: dxfVec(10, 0, 0),
+                    rotation: 0,
+                    normal: dxfVec(0, 0, 1),
+                    styleName: "Arch-48",
+                }),
+            ),
+        );
+
+        const dimension = drawing.entities[0];
+        if (dimension.type !== "dimension") throw new Error("expected a dimension");
+        // Group 3 is the whole point of the style table surviving the trip: without it
+        // every dimension comes back on Standard whatever it was drawn in.
+        expect(dimension.styleName).toBe("Arch-48");
+    });
+
+    test("every dimension style is written, not just the current one", () => {
+        const dxf = writeDxf(drawingWith({ type: "line", layer: "0", start: dxfVec(), end: dxfVec(1) }), {
+            dimensionStyles: [
+                { name: "Standard", textHeight: 2.5, arrowSize: 2.5, extensionOffset: 0.625, decimals: 2 },
+                { name: "Arch-48", textHeight: 96, arrowSize: 96, extensionOffset: 24, decimals: 0 },
+            ],
+        });
+
+        // Both records, and a table count that matches - a reader that trusts group 70
+        // would otherwise stop after the first.
+        expect(dxf).toContain("Arch-48");
+        const table = dxf.slice(dxf.indexOf("DIMSTYLE"));
+        expect(table.slice(0, table.indexOf("ENDTAB")).match(/AcDbDimStyleTableRecord/g)).toHaveLength(2);
+    });
 });
 
 describe("rejecting what is not an ASCII DXF", () => {

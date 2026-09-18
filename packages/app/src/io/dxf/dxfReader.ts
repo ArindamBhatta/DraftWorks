@@ -563,6 +563,7 @@ function buildDimension(tags: DxfTag[], common: ReturnType<typeof commonOf>): Dx
         rotation: number(tags, 50, 0),
         // "<>" is AutoCAD's placeholder for the measured value, i.e. no override at all.
         text: override && override !== "<>" ? unescapeMText(override) : undefined,
+        styleName: text(tags, 3) || undefined,
         normal: normalOf(tags),
         blockName: text(tags, 2) || undefined,
     };

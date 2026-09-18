@@ -5,6 +5,7 @@ export * from "./createCommand";
 export * from "./delete";
 export * from "./dimension";
 export * from "./dimensionSetupCommand";
+export * from "./dimensionStyleManager";
 export * from "./drawingSetupFlow";
 export * from "./folder";
 export * from "./importExport";

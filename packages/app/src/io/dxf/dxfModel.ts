@@ -144,6 +144,11 @@ export interface DxfDimensionEntity extends DxfCommon {
     rotation: number;
     /** Group 1: text override. Empty/undefined means "use the measurement". */
     text?: string;
+    /**
+     * Group 3: the DIMSTYLE table record this dimension is drawn in. Undefined means the
+     * file named none, which AutoCAD reads as Standard.
+     */
+    styleName?: string;
     normal: DxfVec;
     /** The anonymous block holding the drawn picture of this dimension. */
     blockName?: string;

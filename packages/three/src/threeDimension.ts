@@ -117,7 +117,7 @@ export class ThreeDimension extends Object3D implements IVisualObject, IHighligh
     /** Regenerates the line work from the annotation's picked points. */
     rebuild() {
         const geometry = this.annotation.geometry();
-        const style = DimensionSetup.settings;
+        const style = DimensionSetup.styleFor(this.annotation.styleName);
 
         // Degenerate input - coincident points, a collinear third point, a near-zero
         // radius - yields no geometry at all. Such a dimension has to be emptied, not
@@ -246,7 +246,7 @@ export class ThreeDimension extends Object3D implements IVisualObject, IHighligh
      * steady camera from touching the DOM every frame.
      */
     updateScale(pixelsPerUnit: number) {
-        const style = DimensionSetup.settings;
+        const style = DimensionSetup.styleFor(this.annotation.styleName);
         const px = Math.round(style.textHeight * style.overallScale * pixelsPerUnit);
         const clamped = Math.max(8, Math.min(72, px));
         if (clamped === this._lastFontPx) return;

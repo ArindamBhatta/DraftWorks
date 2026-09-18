@@ -100,6 +100,17 @@ export const TEXT_FILL_TYPES = ["none", "background", "color"] as const;
 export type TextFillType = (typeof TEXT_FILL_TYPES)[number];
 
 export interface DimensionSettings {
+    /**
+     * The style's name in the style table, unique case-insensitively - AutoCAD compares
+     * style names that way, so `Standard` and `STANDARD` are one style, not two.
+     *
+     * Not a DIM* variable: in AutoCAD the name lives in the style *table record* rather
+     * than in the settings it holds. It is folded in here because everything that reads a
+     * style already passes the whole `DimensionSettings` around, and threading a separate
+     * name beside it would mean every call site could get the pairing wrong.
+     */
+    name: string;
+
     // ---- Lines --------------------------------------------------------------------
     /** DIMCLRD. */
     dimLineColor: DimensionColor;
@@ -227,6 +238,63 @@ export interface DimensionSettings {
 }
 
 /**
+ * The style every drawing has. AutoCAD's own default name, and the one style the manager
+ * refuses to delete or rename - a drawing with no styles at all has nothing for a new
+ * dimension to be drawn in, and nothing for a deleted style's dimensions to fall back to.
+ */
+export const STANDARD_STYLE_NAME = "Standard";
+
+/** Longest style name the manager accepts, as AutoCAD's own symbol-table limit. */
+const MAX_STYLE_NAME_LENGTH = 255;
+
+/**
+ * Characters AutoCAD forbids in a symbol-table name. They would also have to be escaped
+ * on the way into a DXF group 2/3, which is the other reason to reject them at the door.
+ */
+const INVALID_NAME_CHARS = /[<>/\\":;?*|,=`]/;
+
+/** Style names compare case-insensitively - see `DimensionSettings.name`. */
+export const sameStyleName = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+
+/** True for the one style that cannot be renamed or deleted. */
+export const isStandardStyle = (name: string) => sameStyleName(name, STANDARD_STYLE_NAME);
+
+/**
+ * Why `name` cannot be used, or undefined if it can. Returns the reason rather than a
+ * bare boolean so the manager can say which rule was broken instead of just refusing.
+ *
+ * `existing` is every name already in the table; `self` is the style being renamed, which
+ * is allowed to keep its own name (and to re-case it - `Arch` to `ARCH` is a rename, not
+ * a collision with itself).
+ */
+export function validateStyleName(
+    name: string,
+    existing: readonly string[],
+    self?: string,
+): "empty" | "tooLong" | "invalidChars" | "duplicate" | undefined {
+    const trimmed = name.trim();
+    if (trimmed.length === 0) return "empty";
+    if (trimmed.length > MAX_STYLE_NAME_LENGTH) return "tooLong";
+    if (INVALID_NAME_CHARS.test(trimmed)) return "invalidChars";
+    if (existing.some((other) => sameStyleName(other, trimmed) && !(self && sameStyleName(other, self))))
+        return "duplicate";
+    return undefined;
+}
+
+/**
+ * `base copy`, `base copy 2`, ... - the first such name `existing` does not already hold.
+ * Used by the manager's New button, which opens on a copy of the selected style.
+ */
+export function uniqueStyleName(base: string, existing: readonly string[]): string {
+    const candidate = `${base} copy`;
+    if (!existing.some((other) => sameStyleName(other, candidate))) return candidate;
+    for (let n = 2; ; n++) {
+        const numbered = `${candidate} ${n}`;
+        if (!existing.some((other) => sameStyleName(other, numbered))) return numbered;
+    }
+}
+
+/**
  * The style a new drawing starts in.
  *
  * Precision defaults to 1/16", matching UnitSetup's own architectural default, so the two
@@ -235,6 +303,7 @@ export interface DimensionSettings {
  * type's own options.
  */
 export const DEFAULT_DIMENSION_SETTINGS: DimensionSettings = {
+    name: STANDARD_STYLE_NAME,
     dimLineColor: "byBlock",
     dimLineWeight: 1,
     dimLineExtend: 0,
@@ -340,6 +409,14 @@ export function validateDimensionSettings(
     current: DimensionSettings = DEFAULT_DIMENSION_SETTINGS,
 ): DimensionSettings {
     return {
+        // A name that breaks the table's rules falls back rather than being repaired into
+        // something else: a style whose name silently changed is a style whose dimensions
+        // point at nothing. Uniqueness is not checked here - the validator sees one style
+        // at a time and has no table to compare against; DimensionSetup does that.
+        name:
+            typeof settings.name === "string" && validateStyleName(settings.name, []) === undefined
+                ? settings.name.trim()
+                : current.name,
         dimLineColor: oneOf(COLOR_NAMES, settings.dimLineColor, current.dimLineColor),
         dimLineWeight: positive(settings.dimLineWeight, current.dimLineWeight),
         dimLineExtend: nonNegative(settings.dimLineExtend, current.dimLineExtend),

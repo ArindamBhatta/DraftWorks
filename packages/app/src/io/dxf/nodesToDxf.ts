@@ -407,7 +407,7 @@ function appendDimension(
         });
     }
 
-    const dimStyle = DimensionSetup.settings;
+    const dimStyle = DimensionSetup.styleFor(node.styleName);
     // DIMSCALE is folded in here as it is everywhere else the style is drawn - the block
     // this writes is exploded line work, so nothing downstream would apply it later.
     const textHeight = dimStyle.textHeight * dimStyle.overallScale;
@@ -445,6 +445,10 @@ function appendDimension(
         // The label is whatever the drawing already shows, so a receiving application that
         // formats differently still prints the value this drawing was dimensioned to.
         text: geometry.text,
+        // Always named, even for a dimension that follows the current style: group 3 is
+        // a reference into the DIMSTYLE table, and "the style that was current when this
+        // was exported" is not something the receiving application can work out later.
+        styleName: dimStyle.name,
         normal: vec(node.normal),
         blockName,
     });
@@ -519,16 +523,22 @@ function linearRotation(node: DimensionAnnotation): number {
     return horizontal ? 0 : 90;
 }
 
-/** The dimension settings the DIMSTYLE table should carry, so plots match the screen. */
-export function dimensionStyleForExport() {
-    const settings = DimensionSetup.settings;
-    const scale = settings.overallScale;
-    return {
-        textHeight: settings.textHeight * scale,
-        arrowSize: settings.arrowSize * scale,
-        extensionOffset: settings.extensionOffset * scale,
-        decimals: DimensionSetup.decimalPlaces(),
-    };
+/**
+ * Every style the DIMSTYLE table should carry, so plots match the screen and a dimension's
+ * group 3 has a record to point at. Sizes have DIMSCALE folded in, as they do everywhere
+ * else a style is drawn.
+ */
+export function dimensionStylesForExport() {
+    return DimensionSetup.styles.map((settings) => {
+        const scale = settings.overallScale;
+        return {
+            name: settings.name,
+            textHeight: settings.textHeight * scale,
+            arrowSize: settings.arrowSize * scale,
+            extensionOffset: settings.extensionOffset * scale,
+            decimals: DimensionSetup.decimalPlaces(settings.precision),
+        };
+    });
 }
 
 /** True when a node has geometry or annotation content that DXF can carry. */

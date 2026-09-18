@@ -130,13 +130,19 @@ interface Anchors {
 }
 
 export interface DxfWriteOptions {
-    /** Dimension style values written into DIMSTYLE, so text and arrows plot at the right size. */
-    dimension?: {
+    /**
+     * The drawing's dimension styles, written into DIMSTYLE so text and arrows plot at
+     * the right size and each DIMENSION's group 3 has a record to name. Standard is
+     * written whether or not it appears here, since a DXF with no dimension style is not
+     * something every reader copes with.
+     */
+    dimensionStyles?: {
+        name: string;
         textHeight: number;
         arrowSize: number;
         extensionOffset: number;
         decimals: number;
-    };
+    }[];
 }
 
 export function writeDxf(drawing: DxfDrawing, options: DxfWriteOptions = {}): string {
@@ -344,19 +350,26 @@ function writeTables(
 
     // DIMSTYLE. Carries the drawing's real text/arrow sizes so dimensions plot at the
     // size they were drawn at rather than the reader's own defaults.
-    const dimension = options.dimension;
+    const dimensionStyles = options.dimensionStyles?.length
+        ? options.dimensionStyles
+        : [{ name: "Standard", textHeight: 2.5, arrowSize: 2.5, extensionOffset: 0.625, decimals: 2 }];
     out.tag(0, "TABLE").tag(2, "DIMSTYLE").tag(5, anchors.dimstyleTable).tag(330, "0");
-    out.tag(100, "AcDbSymbolTable").tag(70, 1).tag(100, "AcDbDimStyleTable").tag(71, 1);
-    beginRecord(out, "DIMSTYLE", handles.take(), anchors.dimstyleTable, "AcDbDimStyleTableRecord");
-    out.tag(2, "Standard").tag(70, 0);
-    out.real(40, 1);
-    out.real(41, dimension?.arrowSize ?? 2.5);
-    out.real(42, dimension?.extensionOffset ?? 0.625);
-    out.real(44, 1.25);
-    out.real(140, dimension?.textHeight ?? 2.5);
-    out.real(141, dimension?.arrowSize ?? 2.5);
-    out.real(147, 0.625);
-    out.tag(271, dimension?.decimals ?? 2).tag(272, dimension?.decimals ?? 2);
+    out.tag(100, "AcDbSymbolTable")
+        .tag(70, dimensionStyles.length)
+        .tag(100, "AcDbDimStyleTable")
+        .tag(71, dimensionStyles.length);
+    for (const dimension of dimensionStyles) {
+        beginRecord(out, "DIMSTYLE", handles.take(), anchors.dimstyleTable, "AcDbDimStyleTableRecord");
+        out.tag(2, dimension.name).tag(70, 0);
+        out.real(40, 1);
+        out.real(41, dimension.arrowSize);
+        out.real(42, dimension.extensionOffset);
+        out.real(44, 1.25);
+        out.real(140, dimension.textHeight);
+        out.real(141, dimension.arrowSize);
+        out.real(147, 0.625);
+        out.tag(271, dimension.decimals).tag(272, dimension.decimals);
+    }
     out.tag(0, "ENDTAB");
 
     // BLOCK_RECORD. Model and paper space always exist; each drawing block adds one.
@@ -565,7 +578,7 @@ function writeEntity(out: TagWriter, entity: DxfEntity, owner: string, handles: 
             // every block written here.
             out.tag(70, (DIMENSION_FLAGS[entity.dimensionType] ?? 0) | 32);
             out.tag(71, 5).tag(1, entity.text ? escapeText(entity.text) : "<>");
-            out.tag(3, "Standard");
+            out.tag(3, entity.styleName ?? "Standard");
             writeDimensionSubclass(out, entity);
             break;
 

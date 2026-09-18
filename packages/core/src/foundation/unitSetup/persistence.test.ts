@@ -14,6 +14,9 @@ import { UnitSetup } from "./unitSetup";
 
 function clearStorage() {
     ObjectStorage.default.remove("unitSetup");
+    // Both dimension keys: the style table, and the single style builds before it wrote.
+    // A leftover table would be found first and the migration below never reached.
+    ObjectStorage.default.remove("dimensionStyles");
     ObjectStorage.default.remove("dimensionSetup");
 }
 
@@ -52,15 +55,9 @@ test("dimension style survives the same round trip", () => {
     clearStorage();
 
     DimensionSetup.configure({ textHeight: 4, arrowSize: 3, extensionOffset: 1, precision: 2 });
-    DimensionSetup.configure({ textHeight: 2.5, arrowSize: 2.5, extensionOffset: 0.625, precision: 16 });
-
-    ObjectStorage.default.setValue("dimensionSetup", {
-        textHeight: 4,
-        arrowSize: 3,
-        extensionOffset: 1,
-        precision: 2,
-    });
+    // Reload: the table just written is read back from storage rather than kept in memory.
     expect(DimensionSetup.restore()).toBe(true);
+
     expect(DimensionSetup.settings).toEqual({
         ...DEFAULT_DIMENSION_SETTINGS,
         textHeight: 4,
@@ -68,6 +65,20 @@ test("dimension style survives the same round trip", () => {
         extensionOffset: 1,
         precision: 2,
     });
+});
+
+test("the single style saved before the style table becomes Standard", () => {
+    clearStorage();
+
+    ObjectStorage.default.setValue("dimensionSetup", { textHeight: 4, arrowSize: 3 });
+
+    expect(DimensionSetup.restore()).toBe(true);
+    // The one pre-table style is the whole table now, and it is current - so a returning
+    // user's dimensions come back looking exactly as they left them.
+    expect(DimensionSetup.styleNames).toEqual(["Standard"]);
+    expect(DimensionSetup.currentStyleName).toBe("Standard");
+    expect(DimensionSetup.settings.textHeight).toBe(4);
+    expect(DimensionSetup.settings.arrowSize).toBe(3);
 });
 
 test("a style saved by an older build gains the settings it never had", () => {

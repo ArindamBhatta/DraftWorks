@@ -2,7 +2,8 @@
 // See LICENSE file in the project root for full license information.
 
 import { describe, expect, test } from "@rstest/core";
-import type { DimensionSettings } from "../foundation/unitSetup";
+import { ObjectStorage } from "../foundation/objectStorage";
+import { DEFAULT_DIMENSION_SETTINGS, type DimensionSettings, DimensionSetup } from "../foundation/unitSetup";
 import { XYZ } from "../math";
 import { buildDimensionGeometry, type DimensionFrame } from "./dimensionGeometry";
 
@@ -265,4 +266,47 @@ test("a centred label wider than the span does not draw the line back through it
         expect(Math.min(ax, bx)).toBeGreaterThanOrEqual(0);
         expect(Math.max(ax, bx)).toBeLessThanOrEqual(10);
     }
+});
+
+/** How far the arrowhead triangles spread, as a stand-in for the style's drawn size. */
+const extent = (arrows: number[]) => {
+    const xs = arrows.filter((_, i) => i % 3 === 0);
+    return Math.max(...xs) - Math.min(...xs);
+};
+
+/**
+ * The style table's payoff: two dimensions in the same drawing, laid out differently
+ * because they name different styles. Before the table there was one style and this
+ * could not be expressed at all.
+ */
+test("two dimensions in different named styles are laid out differently", () => {
+    ObjectStorage.default.setValue("dimensionStyles", {
+        current: "Standard",
+        styles: [
+            { ...DEFAULT_DIMENSION_SETTINGS, name: "Standard", textHeight: 2.5 },
+            { ...DEFAULT_DIMENSION_SETTINGS, name: "Large", textHeight: 25, arrowSize: 25 },
+        ],
+    });
+    DimensionSetup.restore();
+
+    const span = {
+        type: "linear",
+        start: at(0, 0),
+        end: at(100, 0),
+        offsetPoint: at(50, 20),
+        frame,
+    } as const;
+    const standard = buildDimensionGeometry({ ...span, settings: DimensionSetup.styleFor("Standard") })!;
+    const large = buildDimensionGeometry({ ...span, settings: DimensionSetup.styleFor("Large") })!;
+
+    // Same measurement, different drawing - which is exactly what a dimension style is.
+    expect(standard.value).toBeCloseTo(large.value);
+    // Bigger arrowheads mean bigger triangles; the label's own height is not on the
+    // geometry, so the arrows are what the style's sizes are visible through here.
+    expect(extent(large.arrows)).toBeGreaterThan(extent(standard.arrows));
+
+    // A dimension naming a style the drawing does not have still draws, in the current
+    // style, rather than failing to render.
+    const missing = buildDimensionGeometry({ ...span, settings: DimensionSetup.styleFor("Gone") })!;
+    expect(extent(missing.arrows)).toBeCloseTo(extent(standard.arrows));
 });

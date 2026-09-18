@@ -1,7 +1,7 @@
 import {
     DxfParseError,
     detectDrawingFormat,
-    dimensionStyleForExport,
+    dimensionStylesForExport,
     dwgVersionName,
     dxfToNodes,
     nodesToDxf,
@@ -154,7 +154,7 @@ export class DefaultDataExchange implements IDataExchange {
         // second time, so anything the writer cannot express is already lost before
         // LibreDWG sees it - the round-trip notes in packages/app/src/io/dxf apply to
         // DWG exactly as they do to DXF.
-        const dxf = writeDxf(drawing, { dimension: dimensionStyleForExport() });
+        const dxf = writeDxf(drawing, { dimensionStyles: dimensionStylesForExport() });
         if (type === ".dxf") return [dxf];
 
         return this.encodeAsDwg(dxf);

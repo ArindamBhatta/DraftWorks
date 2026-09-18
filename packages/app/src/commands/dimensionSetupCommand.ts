@@ -1,20 +1,30 @@
-import {
-    command,
-    type DimensionSettings,
-    DimensionSetup,
-    I18n,
-    type IApplication,
-    type ICommand,
-    PubSub,
-} from "@draftworks/core";
+import { type DimensionSettings, DimensionSetup, I18n, PubSub } from "@draftworks/core";
 import { button, div, fieldset, legend, span } from "@draftworks/element";
 import { PREVIEW_SAMPLES, renderDimensionPreview, suggestedOverallScale } from "./dimensionPreview";
 import style from "./dimensionStyle.module.css";
 import { DimensionStyleForm, dimensionStyleTabs } from "./dimensionStyleForm";
 
+/** Which style the form edits, and whether the result is saved into it. */
+export interface DimensionSetupOptions {
+    /**
+     * The style to edit. Defaults to the current one, which is what the new-drawing flow
+     * and the pre-manager callers mean.
+     */
+    styleName?: string;
+    /**
+     * `style` writes the edits into the style (AutoCAD's Modify); `override` keeps them
+     * as unsaved settings on top of the current style instead (its Override).
+     */
+    mode?: "style" | "override";
+}
+
 /**
- * DIMSTYLE - AutoCAD's Modify Dimension Style dialog: seven tabs of settings with the
- * sample drawing pinned beside them, redrawn on every keystroke.
+ * AutoCAD's Modify Dimension Style dialog: seven tabs of settings with the sample drawing
+ * pinned beside them, redrawn on every keystroke.
+ *
+ * This is the *inner* dialog. DIMSTYLE/D opens the Dimension Style Manager
+ * (`promptDimensionStyleManager`), which is what chooses the style this then edits; the
+ * new-drawing flow still comes straight here, since a new drawing has only Standard.
  *
  * The preview is not decoration. Most of what this dialog controls is an invisible
  * distance or a formatting rule, and four such numbers are hard to judge in the abstract;
@@ -28,11 +38,16 @@ import { DimensionStyleForm, dimensionStyleTabs } from "./dimensionStyleForm";
  * Resolves when the dialog closes either way (Confirm applies, Cancel leaves the active
  * style untouched), so callers can `await` it to chain the next step.
  */
-export function promptDimensionSetup(): Promise<void> {
+export function promptDimensionSetup(options: DimensionSetupOptions = {}): Promise<void> {
     return new Promise((resolve) => {
+        const override = options.mode === "override";
+        // Override always edits the current style plus whatever is already overridden on
+        // it - overriding some other style is not a thing AutoCAD offers, because an
+        // override exists to change what the *next* dimension is drawn with.
+        const target = override ? DimensionSetup.currentStyleName : (options.styleName ?? undefined);
         // Edited in place by the form and never written back to DimensionSetup until
         // Confirm, which is what makes Cancel mean cancel.
-        const draft: DimensionSettings = DimensionSetup.settings;
+        const draft: DimensionSettings = override ? DimensionSetup.settings : DimensionSetup.styleFor(target);
 
         const preview = div({ className: style.preview });
         const sampleName = span({ className: style.previewName });
@@ -123,28 +138,25 @@ export function promptDimensionSetup(): Promise<void> {
         refreshPreview();
         show(0);
 
-        PubSub.default.pub("showDialog", "dialog.title.dimensionSetup", content, [
-            {
-                content: "common.confirm",
-                onclick: () => {
-                    DimensionSetup.configure(draft);
-                    resolve();
+        PubSub.default.pub(
+            "showDialog",
+            override ? "dialog.title.dimensionStyleOverride" : "dialog.title.dimensionSetup",
+            content,
+            [
+                {
+                    content: "common.confirm",
+                    onclick: () => {
+                        if (override) DimensionSetup.setOverride(draft);
+                        else if (target === undefined) DimensionSetup.configure(draft);
+                        else DimensionSetup.modify(target, draft);
+                        resolve();
+                    },
                 },
-            },
-            {
-                content: "common.cancel",
-                onclick: () => resolve(),
-            },
-        ]);
+                {
+                    content: "common.cancel",
+                    onclick: () => resolve(),
+                },
+            ],
+        );
     });
-}
-
-@command({
-    key: "dimension.setup",
-    icon: "icon-measureLength",
-})
-export class DimensionSetupCommand implements ICommand {
-    async execute(_application: IApplication): Promise<void> {
-        await promptDimensionSetup();
-    }
 }

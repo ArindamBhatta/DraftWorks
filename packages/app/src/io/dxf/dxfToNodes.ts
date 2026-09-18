@@ -673,5 +673,9 @@ function buildDimension(
         radius,
         normal: toXYZ(placement.vector(entity.normal)),
         xAxis: XYZ.unitX,
+        // Kept even when this drawing has no such style: `DimensionSetup.styleFor` draws
+        // it in the current style meanwhile, and the name is still right if the file's
+        // DIMSTYLE table is imported later or the user recreates the style by hand.
+        styleName: entity.styleName,
     });
 }

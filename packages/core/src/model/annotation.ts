@@ -36,6 +36,8 @@ export interface DimensionAnnotationOptions extends AnnotationOptionsBase {
     /** The drawing plane the dimension is laid out in. */
     normal: XYZ;
     xAxis: XYZ;
+    /** The named dimension style this one is drawn in; omitted means the current style. */
+    styleName?: string;
 }
 
 export interface TextAnnotationOptions extends AnnotationOptionsBase {
@@ -358,9 +360,28 @@ export class DimensionAnnotation extends Annotation {
         this.setProperty("xAxis", value);
     }
 
+    /**
+     * The named style this dimension is drawn in, or undefined to follow whichever style
+     * is current.
+     *
+     * Undefined is the normal state, not a missing value: a dimension drawn without ever
+     * opening the style manager has no opinion about its style, and should follow the
+     * drawing's. Only a dimension explicitly assigned a style carries a name - which is
+     * also what makes the pre-style-table drawings migrate for free, since none of their
+     * dimensions have one.
+     */
+    @serialize()
+    get styleName(): string | undefined {
+        return this.getPrivateValue("styleName", undefined);
+    }
+    set styleName(value: string | undefined) {
+        this.setProperty("styleName", value);
+    }
+
     constructor(options: DimensionAnnotationOptions) {
         super(options);
         this.dimensionType = options.dimensionType;
+        this.setPrivateValue("styleName", options.styleName);
         this.setPrivateValue("startPoint", options.startPoint);
         this.setPrivateValue("endPoint", options.endPoint);
         this.setPrivateValue("thirdPoint", options.thirdPoint);
@@ -383,6 +404,10 @@ export class DimensionAnnotation extends Annotation {
             offsetPoint: this.offsetPoint,
             radius: this.radius,
             frame: { normal: this.normal, xAxis: this.xAxis },
+            // Resolved here rather than left to the builder's own default, so a dimension
+            // assigned a style is laid out in that style and not in whichever one happens
+            // to be current. `styleFor` handles both the undefined and the deleted case.
+            settings: DimensionSetup.styleFor(this.styleName),
         });
     }
 

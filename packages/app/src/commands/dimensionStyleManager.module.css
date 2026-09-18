@@ -1,0 +1,225 @@
+/* AutoCAD's Dimension Style Manager: the style list on the left, the preview and the
+   selected style's description on the right, and the five buttons down the far side.
+   This is the dialog DIMSTYLE/D actually opens - Modify Dimension Style (the seven-tab
+   form in dimensionStyle.module.css) is what its Modify button leads to. */
+
+.root {
+    display: grid;
+    /* List, preview column, buttons. The buttons are a fixed column rather than a row
+       under the dialog, which is where AutoCAD puts them and what keeps Set Current
+       next to the list it acts on. */
+    grid-template-columns: minmax(200px, 1fr) minmax(320px, 1.4fr) auto;
+    gap: 16px;
+    min-width: 760px;
+    font-size: 13px;
+    color: var(--foreground-color);
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.label {
+    color: var(--foreground-secondary-color);
+}
+
+.list {
+    flex: 1;
+    min-height: 260px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--panel-background-color);
+    padding: 2px;
+}
+
+.item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 5px 8px;
+    border: none;
+    border-radius: 3px;
+    background: none;
+    color: var(--foreground-color);
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.item:hover {
+    background-color: var(--hover-background-color);
+}
+
+.itemSelected {
+    background-color: var(--primary-color, #3b82f6);
+    color: #fff;
+}
+
+/* The current style is marked in the list rather than only in the caption below it, so
+   "which style am I drawing in" is answerable without reading prose. */
+.itemCurrent::before {
+    content: "▸";
+    font-size: 11px;
+}
+
+/* Keeps the names aligned whether or not a row carries the current-style marker. */
+.item:not(.itemCurrent)::before {
+    content: "";
+    width: 7px;
+}
+
+/* An override is not a style, but it is what new dimensions are being drawn in, so it
+   sits in the list under the style it overrides - as AutoCAD nests it. */
+.itemOverride {
+    padding-left: 24px;
+    font-style: italic;
+}
+
+.preview {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--panel-background-color);
+    padding: 8px;
+}
+
+.preview svg {
+    width: 100%;
+    height: 100%;
+    max-height: 240px;
+}
+
+.description {
+    min-height: 34px;
+    color: var(--foreground-secondary-color);
+    line-height: 1.4;
+}
+
+.buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-content: start;
+}
+
+.button {
+    padding: 6px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--panel-background-color);
+    color: var(--foreground-color);
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.button:hover:not(:disabled) {
+    background-color: var(--hover-background-color);
+}
+
+.button:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+/* --- The New Style and Compare sub-dialogs ------------------------------------- */
+
+.form {
+    display: grid;
+    grid-template-columns: auto minmax(180px, 1fr);
+    gap: 10px 12px;
+    align-items: center;
+    min-width: 380px;
+    font-size: 13px;
+    color: var(--foreground-color);
+}
+
+.input {
+    padding: 5px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--panel-background-color);
+    color: var(--foreground-color);
+    font-size: 13px;
+}
+
+.input:focus-visible {
+    outline: 1px solid var(--primary-color, #3b82f6);
+}
+
+/* Spans both columns so the message sits under the field it is about rather than beside
+   a caption of its own. Collapsed when empty so the form does not jump as it appears. */
+.error {
+    grid-column: 1 / -1;
+    color: var(--error-color, #dc2626);
+    min-height: 16px;
+}
+
+.compare {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 560px;
+    font-size: 13px;
+    color: var(--foreground-color);
+}
+
+.compareHeader {
+    display: grid;
+    grid-template-columns: auto minmax(140px, 1fr) auto minmax(140px, 1fr);
+    gap: 8px 12px;
+    align-items: center;
+}
+
+.compareTable {
+    max-height: 340px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+/* The DIM* variable name beside each setting, so a difference can be looked up in
+   AutoCAD's own documentation. */
+.variable {
+    color: var(--foreground-secondary-color);
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.empty {
+    padding: 16px;
+    color: var(--foreground-secondary-color);
+    text-align: center;
+}
+
+/* One line of the Compare table. A grid rather than a real table so the header and the
+   rows share a column track without the header scrolling away with them. */
+.compareRow {
+    display: grid;
+    grid-template-columns: minmax(150px, 1.4fr) auto minmax(90px, 1fr) minmax(90px, 1fr);
+    gap: 8px 12px;
+    padding: 5px 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* The header row is the first child and stays put while the differences scroll. */
+.compareRow:first-child {
+    position: sticky;
+    top: 0;
+    background-color: var(--panel-background-color);
+    color: var(--foreground-secondary-color);
+    font-weight: 600;
+}
+
+.compareRow:last-child {
+    border-bottom: none;
+}
