@@ -1,0 +1,123 @@
+/* The version 1 Share sheet: an invitation rather than a sharing control. The offer
+   first, then what it unlocks, then the one thing to actually do - send the link. */
+
+.root {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 480px;
+    max-width: calc(100vw - 64px);
+    padding: 0 4px;
+    font-size: 13px;
+    color: var(--foreground-color);
+}
+
+.headline {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.intro {
+    margin: -8px 0 0;
+    color: var(--foreground-secondary-color);
+}
+
+.perks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.perk {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: start;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.perkIcon {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--title-background);
+}
+
+.perkIcon svg {
+    width: 18px;
+    height: 18px;
+    fill: var(--primary-color);
+}
+
+.perkTitle {
+    margin: 0 0 2px;
+    font-weight: 600;
+}
+
+.perkBody {
+    margin: 0;
+    color: var(--foreground-secondary-color);
+    line-height: 1.45;
+}
+
+.soon {
+    padding: 2px 8px;
+    border-radius: 10px;
+    background-color: var(--title-background);
+    color: var(--foreground-secondary-color);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.linkRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 8px;
+}
+
+.link {
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 7px 10px;
+    font-size: 13px;
+    border: 1px solid var(--input-border-color);
+    border-radius: 4px;
+    background-color: var(--input-background-color);
+    color: var(--input-text-color);
+}
+
+.button {
+    padding: 7px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--button-secondary-background);
+    color: var(--foreground-color);
+    font-size: 13px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.button:hover {
+    background-color: var(--button-secondary-hover);
+}
+
+.primary {
+    border-color: var(--button-primary-background);
+    background-color: var(--button-primary-background);
+    color: #ffffff;
+}
+
+.primary:hover {
+    background-color: var(--button-primary-hover);
+}
+
+.footnote {
+    margin: 0;
+    color: var(--foreground-muted-color);
+    font-size: 12px;
+}

@@ -194,6 +194,7 @@ export const DefaultRibbon: RibbonTabProfile[] = [
                     "file.import",
                     "file.export",
                     "file.plot",
+                    "doc.share",
                     { type: "widget", widget: "autosaveStatus" },
                 ],
             },
