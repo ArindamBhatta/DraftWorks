@@ -132,7 +132,6 @@ export class AppBuilder {
 
         const app = this.createApp();
         await this._window?.init(app);
-        await this.loadDefaultPlugins(app);
         await this.ensureActiveDocument(app);
 
         Logger.info("Application build completed");
@@ -175,30 +174,6 @@ export class AppBuilder {
         } catch (error) {
             Logger.warn("could not reopen the last drawing, starting a blank one", error);
             return false;
-        }
-    }
-
-    protected async loadDefaultPlugins(app: IApplication) {
-        const urlObj = new URL(window.location.href);
-        const pathParts = urlObj.pathname
-            .split("/")
-            .map((x) => x.trim())
-            .filter((x) => x.length > 0);
-        if (pathParts.at(-1)?.endsWith(".html")) pathParts.pop();
-        urlObj.pathname = `${pathParts.join("/")}/`;
-        const folderUrl = `${urlObj.href}plugins/`;
-        try {
-            const response = await fetch(`${folderUrl}plugins.json`);
-            if (!response.ok) {
-                return;
-            }
-            const config = await response.json();
-            const plugins = config.plugins as string[];
-            for (const plugin of plugins ?? []) {
-                await app.pluginManager.loadFromUrl(folderUrl + plugin);
-            }
-        } catch {
-            Logger.warn(`Failed to load plugins from folder: ${folderUrl}`);
         }
     }
 

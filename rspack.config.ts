@@ -4,7 +4,9 @@ import rspack from "@rspack/core";
 import { TsCheckerRspackPlugin } from "ts-checker-rspack-plugin";
 import packages from "./package.json" with { type: "json" };
 
-const isProduction = process.env.NODE_ENV === "production";
+// rspack sets NODE_ENV from --mode, but only after the config is evaluated, so read
+// the flag directly: `npm run build` passes --mode production.
+const isProduction = process.env.NODE_ENV === "production" || process.argv.includes("production");
 const configDir = import.meta.dirname;
 
 export default defineConfig({
@@ -78,7 +80,7 @@ export default defineConfig({
         new rspack.DefinePlugin({
             __APP_VERSION__: JSON.stringify(packages.version),
             __DOCUMENT_VERSION__: JSON.stringify(packages.documentVersion),
-            __IS_PRODUCTION__: JSON.stringify(process.env.NODE_ENV === "production"),
+            __IS_PRODUCTION__: JSON.stringify(isProduction),
         }),
         new rspack.HtmlRspackPlugin({
             template: resolve(configDir, "public/index.html"),

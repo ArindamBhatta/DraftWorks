@@ -6,7 +6,7 @@
     "author": "Arindam Bhattacharyya <arindambhattacharyya.ab@gmail.com>",
     "type": "module",
     "scripts": {
-        "build": "rspack build && node scripts/build-plugins.mjs",
+        "build": "rspack build --mode production",
         "build:wasm": "npm run build:wasm:occ && npm run build:wasm:dwg",
         "build:wasm:occ": "cd cpp && cmake --preset release && cmake --build --preset release",
         "build:wasm:dwg": "cd cpp/dwg && cmake --preset release && cmake --build --preset release",
