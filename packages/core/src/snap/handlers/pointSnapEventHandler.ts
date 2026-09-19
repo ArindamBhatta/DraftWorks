@@ -84,7 +84,11 @@ export class PointSnapEventHandler extends SnapEventHandler<PointSnapData> {
         // at all. See GridSnap for why that is the AutoCAD order.
         const gridSnap = new GridSnap(pointData.refPoint, pointData.plane);
         return [
-            ...this.getOrthoSnaps(pointData),
+            // Ortho is handed the two snaps that can put a point on its axis, so that
+            // while it is on it can still answer with an endpoint or a tracked
+            // intersection rather than overriding them. They stay in the list behind it
+            // for when ortho is off, where they answer for themselves as before.
+            ...this.getOrthoSnaps(pointData, [objectSnap, trackingSnap]),
             objectSnap,
             trackingSnap,
             surfaceSnap,
@@ -98,9 +102,9 @@ export class PointSnapEventHandler extends SnapEventHandler<PointSnapData> {
      * for the first pick of a command. It reads Config.instance.enableOrtho on every
      * snap, so toggling the status bar button mid-command takes effect immediately.
      */
-    protected getOrthoSnaps(pointData: PointSnapData): ISnap[] {
+    protected getOrthoSnaps(pointData: PointSnapData, candidates: readonly ISnap[] = []): ISnap[] {
         if (!pointData.refPoint || pointData.disableAxisLocks) return [];
-        return [new OrthoSnap(pointData.refPoint, pointData.plane)];
+        return [new OrthoSnap(pointData.refPoint, pointData.plane, candidates)];
     }
 
     protected getPointFromInput(view: IView, text: string): SnapResult {
@@ -222,9 +226,10 @@ export class SnapPointPlaneEventHandler extends PointSnapEventHandler {
     protected override getInitSnaps(pointData: PointSnapData): ISnap[] {
         if (!pointData.plane) throw new Error("plane is required");
 
+        const objectSnap = new ObjectSnap(Config.instance.snapType);
         return [
-            ...this.getOrthoSnaps(pointData),
-            new ObjectSnap(Config.instance.snapType),
+            ...this.getOrthoSnaps(pointData, [objectSnap]),
+            objectSnap,
             new GridSnap(pointData.refPoint, pointData.plane),
             new PlaneSnap(pointData.plane),
         ];
