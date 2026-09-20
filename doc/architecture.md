@@ -1,6 +1,6 @@
-# Chili3D — Project Architecture
+# Draftworks — Project Architecture
 
-This document describes **how the Chili3D codebase is actually organized**: the package
+This document describes **how the Draftworks codebase is actually organized**: the package
 graph, what each folder is responsible for, and the patterns that repeat across the
 codebase. It is a map of the repo as it exists, not a proposal.
 
@@ -18,9 +18,6 @@ surfaces, booleans, fillets, meshing), and Three.js renders the result. Everythi
 the kernel — the document model, undo/redo, commands, snapping, UI — is TypeScript.
 
 ## 2. Package graph
-
-`npm` workspace under `packages/`. Arrows are compile-time dependencies (`import from
-"@chili3d/x"`):
 
 ```mermaid
 flowchart LR
