@@ -1,7 +1,7 @@
 import type { IDocument } from "../document";
 import { DimensionSetup, Id } from "../foundation";
 import type { I18nKeys } from "../i18n";
-import { BoundingBox, XYZ } from "../math";
+import { BoundingBox, type Matrix4, XYZ } from "../math";
 import { property } from "../property";
 import { serializable, serialize } from "../serialize";
 import { buildDimensionGeometry, type DimensionGeometry, type DimensionType } from "./dimensionGeometry";
@@ -73,6 +73,19 @@ export type AnnotationOptions =
     | TextAnnotationOptions
     | RefInfiniteLineAnnotationOptions
     | RefSegmentAnnotationOptions;
+
+/**
+ * How much a transform stretches lengths, for the annotation fields that are stored as
+ * a plain number of drawing units (text height, wrap width) rather than as points.
+ *
+ * SCALE is uniform by construction, so the three basis lengths agree and the mean is
+ * simply that factor. Averaging is the graceful answer if a non-uniform matrix ever
+ * reaches here: text has one height, so there is no anisotropic result to give.
+ */
+function uniformScaleOf(transform: Matrix4): number {
+    const scale = transform.getScale();
+    return (scale.x + scale.y + scale.z) / 3;
+}
 
 export abstract class Annotation extends VisualNode {
     @serialize()
@@ -221,6 +234,29 @@ export class TextAnnotation extends Annotation {
         ]);
     }
 
+    /**
+     * Text is stored as an insertion point plus a cap height in drawing units, so a
+     * modify command has to move the point and rescale the height rather than compose
+     * a matrix - see VisualNode.applyTransform.
+     *
+     * The height and the wrap width are lengths, so they take the matrix's uniform
+     * scale factor. SCALE is the only command that produces one other than 1; MOVE,
+     * ROTATE and MIRROR leave it at 1 and only the point and the axes move.
+     */
+    override applyTransform(transform: Matrix4): void {
+        const factor = uniformScaleOf(transform);
+        this.position = transform.ofPoint(this.position);
+        this.height *= factor;
+        if (this.boxWidth > 0) this.boxWidth *= factor;
+
+        // Rotation is stored as an angle off `xAxis`, so turning the plane's axes
+        // carries the text's own rotation with them and the stored angle stands.
+        const normal = transform.ofVector(this.normal).normalize();
+        const xAxis = transform.ofVector(this.xAxis).normalize();
+        if (normal) this.normal = normal;
+        if (xAxis) this.xAxis = xAxis;
+    }
+
     /** The text's own X direction: the plane's X axis turned by `rotation`. */
     rotatedXAxis(): XYZ {
         const radians = (this.rotation * Math.PI) / 180;
@@ -256,6 +292,13 @@ export class RefInfiniteLineAnnotation extends Annotation {
         this.setPrivateValue("point", options.point);
         this.setPrivateValue("direction", options.direction);
     }
+
+    /** See VisualNode.applyTransform. An infinite line has no length to scale. */
+    override applyTransform(transform: Matrix4): void {
+        this.point = transform.ofPoint(this.point);
+        const direction = transform.ofVector(this.direction).normalize();
+        if (direction) this.direction = direction;
+    }
 }
 
 @serializable()
@@ -286,6 +329,12 @@ export class RefSegmentAnnotation extends Annotation {
 
     override boundingBox(): BoundingBox | undefined {
         return BoundingBox.fromPoints([this.startPoint, this.endPoint]);
+    }
+
+    /** See VisualNode.applyTransform. Both ends move; the length follows from them. */
+    override applyTransform(transform: Matrix4): void {
+        this.startPoint = transform.ofPoint(this.startPoint);
+        this.endPoint = transform.ofPoint(this.endPoint);
     }
 }
 
@@ -393,6 +442,28 @@ export class DimensionAnnotation extends Annotation {
 
     override display(): I18nKeys {
         return "annotation.dimension";
+    }
+
+    /**
+     * Moves the picked points a dimension is built from - see VisualNode.applyTransform.
+     * The measured value, the extension lines and the label all derive from these in
+     * `geometry()`, so a scaled dimension re-reads its own new length for free.
+     *
+     * The text height is deliberately not touched: it comes from the dimension style,
+     * which is shared, and scaling one dimension must not restyle every other one.
+     */
+    override applyTransform(transform: Matrix4): void {
+        this.startPoint = transform.ofPoint(this.startPoint);
+        this.endPoint = transform.ofPoint(this.endPoint);
+        if (this.thirdPoint) this.thirdPoint = transform.ofPoint(this.thirdPoint);
+        this.offsetPoint = transform.ofPoint(this.offsetPoint);
+        // Radius is a length, so it follows the scale factor rather than a point.
+        if (this.radius > 0) this.radius *= uniformScaleOf(transform);
+
+        const normal = transform.ofVector(this.normal).normalize();
+        const xAxis = transform.ofVector(this.xAxis).normalize();
+        if (normal) this.normal = normal;
+        if (xAxis) this.xAxis = xAxis;
     }
 
     geometry(): DimensionGeometry | undefined {
