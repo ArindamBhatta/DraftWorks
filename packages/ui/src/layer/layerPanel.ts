@@ -93,6 +93,8 @@ export class LayerPanel extends HTMLElement {
                     }),
                 ),
             ),
+            // Outside `this.list` so it stays put while the rows scroll under it.
+            this.columnHeader(),
             this.list,
         );
     }
@@ -167,6 +169,9 @@ export class LayerPanel extends HTMLElement {
             onchange: (e) => this.renameLayer(layer, (e.target as HTMLInputElement).value),
         });
 
+        // Column order follows AutoCAD 2013's: Status, Name, then the state and value
+        // columns. Name sits second because it is what the eye scans the list by - the
+        // glyph columns are read only once a row has been found.
         return div(
             {
                 className: [style.row, isCurrent ? style.current : "", layer.visible ? "" : style.off]
@@ -176,6 +181,7 @@ export class LayerPanel extends HTMLElement {
                 onclick: () => this.setCurrent(layer),
             },
             this.statusGlyph(layer, isCurrent, count),
+            nameBox,
             this.toggle(layer, "visible", "layer.toggleOn", "icon-eye", "icon-ban"),
             this.toggle(layer, "frozen", "layer.toggleFreeze", "icon-freeze", "icon-thaw"),
             this.toggle(layer, "locked", "layer.toggleLock", "icon-lock", "icon-unlock"),
@@ -184,8 +190,39 @@ export class LayerPanel extends HTMLElement {
             this.lineWeightPreview(layer),
             this.transparencyPreview(layer),
             this.toggle(layer, "printable", "layer.togglePlot", "icon-plot", "icon-noplot"),
-            nameBox,
             span({ className: style.count, textContent: String(count) }),
+        );
+    }
+
+    /**
+     * The labelled header row. A readout only - sorting by clicking a column is not
+     * wired up, so nothing here invites a click. Each column is sized to fit its word
+     * (see the module CSS), with CSS ellipsis as the fallback for a longer translation.
+     */
+    private columnHeader() {
+        const cell = (key: I18nKeys, className = "") =>
+            span({
+                className: `${style.headerCell} ${className}`.trim(),
+                textContent: new Localize(key),
+            });
+
+        return div(
+            { className: `${style.row} ${style.columnHeader}` },
+            cell("layer.column.status"),
+            cell("layer.column.name", style.headerName),
+            cell("layer.column.on"),
+            cell("layer.column.freeze"),
+            cell("layer.column.lock"),
+            cell("layer.column.color"),
+            cell("layer.column.lineType"),
+            cell("layer.column.lineWeight"),
+            cell("layer.column.transparency"),
+            cell("layer.column.plot"),
+            span({
+                className: style.headerCell,
+                title: I18n.translate("layer.column.count.full"),
+                textContent: new Localize("layer.column.count"),
+            }),
         );
     }
 

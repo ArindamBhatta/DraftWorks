@@ -25,6 +25,8 @@ export interface PickShapeOptions {
 export interface PickNodeOptions {
     nodeFilter?: INodeFilter;
     multi?: boolean;
+    /** In multi mode, finish the pick automatically once this returns true. */
+    canFinish?: (selected: INode[]) => boolean;
 }
 
 export interface ISelection extends IDisposable {

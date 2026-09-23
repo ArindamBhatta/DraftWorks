@@ -5,6 +5,7 @@ import { Config } from "../config";
 import type { IDocument } from "../document";
 import { type AsyncController, PubSub } from "../foundation";
 import { I18n } from "../i18n";
+import type { INode } from "../model";
 import type { INodeFilter } from "../selectionFilter";
 import { ShapeTypes } from "../shape";
 import { type IView, type IVisualObject, VisualStates } from "../visual";
@@ -16,6 +17,9 @@ export class NodeSelectionHandler extends SelectionHandler {
     private _lockDetected: IVisualObject | undefined; // Used for cycling detected objects
     protected highlighState = VisualStates.edgeHighlight;
 
+    /** In multi mode, finish the pick automatically once this returns true. */
+    canFinish?: (selected: INode[]) => boolean;
+
     constructor(
         document: IDocument,
         multiMode: boolean,
@@ -23,6 +27,10 @@ export class NodeSelectionHandler extends SelectionHandler {
         readonly filter?: INodeFilter,
     ) {
         super(document, multiMode, controller);
+    }
+
+    protected override canFinishSelection(): boolean {
+        return this.canFinish?.(this.document.selection.getSelectedNodes()) ?? false;
     }
 
     protected override select(view: IView, event: PointerEvent): number {

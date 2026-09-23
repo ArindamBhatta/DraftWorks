@@ -511,6 +511,11 @@ export class ThreeView extends Observable implements IView {
         for (const detected of detecteds) {
             const threeObject = detected.object.parent as ThreeVisualObject;
             if (!threeObject) continue;
+            // One object usually yields several hits - a dimension's dimension line,
+            // extension lines and arrows, or both segments meeting at a polyline vertex.
+            // Kept once, or a click on a lone dimension offers the cycling menu a stack
+            // of copies of itself.
+            if (visual.includes(threeObject)) continue;
 
             const node = this.getNodeFromObject(threeObject);
             if (node === undefined) continue;

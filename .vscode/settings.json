@@ -11,6 +11,8 @@
         "Facebase",
         "Grayscale",
         "IGES",
+        "Linetype",
+        "lineweight",
         "Lineweights",
         "neighbours",
         "OCCT",
