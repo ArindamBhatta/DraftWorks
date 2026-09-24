@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // The Drawing Units dialog's job is that the three dropdowns and the Sample Output panel
 // never disagree. Precision is the trap: its options mean a fraction denominator under
 // Architectural and decimal places under Decimal, so a type change has to rebuild the

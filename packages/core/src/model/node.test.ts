@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // Siblings are a flat linked list, so any walk that recurses along `nextSibling` costs a
 // stack frame per node. That is invisible on a hand-drawn sketch and fatal on an imported
 // one: a DWG or DXF lands every entity in a single folder, so the chain is as long as the

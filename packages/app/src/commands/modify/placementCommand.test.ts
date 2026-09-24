@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // MOVE and COPY read the same picks three different ways, and getting one of them
 // backwards does not throw - it quietly puts the drawing somewhere else. These pin
 // down which reading applies when, and how a Multiple run rebases between rounds.

@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // Polar tracking is the angle increment made into rays. The cases that matter are the
 // ones where a bad increment does not merely give the wrong answer: `initAxes` walks
 // `while (testAngle < 360) testAngle += angle`, so a zero or negative step hangs the tab

@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // Units and dimension style are chosen once and then expected to stay chosen. Before
 // these settings persisted, every reload reset them to the defaults and the start-up
 // flow asked for them all over again - which is what "why do I need to set it again
