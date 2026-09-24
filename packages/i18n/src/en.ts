@@ -781,6 +781,8 @@ export default {
         "prompt.select.objectToExtend.quick": "Select object to extend (every object is a boundary)",
         "prompt.select.objectToExtend.standard": "Select object to extend (only the boundary edges stop it)",
         "prompt.selectedCount": "Selected",
+        "prompt.selectedCount.tip":
+            "Objects selected so far. Press Enter or ✓ to finish selecting, Esc or ✕ to cancel.",
         // Properties
         "properties.allSelected": "All",
         "properties.group.general": "General",
@@ -892,6 +894,8 @@ export default {
         "statusBar.selectionCyclingTip":
             "Selection cycling: when a click lands on stacked objects, list them and let you choose (Ctrl+Shift+W)",
         "statusBar.cyclingPrompt": "Select an object",
+        "statusBar.annotationScaleTip":
+            "Annotation scale: text and dimensions are drawn at their full size. Set the printed scale in Plot.",
         // Toast
         "toast.ai.drawn": "Drawing added",
         "toast.ai.elevationDrawn": "Elevation added below the plan",

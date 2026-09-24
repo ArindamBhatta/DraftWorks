@@ -116,6 +116,8 @@ export class MatchProp extends MultiStepCommand {
                     nodeFilter: notSource,
                     // Each click or window is applied on its own, then the prompt repeats.
                     canFinish: (selected) => selected.length > 0,
+                    // Nothing accumulates, so a selection count would sit at 0.
+                    showControl: false,
                 },
             );
             const accepted = this.controller.result?.status === "success";

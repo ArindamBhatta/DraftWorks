@@ -77,11 +77,11 @@ export class ThreeGeometry extends ThreeVisualObject implements IVisualGeometry 
         };
     }
 
+    // `lineType` is not handled here: "byLayer" has to be resolved against the node's
+    // layer, which the visual context does - see ThreeVisualContext.onNodePropertyChanged.
     private readonly handleGeometryPropertyChanged = (property: keyof GeometryNode) => {
         if (property === "materialId") {
             this.changeFaceMaterial(this.context.getMaterial(this.geometryNode.materialId));
-        } else if (property === "lineType") {
-            this.setLineType(this.geometryNode.lineType);
         } else if (property === "filled") {
             this.applyFaceLayer();
             this.context.visual.update();

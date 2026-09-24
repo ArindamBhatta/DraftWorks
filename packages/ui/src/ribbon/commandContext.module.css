@@ -220,24 +220,25 @@
     border-left: 1px solid var(--border-color);
 }
 
+/* "Selected 3" on one line: stacked, the label sat under a bold number in 11px grey and
+   the control read as a bare "0". */
 .selectionInfo {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
     padding: 2px 6px;
+    cursor: help;
 }
 
 .selectionCount {
-    font-size: 16px;
     font-weight: bold;
     color: var(--foreground-color);
-    line-height: 20px;
+    min-width: 1ch;
 }
 
 .selectionCountLabel {
-    font-size: 11px;
-    color: var(--secondary-foreground-color, #888);
+    color: var(--foreground-color);
 }
 
 .selectionButton {

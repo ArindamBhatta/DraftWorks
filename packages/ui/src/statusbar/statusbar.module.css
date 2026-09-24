@@ -26,6 +26,27 @@
 
 .right {
     flex: 0 1 auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+/*
+ * The annotation scale, "1:1". Sized and padded like the toggles so it sits on their
+ * baseline, but with no hover or pointer: it is a readout, not a button (see
+ * ANNOTATION_SCALE). The rule to its left sets it apart from the drafting aids, which are
+ * modes, where this is a value.
+ */
+.scale {
+    font-size: 12px;
+    line-height: 1;
+    padding: 4px 7px;
+    margin-left: 6px;
+    border-left: 1px solid var(--border-color);
+    color: var(--foreground-color);
+    white-space: nowrap;
+    cursor: default;
+    user-select: none;
 }
 
 @media (max-width: 680px) {

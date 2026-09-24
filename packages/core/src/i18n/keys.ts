@@ -770,6 +770,7 @@ export const I18N_KEYS = [
     "prompt.select.objectToExtend.quick",
     "prompt.select.objectToExtend.standard",
     "prompt.selectedCount",
+    "prompt.selectedCount.tip",
 
     // Properties
     "properties.allSelected",
@@ -876,6 +877,7 @@ export const I18N_KEYS = [
     "statusBar.selectionCycling",
     "statusBar.selectionCyclingTip",
     "statusBar.cyclingPrompt",
+    "statusBar.annotationScaleTip",
     // Toast
     "toast.ai.drawn",
     "toast.ai.elevationDrawn",

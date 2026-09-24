@@ -27,6 +27,11 @@ export interface PickNodeOptions {
     multi?: boolean;
     /** In multi mode, finish the pick automatically once this returns true. */
     canFinish?: (selected: INode[]) => boolean;
+    /**
+     * Whether a multi pick shows the "N Selected / ✓ / ✕" control. On by default; off
+     * for a pick that finishes on every click, where the count could only ever read 0.
+     */
+    showControl?: boolean;
 }
 
 export interface ISelection extends IDisposable {

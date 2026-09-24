@@ -62,10 +62,17 @@
     max-width: 170px;
     padding: 2px 4px;
     font-size: 13px;
-    color: var(--foreground-color);
-    background-color: var(--panel-color);
-    border: 1px solid var(--border-color);
+    color: var(--input-text-color);
+    background-color: var(--input-background-color);
+    border: 1px solid var(--input-border-color);
     border-radius: 3px;
+}
+
+/* The open list is drawn by the platform, which does not always inherit the select's
+   colours - left to itself it can put the light theme's dark text on a dark popup. */
+.select option {
+    color: var(--input-text-color);
+    background-color: var(--input-background-color);
 }
 
 .check {
@@ -124,12 +131,12 @@
     padding: 4px 8px;
     font-size: 13px;
     color: var(--foreground-color);
-    background-color: var(--panel-color);
+    background-color: var(--control-background-color);
     border: 1px solid var(--border-color);
     border-radius: 3px;
     cursor: pointer;
 }
 
 .pick:hover {
-    background-color: var(--background-selected-color, var(--panel-color));
+    background-color: var(--panel-hover-background-color);
 }
