@@ -11,8 +11,10 @@ import {
     VisualConfig,
 } from "@draftworks/core";
 import {
+    crossingsClearOfEnds,
     type EdgeChange,
     type EdgeContext,
+    EndContactTolerance,
     extendChange,
     type ParameterRange,
     TrimExtendCommand,
@@ -111,7 +113,13 @@ export class Extend extends TrimExtendCommand {
         const probe = probeEdge(basis, span, period, reach, keep);
         if (!probe) return undefined;
 
-        const candidates = GeometryUtils.intersects(probe, boundaries).map((x) => x.parameter);
+        // A boundary an end already sits on is where that end stops now, not where it goes.
+        const ends = [basis.value(span.start), basis.value(span.end)];
+        const candidates = crossingsClearOfEnds(
+            GeometryUtils.intersects(probe, boundaries),
+            ends,
+            Math.max(reach * EndContactTolerance, Precision.Distance),
+        );
         return extendChange(span, picked, candidates, period);
     }
 }

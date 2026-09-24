@@ -51,7 +51,9 @@ export class Picker implements IPicker {
     ): Promise<VisualNode[]> {
         const multi = options?.multi ?? false;
         const handler = new NodeSelectionHandler(this.document, multi, controller, options?.nodeFilter);
-        await this.pickAsync(handler, prompt, controller, multi, "select.objects");
+        handler.canFinish = options?.canFinish;
+        const showControl = multi && (options?.showControl ?? true);
+        await this.pickAsync(handler, prompt, controller, showControl, "select.objects");
         return this.document.selection.getSelectedNodes() as VisualNode[];
     }
 

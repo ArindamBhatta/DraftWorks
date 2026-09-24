@@ -239,6 +239,7 @@ export class ThreeVisualContext implements IVisualContext {
         this.visual.document.modelManager.removeNodeObserver(this.handleNodeChanged);
         this.materialMap.forEach((x) => x.dispose());
         this.materialMap.clear();
+        this._NodeVisualMap.forEach((_, node) => node.removePropertyChanged(this.onNodePropertyChanged));
         this.visualShapes.clear();
         this.tempShapes.clear();
         this._visualNodeMap.clear();
@@ -464,14 +465,36 @@ export class ThreeVisualContext implements IVisualContext {
             this._visualNodeMap.set(visualObject, node);
             this._NodeVisualMap.set(node, visualObject);
             this.applyLayerStyling(node, visualObject);
+            node.onPropertyChanged(this.onNodePropertyChanged);
         }
     }
+
+    /**
+     * Re-styles one object when it moves to another layer or changes its own linetype.
+     *
+     * Everything a layer decides - colour, ByLayer linetype, weight, on/off, lock - is
+     * applied from here, so a node changing *which* layer it is on has to come through
+     * here too. Without this only the commands that remembered to call
+     * refreshLayerStyling showed the change; MATCHPROP, the property panel and undo of
+     * either left the object in its old layer's colour until the drawing was reloaded.
+     */
+    private readonly onNodePropertyChanged = (property: PropertyKey, source: unknown) => {
+        if (property !== "layerId" && property !== "lineType") return;
+
+        const node = source as INode;
+        const visualObject = this._NodeVisualMap.get(node);
+        if (!visualObject) return;
+
+        this.applyLayerStyling(node, visualObject);
+        this.visual.update();
+    };
 
     removeNode(models: INode[]) {
         models.forEach((m) => {
             const visual = this._NodeVisualMap.get(m);
             this._NodeVisualMap.delete(m);
             if (!visual) return;
+            m.removePropertyChanged(this.onNodePropertyChanged);
             this._visualNodeMap.delete(visual);
             visual.parent?.remove(visual);
             visual.dispose();

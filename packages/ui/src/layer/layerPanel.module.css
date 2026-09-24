@@ -46,18 +46,40 @@
     background-color: var(--panel-background-color);
 }
 
-/* AutoCAD 2013 spaces its Layer Manager columns well apart, so a glyph is clearly its
-   own column rather than one of a crowded strip - and so a click lands on the column
-   the user meant. 10px is what separates these without pushing the name box narrow. */
-.list .row {
-    display: flex;
-    flex-direction: row;
+/* One grid template shared by the header and every row, so a cell sits under its own
+   label however wide the panel is - the point of the header. Flexbox cannot do that:
+   each row would size its own cells and the columns would drift apart.
+
+   Name is the only elastic column (1fr); the rest are sized to their glyph, wide enough
+   that a click lands on the column the user meant. Order matches AutoCAD 2013's:
+   Status, Name, On, Freeze, Lock, Color, Linetype, Lineweight, Transparency, Plot, #. */
+/* Each column is sized to fit its own header word, not the glyph inside it - a column
+   narrower than its label makes the label useless, which is the whole point of having
+   one. The glyphs then centre in the wider cell, as AutoCAD's do.
+
+   Name is capped rather than 1fr: as 1fr it absorbed every spare pixel of the palette,
+   leaving a wide blank gap between the names and the first glyph column. The last
+   column is 1fr instead, so slack collects at the right edge where it reads as margin
+   and the table keeps its shape at any panel width. */
+.row {
+    display: grid;
+    grid-template-columns: 90px minmax(90px, 180px) 26px 40px 30px 36px 52px 66px 76px 30px 1fr;
     align-items: center;
-    gap: 10px;
-    padding: 3px 10px;
+    gap: 6px;
+    padding: 3px 8px;
+    border-left: 3px solid transparent;
+}
+
+/* The glyph columns are wider than their glyphs, so centre what sits in them - a
+   left-aligned icon under a centred label reads as a different column. Name and the
+   trailing count column are text, and both stay left against their own labels. */
+.row > *:not(.name):not(.headerName):not(.count):not(:last-child) {
+    justify-self: center;
+}
+
+.list .row {
     cursor: pointer;
     user-select: none;
-    border-left: 3px solid transparent;
 
     &:hover {
         background-color: var(--hover-background-color);
@@ -115,7 +137,6 @@
 }
 
 .name {
-    flex: 1;
     font: inherit;
     font-size: 0.9rem;
     overflow: hidden;
@@ -137,9 +158,38 @@
 .count {
     font-size: 0.75rem;
     opacity: 0.6;
-    flex: 0 0 auto;
+    text-align: left;
 }
 
+/* A readout, not a control: sorting by column is not wired up, so nothing here
+   highlights on hover or takes a pointer. It sits outside the scrolling list, so the
+   labels stay put while the rows move under them. */
+.columnHeader {
+    cursor: default;
+    user-select: none;
+    font-size: 0.7rem;
+    opacity: 0.75;
+    padding-top: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--panel-background-color);
+}
+
+.headerCell {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* The name column's cell is an <input> with 2px of padding on the rows; the header is a
+   <span> without it, so without this the label sits two pixels left of the names. */
+.headerName {
+    padding-left: 2px;
+}
+
+/* The palette is a floating window, so it is sized by its own width (see
+   layerFloatPanel), not the viewport - but on a phone-width screen there is nowhere to
+   float it, and the ribbon that opens it is hidden too. */
 @media (max-width: 680px) {
     .root {
         display: none;

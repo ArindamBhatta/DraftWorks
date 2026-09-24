@@ -5,6 +5,7 @@ import {
     Combobox,
     Config,
     type CursorType,
+    CurveUtils,
     EditableShapeNode,
     type GeometryNode,
     I18n,
@@ -16,6 +17,7 @@ import {
     type IEventHandler,
     type IShape,
     type IShapeFilter,
+    type ITrimmedCurve,
     type IView,
     type IVisualObject,
     isVisualGeometry,
@@ -35,7 +37,10 @@ import {
     type TrimExtendMode,
     VisualConfig,
     type VisualShapeData,
+    type XYZ,
+    type XYZLike,
 } from "@draftworks/core";
+import { straightDirection, supportCurve } from "./fillet";
 
 /** A stretch of a curve, named by its start and end parameter on that curve. */
 export interface ParameterRange {
@@ -176,6 +181,61 @@ export function trimChange(intersections: number[], picked: number): EdgeChange 
 const wrap = (value: number, period: number) => ((value % period) + period) % period;
 
 /**
+ * The ends to rebuild an edge from as a plain line, or undefined when its own curve will do.
+ *
+ * EXTEND follows an edge's curve on past its ends to find the next boundary, so it needs
+ * a curve that goes on. A line drawn with OFFSET does not have one: OFFSET wraps the
+ * source line, already cut to length, in an offset curve, and that curve stops exactly
+ * where the new line does - so every click on it found nothing to reach. It is straight
+ * all the same (see straightDirection), and a line with the same two ends is the line it
+ * already is.
+ *
+ * Exported for testing.
+ */
+export function straightRebuild(curve: ITrimmedCurve): { start: XYZ; end: XYZ } | undefined {
+    const support = supportCurve(curve);
+    if (CurveUtils.isLine(support)) return undefined;
+
+    const first = curve.firstParameter();
+    const last = curve.lastParameter();
+    if (!straightDirection(support, first, last)) return undefined;
+    return { start: curve.value(first), end: curve.value(last) };
+}
+
+/**
+ * How close, as a share of `reach`, a crossing has to be to an edge's end to be the
+ * boundary that end already stops on.
+ *
+ * One part in a hundred thousand of the drawing: far below anything that shows on screen,
+ * and well above the float32 error a snapped point can carry through the mesh it came
+ * from - a coordinate of 1000 is only good to about 1e-4.
+ */
+export const EndContactTolerance = 1e-5;
+
+/**
+ * The parameters an extension could stop at: every crossing except those sitting on one
+ * of the edge's own `ends`.
+ *
+ * A line drawn from one wall of a rectangle to the other ends on the walls, and EXTEND
+ * should carry it past them to whatever lies beyond. Should an end fall a hair short, a
+ * wall is still a crossing just ahead of it - and the "extension" is a stretch too short
+ * to see, so the click appears to do nothing and does it again on every retry. Measured
+ * as a distance rather than a parameter, because an arc's parameter is an angle.
+ *
+ * Exported for testing.
+ */
+export function crossingsClearOfEnds(
+    crossings: { point: XYZLike; parameter: number }[],
+    ends: XYZLike[],
+    tolerance: number,
+): number[] {
+    const distance = (a: XYZLike, b: XYZLike) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+    return crossings
+        .filter((crossing) => ends.every((end) => distance(crossing.point, end) > tolerance))
+        .map((crossing) => crossing.parameter);
+}
+
+/**
  * How far EXTEND stretches the edge, and in which direction - or undefined when there is
  * nothing out there to stretch to.
  *
@@ -296,6 +356,33 @@ function handleOptionKey(options: StepOption[], event: KeyboardEvent): boolean {
     return true;
 }
 
+/**
+ * What can stand as a cutting or boundary edge: anything with edges in it.
+ *
+ * Wider than EdgeFilter, which is for the edge being trimmed or extended. A rectangle,
+ * circle, polyline or hatch is a wire or a face rather than a lone edge, but in AutoCAD
+ * it is as good a boundary as a line - extending a run of lines out to a rectangle's wall
+ * is the ordinary case, not an edge one.
+ */
+export class BoundaryFilter implements IShapeFilter {
+    allow(shape: IShape): boolean {
+        return shape.shapeType !== ShapeTypes.vertex;
+    }
+}
+
+/**
+ * The edges a boundary shape contributes: itself if it is one, else every edge in it.
+ * The pieces are new handles, so each is passed to `keep` for disposal.
+ */
+export function boundaryEdgesOf(shape: IShape, keep: (disposable: IDisposable) => void): IEdge[] {
+    if (shape.shapeType === ShapeTypes.edge) return [shape as IEdge];
+    if (shape.shapeType === ShapeTypes.vertex) return [];
+
+    const edges = shape.findSubShapes(ShapeTypes.edge) as IEdge[];
+    edges.forEach(keep);
+    return edges;
+}
+
 /** The multi-pick that names the cutting or boundary edges, with the prompt's options live. */
 class PickBoundaryHandler extends SubshapeSelectionHandler {
     constructor(
@@ -303,7 +390,7 @@ class PickBoundaryHandler extends SubshapeSelectionHandler {
         controller: AsyncController,
         private readonly options: StepOption[],
     ) {
-        super(document, ShapeTypes.shape, true, controller, new EdgeFilter());
+        super(document, ShapeTypes.shape, true, controller, new BoundaryFilter());
     }
 
     override keyDown(view: IView, event: KeyboardEvent): void {
@@ -732,13 +819,14 @@ export abstract class TrimExtendCommand extends CancelableCommand {
         target: VisualShapeData,
         keep: (disposable: IDisposable) => void,
     ): EdgePlan | undefined => {
-        const edge = target.shape.transformedMul(target.transform) as IEdge;
-        keep(edge);
+        const edge = this.followable(target.shape.transformedMul(target.transform) as IEdge, keep);
 
         if (!target.point) return undefined;
 
         const curve = edge.curve;
-        const basis = curve.basisCurve;
+        // Past every trim, not just the outermost: a curve that was trimmed before it was
+        // made into an edge - Break does that - would otherwise stop at the old trim.
+        const basis = supportCurve(curve);
         const span = { start: curve.firstParameter(), end: curve.lastParameter() };
         // A generous tolerance, as the pick is a click on a line a few pixels wide rather
         // than a point claimed to be exactly on the curve.
@@ -759,6 +847,23 @@ export abstract class TrimExtendCommand extends CancelableCommand {
         return change && { ...change, target, basis };
     };
 
+    /**
+     * `edge`, or a plain line in its place when it runs straight on a curve that cannot be
+     * followed past its ends - see straightRebuild. The pieces a click leaves are built
+     * from whichever this returns, so an offset line comes out of TRIM or EXTEND as an
+     * ordinary one.
+     */
+    private followable(edge: IEdge, keep: (disposable: IDisposable) => void): IEdge {
+        keep(edge);
+        const ends = straightRebuild(edge.curve);
+        if (!ends) return edge;
+
+        const line = shapeFactory.line(ends.start, ends.end);
+        if (!line.isOk) return edge;
+        keep(line.value);
+        return line.value;
+    }
+
     private boundariesFor(target: VisualShapeData, keep: (disposable: IDisposable) => void): BoundaryEdges {
         if (this.#picked) return this.#picked;
 
@@ -772,7 +877,7 @@ export abstract class TrimExtendCommand extends CancelableCommand {
             const visuals = box
                 ? this.document.visual.context.boundingBoxIntersectFilter(
                       BoundingBox.expand(box, 1e-3),
-                      new EdgeFilter(),
+                      new BoundaryFilter(),
                   )
                 : [];
             return this.worldEdgesOf(visuals, keep);
@@ -797,11 +902,13 @@ export abstract class TrimExtendCommand extends CancelableCommand {
             if (!isVisualGeometry(visual)) continue;
 
             const shape = (visual.geometryNode as ShapeNode)?.shape?.value;
-            if (!shape || shape.shapeType !== ShapeTypes.edge) continue;
+            if (!shape || !new BoundaryFilter().allow(shape)) continue;
 
-            const edge = shape.transformedMul(visual.worldTransform()) as IEdge;
-            keep(edge);
-            items.push({ edge, source: shape });
+            const world = shape.transformedMul(visual.worldTransform());
+            keep(world);
+            // Every edge of a rectangle or circle keeps the whole shape as its source: a
+            // pick is always a lone edge, so it can only ever recognise itself.
+            for (const edge of boundaryEdgesOf(world, keep)) items.push({ edge, source: shape });
             bounds = unionBox(bounds, visual.boundingBox());
         }
         return { items, box: bounds };
@@ -811,12 +918,13 @@ export abstract class TrimExtendCommand extends CancelableCommand {
     private worldEdges(shapes: VisualShapeData[]): BoundaryEdges {
         const items: BoundaryEdge[] = [];
         let bounds: BoundingBox | undefined;
+        const keep = (disposable: IDisposable) => this.disposeStack.add(disposable);
         for (const shape of shapes) {
-            if (shape.shape.shapeType !== ShapeTypes.edge) continue;
+            if (!new BoundaryFilter().allow(shape.shape)) continue;
 
-            const edge = shape.shape.transformedMul(shape.transform) as IEdge;
-            this.disposeStack.add(edge);
-            items.push({ edge, source: shape.shape });
+            const world = shape.shape.transformedMul(shape.transform);
+            keep(world);
+            for (const edge of boundaryEdgesOf(world, keep)) items.push({ edge, source: shape.shape });
             bounds = unionBox(bounds, shape.owner.boundingBox());
         }
         return { items, box: bounds };

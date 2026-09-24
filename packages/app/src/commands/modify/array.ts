@@ -547,7 +547,7 @@ export class ArrayCommand extends MultiStepCommand {
         for (const matrix of matrixs) {
             this.models?.forEach((model) => {
                 const cloned = model.clone();
-                cloned.transform = cloned.transform.multiply(matrix);
+                cloned.applyTransform(matrix);
                 nodes.push(cloned);
             });
         }

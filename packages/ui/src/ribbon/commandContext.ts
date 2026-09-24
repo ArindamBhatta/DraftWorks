@@ -170,12 +170,12 @@ export class CommandContext extends HTMLElement implements IDisposable {
         this.selectionControlContainer = div(
             { className: style.selectionControl },
             div(
-                { className: style.selectionInfo },
-                this.countDom(),
+                { className: style.selectionInfo, title: I18n.translate("prompt.selectedCount.tip") },
                 span({
                     className: style.selectionCountLabel,
                     textContent: new Localize("prompt.selectedCount"),
                 }),
+                this.countDom(),
             ),
             div(
                 { className: style.selectionButton, onclick: () => controller.success() },

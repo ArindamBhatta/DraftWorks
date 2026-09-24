@@ -99,12 +99,12 @@ export abstract class TransformedCommand extends MultiStepCommand {
             if (this.isClone) {
                 this.models?.forEach((x) => {
                     const clone = x.clone();
-                    clone.transform = x.transform.multiply(transform);
+                    clone.applyTransform(transform);
                     x.parent?.insertAfter(x, clone);
                 });
             } else {
                 this.models?.forEach((x) => {
-                    x.transform = x.transform.multiply(transform);
+                    x.applyTransform(transform);
                 });
             }
 

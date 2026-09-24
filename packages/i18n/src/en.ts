@@ -482,6 +482,22 @@ export default {
         "layer.lineType": "Layer linetype",
         "layer.lineWeight": "Layer lineweight",
         "layer.transparency": "Layer transparency",
+        // Layer Properties Manager column headers. Real words, not AutoCAD's rendered
+        // truncation ("Fre...") - that is what its narrow columns do to the text at
+        // draw time, not what it stores. These columns are sized to fit the word, and
+        // CSS ellipsis handles any locale whose translation is longer.
+        "layer.column.status": "Status",
+        "layer.column.name": "Name",
+        "layer.column.on": "On",
+        "layer.column.freeze": "Freeze",
+        "layer.column.lock": "Lock",
+        "layer.column.color": "Color",
+        "layer.column.lineType": "Linetype",
+        "layer.column.lineWeight": "Lineweight",
+        "layer.column.transparency": "Transparency",
+        "layer.column.plot": "Plot",
+        "layer.column.count": "#",
+        "layer.column.count.full": "Objects on this layer",
         "layer.status.current": "Current layer",
         "layer.status.inUse": "Layer in use",
         "layer.status.empty": "Empty layer",
@@ -765,6 +781,8 @@ export default {
         "prompt.select.objectToExtend.quick": "Select object to extend (every object is a boundary)",
         "prompt.select.objectToExtend.standard": "Select object to extend (only the boundary edges stop it)",
         "prompt.selectedCount": "Selected",
+        "prompt.selectedCount.tip":
+            "Objects selected so far. Press Enter or ✓ to finish selecting, Esc or ✕ to cancel.",
         // Properties
         "properties.allSelected": "All",
         "properties.group.general": "General",
@@ -876,6 +894,8 @@ export default {
         "statusBar.selectionCyclingTip":
             "Selection cycling: when a click lands on stacked objects, list them and let you choose (Ctrl+Shift+W)",
         "statusBar.cyclingPrompt": "Select an object",
+        "statusBar.annotationScaleTip":
+            "Annotation scale: text and dimensions are drawn at their full size. Set the printed scale in Plot.",
         // Toast
         "toast.ai.drawn": "Drawing added",
         "toast.ai.elevationDrawn": "Elevation added below the plan",

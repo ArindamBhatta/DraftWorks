@@ -7,11 +7,22 @@
 // functions work in curve parameters, so a line running 0..10 with crossings at 3 and 7
 // is the whole of the geometry a test needs.
 
-import { TrimExtendModes } from "@draftworks/core";
+import {
+    type IDisposable,
+    type IShape,
+    type ITrimmedCurve,
+    ShapeTypes,
+    TrimExtendModes,
+    XYZ,
+} from "@draftworks/core";
 import { expect, test } from "@rstest/core";
 import {
+    BoundaryFilter,
+    boundaryEdgesOf,
+    crossingsClearOfEnds,
     extendChange,
     parseTrimExtendMode,
+    straightRebuild,
     TrimExtendModeLabels,
     trimChange,
     trimExtendModeOf,
@@ -136,4 +147,92 @@ test("an answer that is neither mode is rejected rather than guessed at", () => 
     for (const text of ["x", "qq", "stand", "1"]) {
         expect(parseTrimExtendMode(text, TrimExtendModeLabels.quick)).toBeUndefined();
     }
+});
+
+// A stand-in for an OCCT shape: all boundaryEdgesOf asks of one is its type and edges.
+function fakeShape(shapeType: IShape["shapeType"], edges: IShape[] = []): IShape {
+    return { shapeType, findSubShapes: () => edges } as unknown as IShape;
+}
+
+test("a rectangle, circle or hatch is a boundary, edge by edge", () => {
+    // They are wires and faces, not lone edges. Leaving them out meant a line aimed at a
+    // rectangle's wall found nothing to extend to, while one aimed at a plain line did.
+    const sides = [1, 2, 3, 4].map(() => fakeShape(ShapeTypes.edge));
+    const kept: IDisposable[] = [];
+    const keep = (d: IDisposable) => kept.push(d);
+
+    for (const type of [ShapeTypes.wire, ShapeTypes.face, ShapeTypes.compound]) {
+        const shape = fakeShape(type, sides);
+        expect(new BoundaryFilter().allow(shape)).toBe(true);
+        expect(boundaryEdgesOf(shape, keep)).toEqual(sides);
+    }
+    expect(kept.length).toBe(12);
+});
+
+test("a lone edge is its own boundary, and a point is none", () => {
+    const line = fakeShape(ShapeTypes.edge);
+    expect(boundaryEdgesOf(line, () => {})).toEqual([line]);
+
+    const point = fakeShape(ShapeTypes.vertex);
+    expect(new BoundaryFilter().allow(point)).toBe(false);
+    expect(boundaryEdgesOf(point, () => {})).toEqual([]);
+});
+
+// A vertical line from y=0 to y=494, drawn wall to wall inside a rectangle, with a second
+// rectangle around the first at y=-27 and y=521 - the layout EXTEND is most often asked
+// to deal with. Points carry the y; the parameter along the line is the same number.
+const wallToWall = { start: 0, end: 494 };
+const crossingAt = (y: number) => ({ point: { x: 0, y, z: 0 }, parameter: y });
+const lineEnds = [
+    { x: 0, y: 0, z: 0 },
+    { x: 0, y: 494, z: 0 },
+];
+
+test("an end sitting on a wall runs on past it to the next one", () => {
+    const candidates = crossingsClearOfEnds([-27, 0, 494, 521].map(crossingAt), lineEnds, 0.013);
+    expect(candidates).toEqual([-27, 521]);
+    expect(extendChange(wallToWall, 490, candidates)!.affected).toEqual({ start: 494, end: 521 });
+});
+
+test("an end a hair short of a wall is still on it", () => {
+    // OCCT puts the crossing at 494 and the end at 493.999999. Taken at face value, that
+    // is an extension a millionth long - a click that looks like it did nothing.
+    const shortEnds = [lineEnds[0], { x: 0, y: 493.999999, z: 0 }];
+    const candidates = crossingsClearOfEnds([-27, 0, 494, 521].map(crossingAt), shortEnds, 0.013);
+    expect(candidates).toEqual([-27, 521]);
+});
+
+test("a wall a visible distance ahead is still a wall", () => {
+    const candidates = crossingsClearOfEnds([500, 521].map(crossingAt), lineEnds, 0.013);
+    expect(candidates).toEqual([500, 521]);
+});
+
+// OFFSET makes a line as an offset curve over the source line cut to length, so the curve
+// under the new line ends where the line does and EXTEND had nothing past either end to
+// follow. These stand in for the three layers an edge's curve can have.
+const along = (x: number) => (t: number) => new XYZ({ x, y: t, z: 0 });
+const trimmedOver = (support: object, first: number, last: number, value: (t: number) => XYZ) =>
+    ({
+        curveType: "trimmedCurve",
+        basisCurve: support,
+        firstParameter: () => first,
+        lastParameter: () => last,
+        value,
+    }) as unknown as ITrimmedCurve;
+
+test("a line made by OFFSET is rebuilt as a plain line, end to end", () => {
+    const offsetLine = { curveType: "offsetCurve", value: along(50), direction: () => XYZ.unitZ };
+    const ends = straightRebuild(trimmedOver(offsetLine, 0, 494, along(50)))!;
+    expect([ends.start.x, ends.start.y, ends.end.x, ends.end.y]).toEqual([50, 0, 50, 494]);
+});
+
+test("a plain line is left as it is", () => {
+    const line = { curveType: "line", direction: XYZ.unitY, value: along(0) };
+    expect(straightRebuild(trimmedOver(line, 0, 10, along(0)))).toBeUndefined();
+});
+
+test("an offset arc is not mistaken for a line", () => {
+    const arc = (t: number) => new XYZ({ x: Math.cos(t), y: Math.sin(t), z: 0 });
+    const offsetArc = { curveType: "offsetCurve", value: arc, direction: () => XYZ.unitZ };
+    expect(straightRebuild(trimmedOver(offsetArc, 0, 1.5, arc))).toBeUndefined();
 });

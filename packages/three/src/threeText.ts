@@ -23,10 +23,6 @@ import type { ThreeVisualContext } from "./threeVisualContext";
 
 const HIGHLIGHT_COLOR = "#00ffff";
 
-/** Keeps text legible when zoomed far out and sane when zoomed far in. */
-const MIN_FONT_PX = 6;
-const MAX_FONT_PX = 400;
-
 /**
  * Renders one TextAnnotation - both AutoCAD's TEXT and its MTEXT, which differ only in
  * whether the block wraps.
@@ -140,8 +136,9 @@ export class ThreeText extends Object3D implements IVisualObject, IHighlightable
         if (pixelsPerUnit <= 0 || pixelsPerUnit === this._pixelsPerUnit) return;
         this._pixelsPerUnit = pixelsPerUnit;
 
-        const fontPx = this.annotation.height * pixelsPerUnit;
-        this._inner.style.fontSize = `${Math.max(MIN_FONT_PX, Math.min(MAX_FONT_PX, fontPx))}px`;
+        // No floor or ceiling here: the text has to keep shrinking and growing with the
+        // rest of the drawing, the way real CAD text does.
+        this._inner.style.fontSize = `${this.annotation.height * pixelsPerUnit}px`;
         this._inner.style.width = this.annotation.isMultiline
             ? `${this.annotation.boxWidth * pixelsPerUnit}px`
             : "";
@@ -151,14 +148,10 @@ export class ThreeText extends Object3D implements IVisualObject, IHighlightable
 
     /**
      * The rendered size in drawing units. The DOM knows the real width of proportional
-     * glyphs; the model's estimate only stands in until the element has been laid out
-     * (and when the font was clamped, which breaks the units-to-pixels relationship).
+     * glyphs; the model's estimate only stands in until the element has been laid out.
      */
     private measure(pixelsPerUnit: number): { width: number; height: number } {
         const estimate = this.annotation.layout();
-        const fontPx = this.annotation.height * pixelsPerUnit;
-        if (fontPx < MIN_FONT_PX || fontPx > MAX_FONT_PX) return estimate;
-
         const width = this._inner.offsetWidth / pixelsPerUnit;
         const height = this._inner.offsetHeight / pixelsPerUnit;
         return width > 0 && height > 0 ? { width, height } : estimate;

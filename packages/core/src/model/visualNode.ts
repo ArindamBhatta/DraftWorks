@@ -58,6 +58,21 @@ export abstract class VisualNode extends Node {
         });
     }
 
+    /**
+     * Applies a world-space transform from a modify command (MOVE, ROTATE, SCALE,
+     * MIRROR) to this node.
+     *
+     * Most nodes carry their placement in `transform`, so composing the matrix is all
+     * it takes. Annotations are the exception: their geometry lives in their own
+     * fields (a text's `position` and `height`, a dimension's picked points) and the
+     * renderer reads those directly, ignoring `transform` entirely. They override this
+     * to bake the matrix into those fields instead - without it, a scaled or moved
+     * label simply would not move.
+     */
+    applyTransform(transform: Matrix4): void {
+        this.transform = this.transform.multiply(transform);
+    }
+
     // Delegates to the rendered visual object instead of composing this.transform
     // with the parent chain locally, because the model layer (this class) doesn't
     // walk ancestors to accumulate transforms itself - the render-side scene graph
