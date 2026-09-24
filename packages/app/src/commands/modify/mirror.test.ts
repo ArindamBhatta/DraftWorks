@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // MIRROR's reflection plane. The failure worth guarding against is subtle: a plane
 // built from the wrong pair of vectors still produces a plausible-looking transform,
 // but it rotates the drawing instead of flipping it - and a symmetric test shape

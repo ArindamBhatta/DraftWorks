@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // The height and rotation prompts both accept "just press Enter", so the difference
 // between "keep the remembered value" and "reject this" has to be exact - getting it
 // wrong either drops text at size zero or refuses a legitimate angle.

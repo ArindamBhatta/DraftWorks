@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // JOIN's collinear-line rule. Two failures are worth guarding against, and neither
 // shows up on the easy case of two segments running left to right from the origin:
 // treating a gap as a reason to refuse (JOIN exists to close those), and measuring

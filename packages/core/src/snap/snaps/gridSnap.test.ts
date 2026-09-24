@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // Snap mode (F9) is rounding, and rounding has exactly two ways to go badly wrong: a
 // spacing of zero, which divides by zero and puts every point at the origin, and rounding
 // in world coordinates rather than the plane's, which lands the lattice on the wrong axes

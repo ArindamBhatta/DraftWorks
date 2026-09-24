@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // The constraint maths behind the cursor's distance/angle boxes. Getting a sign or
 // a wrap wrong here sends the rubber-band line to the mirror image of where the
 // user asked for it, which is hard to spot by eye and impossible to spot in review.

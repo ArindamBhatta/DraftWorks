@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // ROTATE's angle convention. A sign or reference error here does not throw - it
 // quietly turns the drawing the wrong way, or by the wrong amount, which is the kind
 // of thing that only shows up as "rotate is broken" long after the fact. These pin
