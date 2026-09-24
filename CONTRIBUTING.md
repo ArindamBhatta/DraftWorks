@@ -78,58 +78,75 @@ This is the most common kind of contribution. Take POINT as the smallest real ex
 
 ## Problems to pick up
 
-Comment on the matching issue (or open one) to say you're taking a problem, so two people don't build the same thing. Each problem below says where to start.
+Each problem has a GitHub issue with the full details. Comment there to say you're taking it, so two people don't build the same thing, and put `Closes #N` in your pull request. The whole list is also under the [good first issue](https://github.com/ArindamBhatta/DraftWorks/labels/good%20first%20issue) and [help wanted](https://github.com/ArindamBhatta/DraftWorks/labels/help%20wanted) labels.
 
 ### Good first issues: a few hours, no CAD maths
 
 #### 1. Save the plot as SVG
+
+Issue [#8](https://github.com/ArindamBhatta/DraftWorks/issues/8)
 
 PLOT only writes PDF, but the live preview is already a complete SVG of the sheet from `plotToSvg`. Add an output-format choice to the plot dialog and save that SVG.
 **Start:** [packages/app/src/commands/plot.ts](packages/app/src/commands/plot.ts) (the preview is built around line 253), [packages/app/src/io/plot/plotSvg.ts](packages/app/src/io/plot/plotSvg.ts).
 
 #### 2. Add a ZOOM command (`z`)
 
+Issue [#9](https://github.com/ArindamBhatta/DraftWorks/issues/9)
+
 There's no ZOOM command yet. `cameraController.fitContent()` already does what ZOOM Extents does. Start with `Z` → `E`, then add Window.
 **Start:** [packages/app/src/commands/view/pan.ts](packages/app/src/commands/view/pan.ts) as a template, [packages/core/src/visual/cameraController.ts](packages/core/src/visual/cameraController.ts).
 
 #### 3. Translate DraftWorks into your language
 
+Issue [#10](https://github.com/ArindamBhatta/DraftWorks/issues/10)
+
 Only English exists. Copy [packages/i18n/src/en.ts](packages/i18n/src/en.ts) to `<code>.ts`, translate it, and export it from [packages/i18n/src/index.ts](packages/i18n/src/index.ts). The `Locale` type requires every key, so the build lists any you've missed. Keep CAD terms the way drafters in your language say them. They often use the English words.
 
 #### 4. Match the browser language by its primary subtag
+
+Issue [#11](https://github.com/ArindamBhatta/DraftWorks/issues/11)
 
 `I18n.defaultLanguage()` compares `navigator.language` exactly, so a browser set to `hi-IN` won't pick up a `hi` translation. Fall back to the part before the hyphen, and add a test.
 **Start:** [packages/core/src/i18n/i18n.ts](packages/core/src/i18n/i18n.ts), line 40.
 
 #### 5. Run tests and lint on pull requests
 
-The only GitHub workflow deploys Pages on pushes to `main`. Nothing checks a pull request. Add `.github/workflows/ci.yml` that runs `npm ci`, `npm test` and `npx biome ci` on Node 22.
+Issue [#12](https://github.com/ArindamBhatta/DraftWorks/issues/12)
 
-#### 6. Bring doc/architecture.md up to date
+The only GitHub workflow deploys Pages on pushes to `main`. Nothing checks a pull request. Add `.github/workflows/ci.yml` that runs `npm ci`, `npx biome ci`, `npm test` and `npm run build` on Node 22.
 
-It describes a `commands/measure/` folder and zh-cn/pt-br/ru locales that no longer exist, leaves out the `ai` and `generators` packages, and sends readers to `CLAUDE.md` for build commands, which points at a file that isn't in the repo.
 
 ### Medium: a new command following an existing one
 
 #### 7. DIST (`di`)
+
+Issue [#14](https://github.com/ArindamBhatta/DraftWorks/issues/14)
 
 Pick two points. Report the distance, ΔX, ΔY and angle in the drawing's own units (`5'-8 1/2"`, not `1739.9`), as a toast.
 **Start:** `MultiStepCommand` with two `PointStep`s. Format with `UnitSetup` in [packages/core/src/foundation/unitSetup/unitSetup.ts](packages/core/src/foundation/unitSetup/unitSetup.ts).
 
 #### 8. AREA (`aa`)
 
+Issue [#15](https://github.com/ArindamBhatta/DraftWorks/issues/15)
+
 Pick points, or pick a closed object. Report the area and perimeter. Engineers use this constantly for slab, plot and room areas.
 
 #### 9. DIMCONTINUE (`dco`) and DIMBASELINE (`dba`)
+
+Issue [#16](https://github.com/ArindamBhatta/DraftWorks/issues/16)
 
 Continue a chain of dimensions from the last linear dimension, or measure each one from a common baseline. Almost every structural drawing needs these.
 **Start:** [packages/app/src/commands/dimension/](packages/app/src/commands/dimension/).
 
 #### 10. DIVIDE (`div`) and MEASURE (`me`)
 
+Issue [#17](https://github.com/ArindamBhatta/DraftWorks/issues/17)
+
 Place points along a curve at N equal segments, or at a fixed length. This is how rebar and stirrups get spaced.
 
 #### 11. LENGTHEN (`len`)
+
+Issue [#18](https://github.com/ArindamBhatta/DraftWorks/issues/18)
 
 Delta, Percent, Total and Dynamic, as in AutoCAD.
 
@@ -137,14 +154,20 @@ Delta, Percent, Total and Dynamic, as in AutoCAD.
 
 #### 12. Circle Tan-Tan-Radius and Tan-Tan-Tan
 
+Issue [#19](https://github.com/ArindamBhatta/DraftWorks/issues/19)
+
 Both are on the ribbon but greyed out because the tangent solve isn't written yet. The solve needs line/line, line/circle and circle/circle cases, and the maths should be a pure function with tests, like `circumcircle`.
 **Start:** [packages/app/src/commands/create/circle.ts](packages/app/src/commands/create/circle.ts), [packages/builder/src/ribbon.ts](packages/builder/src/ribbon.ts) around line 19.
 
 #### 13. PNG export
 
+Issue [#20](https://github.com/ArindamBhatta/DraftWorks/issues/20)
+
 Rasterise the plot SVG at a chosen DPI. This builds on problem 1.
 
 #### 14. Blocks (BLOCK / INSERT)
+
+Issue [#21](https://github.com/ArindamBhatta/DraftWorks/issues/21)
 
 This is the biggest missing feature. It needs a block table in the document, insert nodes, serialisation, and a DXF/DWG round trip. Please discuss the design in an issue before writing code.
 
