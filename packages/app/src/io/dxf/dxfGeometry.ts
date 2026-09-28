@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 /**
  * The geometry DXF needs that is not geometry the kernel provides: resolving a polyline
  * bulge into an arc, and evaluating a B-spline.

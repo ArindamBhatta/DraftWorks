@@ -6,6 +6,15 @@
  * not an arrow: in a drafting app the pointer is a drawing instrument whenever it is
  * over the canvas. "draw" drops the pickbox while a command asks for a point, and
  * "select.objects" drops the crosshair while a command asks for objects - AutoCAD's
- * bare pickbox, which is how "Select objects:" looks and feels there.
+ * bare pickbox, which is how "Select objects:" looks and feels there. "select.erase" is
+ * that pickbox with AutoCAD's red cross beside it, for ERASE's "Select objects:" - the
+ * one pick whose objects are about to disappear rather than be changed.
  */
-export type CursorType = "default" | "draw" | "select.default" | "select.objects" | "pan" | "pan.active";
+export type CursorType =
+    | "default"
+    | "draw"
+    | "select.default"
+    | "select.objects"
+    | "select.erase"
+    | "pan"
+    | "pan.active";

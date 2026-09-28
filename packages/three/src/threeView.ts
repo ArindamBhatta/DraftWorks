@@ -70,7 +70,7 @@ import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
 import { CSS2DObject, CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { CameraController } from "./cameraController";
 import { Constants } from "./constants";
-import { setSelectionDashScale } from "./materials";
+import { setScreenDashScale } from "./materials";
 import { ThreeRefSegmentAnnotation } from "./threeAnnotation";
 import { ThreeDimension } from "./threeDimension";
 import { ThreeGeometry } from "./threeGeometry";
@@ -368,14 +368,15 @@ export class ThreeView extends Observable implements IView {
      * drawing units has to be re-derived whenever the zoom moves: dimension text (sized
      * in drawing units, so its pixel size follows the zoom - see
      * ThreeDimension.updateScale, which no-ops unless the size really moved) and the
-     * selection dash (sized in pixels, so its drawing-unit length has to follow instead).
+     * selection dash and TRIM's dots (sized in pixels, so their drawing-unit length has
+     * to follow instead).
      */
     private updateScreenScales() {
         const worldHeight = this.camera.top - this.camera.bottom;
         if (worldHeight <= 0) return;
 
         const pixelsPerUnit = this.height / worldHeight;
-        setSelectionDashScale(pixelsPerUnit);
+        setScreenDashScale(pixelsPerUnit);
         this.content.visualShapes.traverse((object) => {
             if (object instanceof ThreeDimension || object instanceof ThreeText) {
                 object.updateScale(pixelsPerUnit);

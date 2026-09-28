@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 import {
     Config,
     I18n,
@@ -143,6 +140,7 @@ export class MainWindow extends HTMLElement implements IWindow {
             "enableDynamicInput",
             "showLineWeight",
             "enableSelectionCycling",
+            "enableAutoComplete",
         ];
         if (shouldSaveProps.includes(prop)) {
             Config.instance.saveToStorage();

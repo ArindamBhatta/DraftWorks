@@ -5,7 +5,7 @@ import type { ShapeNode } from "../model";
 import type { INodeFilter, IShapeFilter } from "../selectionFilter";
 import { type ShapeType, ShapeTypeUtils } from "../shape";
 import { resolveStepOptions, type SnapResult, type StepOptions } from "../snap";
-import type { VisualShapeData, VisualState } from "../visual";
+import type { CursorType, VisualShapeData, VisualState } from "../visual";
 import type { IStep } from "./step";
 
 export interface SelectShapeOptions {
@@ -35,6 +35,10 @@ export interface SelectNodeOptions {
     multiple?: boolean;
     filter?: INodeFilter;
     keepSelection?: boolean;
+    /** See PickNodeOptions.highlightState. */
+    highlightState?: VisualState;
+    /** See PickNodeOptions.cursor. */
+    cursor?: CursorType;
 }
 
 export abstract class SelectStep implements IStep {
@@ -152,6 +156,8 @@ export class SelectNodeStep implements IStep {
             const nodes = await document.picker.pickNode(this.prompt, controller, {
                 nodeFilter: this.options?.filter,
                 multi: this.options?.multiple,
+                highlightState: this.options?.highlightState,
+                cursor: this.options?.cursor,
             });
             if (nodes.length === 0) return undefined;
             return {

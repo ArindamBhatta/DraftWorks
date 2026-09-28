@@ -3,6 +3,7 @@ import {
     type CommandKeys,
     CommandPrefix,
     CommandStore,
+    Config,
     findCommandByAlias,
     findCommandSuggestions,
     I18n,
@@ -20,6 +21,24 @@ import style from "./commandLine.module.css";
 
 /** How far Up-arrow can walk back through what was typed. */
 const HISTORY_LIMIT = 50;
+
+/** How many commands the Recent Commands list keeps. */
+const RECENT_LIMIT = 10;
+
+/** AutoCAD's Recent Commands button: a `>_` prompt with a drop-down arrow. */
+const RECENT_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="16" viewBox="0 0 24 16"
+    fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M2.5 4 L6.5 8 L2.5 12" />
+    <path d="M8.5 12.5 H13.5" />
+    <path d="M17 7 H22 L19.5 10 Z" fill="currentColor" stroke-width="1" />
+</svg>`;
+
+/** AutoCAD's Customize button: a wrench. */
+const CUSTOMIZE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z" />
+</svg>`;
+
+type MenuKind = "customize" | "recent";
 
 /**
  * A prompt waiting for something to be typed at it - see PubSub's `showInput`.
@@ -55,6 +74,10 @@ interface PromptInput {
  *
  * The crosshair keeps its distance and angle boxes: a number typed during a pick is a
  * dimension, and a dimension belongs next to the thing being dimensioned.
+ *
+ * The left end carries AutoCAD's two buttons: the Customize wrench, whose menu holds the
+ * AutoComplete switch, and Recent Commands (`>_`), which lists the last commands run by
+ * any route - typed, ribbon or hotkey - and runs one again when it is picked.
  */
 export class CommandLine extends HTMLElement {
     private readonly textbox: HTMLInputElement;
@@ -62,6 +85,8 @@ export class CommandLine extends HTMLElement {
     private readonly tip: HTMLElement;
     private readonly options: HTMLElement;
     private readonly suggestionList: HTMLElement;
+    /** The wrench's and the `>_` button's drop-up. One at a time, like AutoCAD's. */
+    private readonly menu: HTMLElement;
 
     private suggestions: CommandAliasMatch[] = [];
     private activeIndex = -1;
@@ -69,6 +94,9 @@ export class CommandLine extends HTMLElement {
     private historyIndex = -1;
     private commandRunning = false;
     private promptInput: PromptInput | undefined;
+    /** Newest first. */
+    private readonly recent: CommandKeys[] = [];
+    private openMenu: MenuKind | undefined;
 
     constructor(className?: string) {
         super();
@@ -93,13 +121,16 @@ export class CommandLine extends HTMLElement {
         this.tip = span({ className: style.tip });
         this.options = div({ className: style.options });
         this.suggestionList = div({ className: style.suggestions, style: "display: none;" });
+        this.menu = div({ className: `${style.suggestions} ${style.menu}`, style: "display: none;" });
 
         this.setIdlePrompt();
         this.append(
             this.suggestionList,
+            this.menu,
             div(
                 { className: style.live },
-                span({ className: style.chevron, textContent: "›" }),
+                this.menuButton("customize", CUSTOMIZE_ICON, "prompt.commandLine.customize"),
+                this.menuButton("recent", RECENT_ICON, "prompt.commandLine.recent"),
                 this.commandName,
                 this.tip,
                 this.options,
@@ -118,6 +149,7 @@ export class CommandLine extends HTMLElement {
         PubSub.default.sub("showInput", this.showPromptInput);
         PubSub.default.sub("clearInput", this.clearPromptInput);
         window.addEventListener("keydown", this.handleGlobalKeyDown);
+        Config.instance.onPropertyChanged(this.handleConfigChanged);
         setTimeout(() => this.focusInput());
     }
 
@@ -131,15 +163,28 @@ export class CommandLine extends HTMLElement {
         PubSub.default.remove("showInput", this.showPromptInput);
         PubSub.default.remove("clearInput", this.clearPromptInput);
         window.removeEventListener("keydown", this.handleGlobalKeyDown);
+        Config.instance.removePropertyChanged(this.handleConfigChanged);
+        this.closeMenu();
     }
+
+    private readonly handleConfigChanged = (property: keyof Config) => {
+        // Deferred so that it reads the new language whichever listener runs first,
+        // this one or MainWindow's, which does the switching.
+        if (property === "language") queueMicrotask(() => this.updatePlaceholder());
+    };
 
     // ------------------------------------------------------------ the live line
 
     private readonly handleCommandOpened = (command: ICommand) => {
         this.commandRunning = true;
         this.hideSuggestions();
+        this.closeMenu();
+        this.updatePlaceholder();
         const data = CommandStore.getComandData(command);
-        if (data) this.commandName.textContent = commandTitle(data.key);
+        if (data) {
+            this.commandName.textContent = commandTitle(data.key);
+            this.remember(data.key);
+        }
         // The running command owns the keyboard from here, until it asks for text.
         if (document.activeElement === this.textbox) this.textbox.blur();
     };
@@ -161,9 +206,20 @@ export class CommandLine extends HTMLElement {
         this.setIdlePrompt();
     };
 
-    /** With nothing running, the line asks the only question there is: which command. */
+    /**
+     * Between prompts the line is empty, and with nothing running the box itself asks
+     * which command, as AutoCAD's grey "Type a command" does. "Command:" is not shown
+     * here - it heads each command's echo in the history instead.
+     */
     private setIdlePrompt() {
-        I18n.set(this.tip, "textContent", "prompt.commandLine");
+        this.tip.textContent = "";
+        this.updatePlaceholder();
+    }
+
+    private updatePlaceholder() {
+        this.textbox.placeholder = this.commandRunning
+            ? ""
+            : I18n.translate("prompt.commandLine.placeholder");
     }
 
     /**
@@ -329,7 +385,11 @@ export class CommandLine extends HTMLElement {
         // A running command's prompt takes an answer, not a command name.
         if (this.promptInput) return;
 
-        this.suggestions = findCommandSuggestions(this.textbox.value);
+        this.closeMenu();
+        // With AutoComplete off the list never opens, so Enter runs only a full alias.
+        this.suggestions = Config.instance.enableAutoComplete
+            ? findCommandSuggestions(this.textbox.value)
+            : [];
         this.activeIndex = this.suggestions.length > 0 ? 0 : -1;
         this.renderSuggestions();
     };
@@ -494,6 +554,111 @@ export class CommandLine extends HTMLElement {
         this.suggestionList.style.display = "none";
         this.suggestionList.replaceChildren();
     };
+
+    // ------------------------------------------------------------ wrench and recent
+
+    private menuButton(kind: MenuKind, icon: string, title: I18nKeys) {
+        return div(
+            {
+                className: style.menuButton,
+                title: new Localize(title),
+                // pointerdown, not click, so the box keeps focus. Stopped here, or the
+                // document listener that closes an open menu would close it again.
+                onpointerdown: (e: PointerEvent) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.toggleMenu(kind);
+                },
+            },
+            createIcon({ type: "svg", value: icon }),
+        );
+    }
+
+    private toggleMenu(kind: MenuKind) {
+        if (this.openMenu === kind) {
+            this.closeMenu();
+            return;
+        }
+
+        this.hideSuggestions();
+        this.openMenu = kind;
+        this.menu.replaceChildren(...(kind === "recent" ? this.recentItems() : this.customizeItems()));
+        this.menu.style.display = "";
+        // A press anywhere else closes it, as does Escape - caught before the running
+        // command sees it, so closing the menu does not also cancel the command.
+        document.addEventListener("pointerdown", this.closeMenu);
+        window.addEventListener("keydown", this.handleMenuKeyDown, true);
+    }
+
+    private readonly closeMenu = () => {
+        if (!this.openMenu) return;
+
+        this.openMenu = undefined;
+        this.menu.style.display = "none";
+        this.menu.replaceChildren();
+        document.removeEventListener("pointerdown", this.closeMenu);
+        window.removeEventListener("keydown", this.handleMenuKeyDown, true);
+    };
+
+    private readonly handleMenuKeyDown = (e: KeyboardEvent) => {
+        if (e.key !== "Escape") return;
+        e.preventDefault();
+        e.stopPropagation();
+        this.closeMenu();
+    };
+
+    private menuItem(onPick: () => void, ...children: (Node | string)[]) {
+        return div(
+            {
+                className: style.suggestion,
+                onpointerdown: (e: PointerEvent) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.closeMenu();
+                    onPick();
+                },
+            },
+            ...children,
+        );
+    }
+
+    private remember(command: CommandKeys) {
+        const index = this.recent.indexOf(command);
+        if (index >= 0) this.recent.splice(index, 1);
+        this.recent.unshift(command);
+        if (this.recent.length > RECENT_LIMIT) this.recent.pop();
+    }
+
+    private recentItems(): HTMLElement[] {
+        if (this.recent.length === 0) {
+            return [
+                div({
+                    className: `${style.suggestion} ${style.menuEmpty}`,
+                    textContent: new Localize("prompt.commandLine.recent.empty"),
+                }),
+            ];
+        }
+        return this.recent.map((command) =>
+            this.menuItem(
+                () => this.run(command, ""),
+                suggestionIcon(command),
+                span({ className: style.name, textContent: commandTitle(command) }),
+            ),
+        );
+    }
+
+    private customizeItems(): HTMLElement[] {
+        const on = Config.instance.enableAutoComplete;
+        return [
+            this.menuItem(
+                () => {
+                    Config.instance.enableAutoComplete = !on;
+                },
+                span({ className: style.menuCheck, textContent: on ? "✓" : "" }),
+                span({ textContent: new Localize("prompt.commandLine.autoComplete") }),
+            ),
+        ];
+    }
 }
 
 /** `FILLET` - the command's own name, as AutoCAD heads its prompt with it. */

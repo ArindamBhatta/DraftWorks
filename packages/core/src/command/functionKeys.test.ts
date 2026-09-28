@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // The function-key row's whole value is that it matches AutoCAD's, so the bindings are
 // pinned here rather than left to whoever edits the table next. F10 and F11 in particular
 // look arbitrary and are not: AutoCAD puts polar tracking on F10 and object snap tracking

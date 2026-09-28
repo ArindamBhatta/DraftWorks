@@ -31,6 +31,7 @@ import { Constants } from "./constants";
 import {
     defaultEdgeMaterial,
     defaultVertexMaterial,
+    fadedMaterial,
     layerEdgeMaterial,
     lockFaceMaterial,
     lockLineMaterial,
@@ -178,6 +179,24 @@ export class ThreeGeometry extends ThreeVisualObject implements IVisualGeometry 
         if (this._edges && wasBase) this._edges.material = material;
     }
 
+    /** The edge material this object is drawn with when nothing temporary is showing. */
+    get baseEdgeMaterial(): LineMaterial {
+        return this._baseEdgeMaterial;
+    }
+
+    /**
+     * Hides the object's own lines while something else is drawn in their place - see
+     * ThreeHighlighter.highlightChange.
+     *
+     * Only what is drawn: hover detection raycasts these same objects and three does
+     * not skip hidden ones, so the cursor goes on finding the object underneath its
+     * stand-in, and the stand-in does not flicker away the moment it appears.
+     */
+    setLinesStoodIn(stoodIn: boolean) {
+        if (this._edges) this._edges.visible = !stoodIn;
+        if (this._vertexs) this._vertexs.visible = !stoodIn;
+    }
+
     private initEdges(data: EdgeMeshData) {
         const buff = ThreeGeometryFactory.createEdgeBufferGeometry(data);
         this._edges = new LineSegments2(buff, this._baseEdgeMaterial);
@@ -222,6 +241,24 @@ export class ThreeGeometry extends ThreeVisualObject implements IVisualGeometry 
 
     setVertexsMateiralTemperary(material: PointsMaterial) {
         if (this._vertexs) this._vertexs.material = material;
+    }
+
+    /**
+     * The object as it is drawn now, at half strength - see fadedMaterial. Faded from
+     * the base materials rather than whatever is showing, so the fade is of the line
+     * itself and not of a highlight; a locked object keeps its lock look, the same as in
+     * removeTemperaryMaterial, which is also what undoes this.
+     */
+    setFadedTemperary(): void {
+        if (this._vertexs) this._vertexs.material = fadedMaterial(defaultVertexMaterial);
+        if (this._edges && this._edges.material !== lockLineMaterial)
+            this._edges.material = fadedMaterial(this._baseEdgeMaterial);
+        if (this._faces && this._faces.material !== lockFaceMaterial) {
+            const material = this._faceMaterial;
+            this._faces.material = Array.isArray(material)
+                ? material.map((x) => fadedMaterial(x))
+                : fadedMaterial(material);
+        }
     }
 
     removeTemperaryMaterial(): void {

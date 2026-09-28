@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // The centroid formula behind the Geometric Center snap. The easy cases (rectangle,
 // square) are symmetric, so a sign error hides in them - the L-shape and triangle are
 // the ones that actually pin the shoelace weighting down.

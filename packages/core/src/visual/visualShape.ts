@@ -11,6 +11,11 @@ export const VisualStates = {
     faceTransparent: 4,
     faceHighlight: 8,
     faceSelected: 16,
+    /**
+     * The whole object drawn as it is, at half strength - ERASE's hover. A highlight says
+     * "you could pick this"; fading says what picking it will do, which is make it go away.
+     */
+    faded: 32,
 } as const;
 export type VisualState = (typeof VisualStates)[keyof typeof VisualStates];
 

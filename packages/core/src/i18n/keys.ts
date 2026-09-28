@@ -597,6 +597,11 @@ export const I18N_KEYS = [
     "prompt.dimension.vertex",
     "prompt.commandLine",
     "prompt.commandLine.unknown{0}",
+    "prompt.commandLine.placeholder",
+    "prompt.commandLine.recent",
+    "prompt.commandLine.recent.empty",
+    "prompt.commandLine.customize",
+    "prompt.commandLine.autoComplete",
     "prompt.mtext.firstCorner",
     "prompt.mtext.oppositeCorner",
     "prompt.offset.distance",
@@ -909,9 +914,6 @@ export const I18N_KEYS = [
     // Vertex
     "vertex.point",
     // Viewport
-    "viewport.fitContent",
-    "viewport.zoomIn",
-    "viewport.zoomOut",
     "viewport.mode.solid",
     "viewport.mode.wireframe",
     "viewport.mode.solidAndWireframe",

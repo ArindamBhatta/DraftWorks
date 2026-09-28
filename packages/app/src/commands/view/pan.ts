@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 import { AsyncController, CancelableCommand, command, PanEventHandler } from "@draftworks/core";
 
 /**
@@ -11,7 +8,7 @@ import { AsyncController, CancelableCommand, command, PanEventHandler } from "@d
  */
 @command({
     key: "view.pan",
-    icon: "icon-arrows",
+    icon: "icon-pan",
 })
 export class PanCommand extends CancelableCommand {
     protected async executeAsync(): Promise<void> {

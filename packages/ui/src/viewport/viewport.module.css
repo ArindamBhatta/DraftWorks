@@ -2,67 +2,6 @@
     position: relative;
 }
 
-.viewControls {
-    position: absolute;
-    height: 100%;
-    top: 0;
-    right: 16px;
-    z-index: 999;
-    pointer-events: none;
-    padding-top: 160px;
-    color: var(--foreground-color);
-
-    svg {
-        border: none;
-        background: transparent;
-        width: 22px;
-        height: 22px;
-        padding: 8px;
-        border-radius: 7.5px;
-        color: inherit;
-        fill: currentColor;
-        /* The viewport itself is a crosshair; these are buttons on top of it. */
-        cursor: pointer;
-
-        &:hover {
-            background: var(--hover-background-color);
-        }
-
-        &:active {
-            background: var(--active-background-color);
-        }
-    }
-
-    .border {
-        border: 1px solid var(--border-color);
-        background: var(--panel-background-color);
-        border-radius: 10px;
-        margin: 1px 0px;
-        padding: 2px;
-        pointer-events: all;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        color: var(--foreground-color);
-
-        div {
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            border-radius: 7.5px;
-            color: inherit;
-        }
-    }
-}
-
-@media (max-width: 680px) {
-    .viewControls {
-        display: none;
-    }
-}
-
 .viewLabel {
     position: absolute;
     top: 8px;
@@ -91,4 +30,83 @@
         width: 100%;
         height: 100%;
     }
+}
+
+/* AutoCAD keeps its ViewCube light grey in both themes and half faded while the
+   cursor is elsewhere, so the drawing under it is never fully covered. */
+.viewCube {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 30;
+    width: 110px;
+    height: 125px;
+    opacity: 0.75;
+    transition: opacity 0.15s;
+    user-select: none;
+    pointer-events: none;
+
+    svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+
+    text {
+        font-family: Arial, Helvetica, sans-serif;
+        text-anchor: middle;
+        dominant-baseline: central;
+    }
+}
+
+.viewCubeRing {
+    fill: none;
+    stroke: #c4c8cd;
+    stroke-width: 7;
+}
+
+.viewCubeCompass {
+    fill: #e6e8eb;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.viewCubeFace {
+    fill: #dfe2e6;
+    stroke: #6f7780;
+    stroke-width: 1;
+}
+
+.viewCubeFaceText {
+    fill: #2f343a;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+/* The TOP face is the one clickable part, and AutoCAD's hover state marks it: the
+   cube goes fully opaque and the face turns light blue. Over the cube AutoCAD shows
+   its plain arrow, not the drawing crosshair. */
+.viewCubeTop {
+    pointer-events: auto;
+    cursor: default;
+
+    &:hover .viewCubeFace {
+        fill: #b5dcf7;
+    }
+}
+
+.viewCube:has(.viewCubeTop:hover) {
+    opacity: 1;
+}
+
+.viewCubeTag {
+    fill: #dfe2e6;
+    stroke: #6f7780;
+    stroke-width: 1;
+}
+
+.viewCubeTagText {
+    fill: #2f343a;
+    font-size: 8px;
+    font-weight: bold;
 }

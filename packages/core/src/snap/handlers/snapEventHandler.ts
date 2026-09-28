@@ -553,7 +553,9 @@ export abstract class SnapEventHandler<D extends SnapData = SnapData> implements
         if (guides.length > 0) {
             this._tempShapes = [
                 ...(this._tempShapes ?? []),
-                this.document.visual.context.displayMesh(guides),
+                this.document.visual.context.displayMesh(guides, {
+                    lineOpacity: VisualConfig.helperLineOpacity,
+                }),
             ];
         }
     }

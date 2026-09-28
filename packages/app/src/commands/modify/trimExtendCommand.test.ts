@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // TRIM and EXTEND both come down to "which piece of this curve did the click mean", and
 // getting that backwards does not throw - it silently erases the wrong half of a line, or
 // stretches the wrong end of it. These pin the answer down without needing OCCT: both

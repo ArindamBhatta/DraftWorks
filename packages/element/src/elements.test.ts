@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // An SVG's className is a read-only SVGAnimatedString, so svg() has to apply classes
 // through classList instead of letting setProperties assign them like every other
 // element. classList.add takes one token at a time and throws on whitespace, so the

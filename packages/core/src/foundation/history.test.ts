@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // Autosave triggers off this callback, so "when does History say something changed" is
 // now a load-bearing question rather than an internal detail. The cases that matter are
 // the quiet ones: work that history deliberately ignores must stay quiet here too, or

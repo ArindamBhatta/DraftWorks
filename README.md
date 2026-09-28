@@ -161,10 +161,10 @@ If it's useful to you, a ⭐ genuinely helps more people find it.
 
 ```bash
 npm install
-npm run setup:wasm     # first run only — fetches the WASM toolchain
-npm run build:wasm     # builds the OCCT + LibreDWG kernels
 npm run dev
 ```
+
+The compiled OCCT and LibreDWG kernels are committed, so no WASM toolchain is needed. Run `npm run setup:wasm` and `npm run build:wasm` only if you change the C++ in `cpp/`.
 
 ```bash
 npm run build   # production build
@@ -173,6 +173,10 @@ npm run check   # lint/format with Biome
 ```
 
 See [doc/architecture.md](doc/architecture.md) for how the packages fit together.
+
+## Contributing
+
+Pull requests are welcome, from a translation to a new command. [CONTRIBUTING.md](CONTRIBUTING.md) covers setup, how a command is wired up, and a list of problems ready to pick up.
 
 ## Built on
 

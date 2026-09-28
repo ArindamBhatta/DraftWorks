@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // What a command waits on. Everything interactive - a pick, a typed prompt - is a
 // promise that only this object's listeners can resolve, so a controller that is put
 // down without finishing takes the whole command with it: the canvas keeps the

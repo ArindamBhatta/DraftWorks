@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // LWT (AutoCAD's LWDISPLAY) works by changing `linewidth` on the cached materials in
 // place, while the cache key keeps the weight the layer actually assigned. That split is
 // what these cover: turning the display off must not lose the assigned weight, and

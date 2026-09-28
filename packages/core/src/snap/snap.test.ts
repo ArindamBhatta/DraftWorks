@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // Typing an option at a prompt ("3P" at Specify center point) and clicking its chip
 // in the status bar have to choose the same thing, so the typed side is matched
 // through this one function. What it must and must not accept is easy to get subtly

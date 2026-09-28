@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 import {
     command,
     GeometryUtils,
@@ -14,6 +11,7 @@ import {
     crossingsClearOfEnds,
     type EdgeChange,
     type EdgeContext,
+    type EdgePreview,
     EndContactTolerance,
     extendChange,
     type ParameterRange,
@@ -97,8 +95,8 @@ export class Extend extends TrimExtendCommand {
 
     // Green, the app's colour for geometry that is not there yet: the stretch under the
     // cursor is the one the click will bring into being.
-    protected override get previewColor(): number {
-        return VisualConfig.extendPreviewColor;
+    protected override get preview(): EdgePreview {
+        return { kind: "overlay", color: VisualConfig.extendPreviewColor };
     }
 
     protected override planEdge({

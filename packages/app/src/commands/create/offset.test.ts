@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // The opening OFFSET prompt is the one place the command reads free text, and the
 // three answers it accepts (a length, Through, or Enter for the remembered default)
 // all look alike from the call site. These pin down which is which.

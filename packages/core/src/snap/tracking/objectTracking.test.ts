@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // What counts as still hovering the same point. Acquisition is a timer that has to
 // survive the pointer moves a hovering hand makes - get this wrong and the hover never
 // completes, so no alignment path is ever offered and the feature looks absent rather

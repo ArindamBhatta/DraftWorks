@@ -1,6 +1,3 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 // The reported bug, as a test: polar tracking was never offered, because TrackingSnap
 // asked AxisTracking for its axes without an angle - which only ever builds the four
 // workplane axes - and gated the whole snap behind the object-snap-tracking flag. So

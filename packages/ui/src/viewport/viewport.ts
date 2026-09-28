@@ -1,8 +1,5 @@
-// Part of the Chili3d Project, under the AGPL-3.0 License.
-// See LICENSE file in the project root for full license information.
-
 import { Binding, type IEventHandler, type IView, Localize } from "@draftworks/core";
-import { div, span, svg } from "@draftworks/element";
+import { div, span } from "@draftworks/element";
 import { DimensionHost, Flyout } from "./flyout";
 import style from "./viewport.module.css";
 
@@ -18,10 +15,7 @@ export class Viewport extends HTMLElement {
     private readonly _secondDimensionHost: DimensionHost;
     private readonly _eventCaches: [keyof HTMLElementEventMap, (e: any) => void][] = [];
 
-    constructor(
-        readonly view: IView,
-        readonly showViewControls: boolean,
-    ) {
+    constructor(readonly view: IView) {
         super();
         this.className = style.root;
         this._dimensionHost = new DimensionHost("first");
@@ -33,54 +27,14 @@ export class Viewport extends HTMLElement {
         view.setDom(this);
     }
 
-    // No camera-projection switcher: the view is orthographic-only (see
-    // ICameraController), so the only view controls left are fit/zoom.
+    // No zoom buttons: the wheel zooms, and fit is the TOP face of the view cube.
     private render() {
-        this.append(
-            this.showViewControls
-                ? div(
-                      {
-                          className: style.viewControls,
-                          onpointerdown: (ev) => ev.stopPropagation(),
-                          onclick: (e) => e.stopPropagation(),
-                      },
-                      this.createActionControls(),
-                  )
-                : "",
-            this.createViewLabel(),
-            this.createUcsIcon(),
-        );
+        this.append(this.createViewLabel(), this.createViewCube(), this.createUcsIcon());
     }
 
-    private createActionControls() {
-        return div(
-            { className: style.border },
-            svg({
-                icon: "icon-fitcontent",
-                title: new Localize("viewport.fitContent"),
-                onclick: async (e) => {
-                    e.stopPropagation();
-                    this.view.cameraController.fitContent();
-                    this.view.update();
-                },
-            }),
-            svg({
-                icon: "icon-zoomin",
-                title: new Localize("viewport.zoomIn"),
-                onclick: () => {
-                    this.view.cameraController.zoom(this.view.width / 2, this.view.height / 2, -5);
-                    this.view.update();
-                },
-            }),
-            svg({
-                icon: "icon-zoomout",
-                title: new Localize("viewport.zoomOut"),
-                onclick: () => {
-                    this.view.cameraController.zoom(this.view.width / 2, this.view.height / 2, 5);
-                    this.view.update();
-                },
-            }),
-        );
+    private fitContent() {
+        this.view.cameraController.fitContent();
+        this.view.update();
     }
 
     // Static AutoCAD-style viewport corner label: "[<view name>] [2D Wireframe]".
@@ -98,6 +52,59 @@ export class Viewport extends HTMLElement {
             " ]  [ ",
             span({ textContent: new Localize("viewport.2dWireframe") }),
             " ]",
+        );
+    }
+
+    // AutoCAD's ViewCube as it looks in plan view: the TOP face inside a compass ring,
+    // with the WCS tag underneath. The view is locked to Top (see
+    // Application.createActiveView), so TOP is the only face. Clicking it fits the
+    // drawing, as clicking a face does in AutoCAD. The ring and the tag let the pointer
+    // through to the drawing.
+    //
+    // The drawing handlers read offsetX/offsetY, which over the face would be measured
+    // from the face instead of the view. So the face keeps its pointer events to itself,
+    // and a click on it never picks an object or places a point in a running command.
+    private createViewCube() {
+        // The ring is four arcs with a 20° gap at each compass point, so the letters
+        // sit in open space instead of on top of the stroke.
+        const markup = `<svg viewBox="0 0 120 136" xmlns="http://www.w3.org/2000/svg">
+            <path class="${style.viewCubeRing}" d="M 67.99 14.7 A 46 46 0 0 1 105.3 52.01
+                M 105.3 67.99 A 46 46 0 0 1 67.99 105.3
+                M 52.01 105.3 A 46 46 0 0 1 14.7 67.99
+                M 14.7 52.01 A 46 46 0 0 1 52.01 14.7" />
+            <g class="${style.viewCubeCompass}">
+                <text x="60" y="14">N</text>
+                <text x="106" y="60">E</text>
+                <text x="60" y="106">S</text>
+                <text x="14" y="60">W</text>
+            </g>
+            <g class="${style.viewCubeTop}">
+                <rect class="${style.viewCubeFace}" x="38" y="38" width="44" height="44" rx="2" />
+                <text class="${style.viewCubeFaceText}" x="60" y="60">TOP</text>
+            </g>
+            <rect class="${style.viewCubeTag}" x="43" y="120" width="34" height="14" rx="3" />
+            <text class="${style.viewCubeTagText}" x="60" y="127">WCS</text>
+        </svg>`;
+        const doc = new DOMParser().parseFromString(markup, "image/svg+xml");
+        // Only the face takes pointer events (see the CSS), so everything that reaches
+        // these listeners came from the face.
+        const keep = (e: Event) => e.stopPropagation();
+        return div(
+            {
+                className: style.viewCube,
+                onpointerdown: keep,
+                onpointermove: keep,
+                onpointerup: keep,
+                onwheel: (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                },
+                onclick: (e) => {
+                    e.stopPropagation();
+                    this.fitContent();
+                },
+            },
+            doc.documentElement as unknown as SVGSVGElement,
         );
     }
 

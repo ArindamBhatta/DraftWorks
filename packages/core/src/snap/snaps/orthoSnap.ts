@@ -156,7 +156,12 @@ export class OrthoSnap implements ISnap {
             VisualConfig.temporaryEdgeColor,
             "dash",
         );
-        this._tempLine = [view, view.document.visual.context.displayMesh([lineData])];
+        this._tempLine = [
+            view,
+            view.document.visual.context.displayMesh([lineData], {
+                lineOpacity: VisualConfig.helperLineOpacity,
+            }),
+        ];
     }
 
     removeDynamicObject(): void {
