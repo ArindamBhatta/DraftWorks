@@ -14,20 +14,39 @@
     line-height: 17px;
 }
 
-/* The one live line: `> FILLET Select first object or [Radius/Trim]: ▏` */
+/* The one live line: `🔧 >_ FILLET Select first object or [Radius/Trim]: ▏`. The tall
+   vertical padding makes the bar about 34px high with its top border, close to
+   AutoCAD's docked command line. */
 .live {
     display: flex;
     flex-direction: row;
     align-items: baseline;
     gap: 6px;
-    padding: 3px 8px;
+    padding: 8px 8px;
     min-width: 0;
 }
 
-.chevron {
+/* The wrench and `>_` buttons. The negative margin gives the hover square room without
+   making the bar taller than the text line. */
+.menuButton {
     flex: 0 0 auto;
+    align-self: center;
+    display: flex;
+    padding: 2px 3px;
+    margin: -2px 0;
+    border-radius: 3px;
     color: var(--foreground-muted-color);
+    cursor: pointer;
     user-select: none;
+
+    svg {
+        display: block;
+    }
+
+    &:hover {
+        background: var(--hover-background-color);
+        color: var(--foreground-color);
+    }
 }
 
 /* The running command, heading its own prompt. Its own colour, so that "which command
@@ -49,6 +68,12 @@
     color: var(--foreground-color);
     white-space: nowrap;
     user-select: none;
+}
+
+/* Hidden when empty, so they leave no gap before the box. */
+.tip:empty,
+.options:empty {
+    display: none;
 }
 
 /* `or [Close/Undo]:` - empty, and so invisible, whenever the live prompt offers no
@@ -98,6 +123,10 @@
     text-underline-offset: 2px;
 }
 
+.input::placeholder {
+    color: var(--foreground-muted-color);
+}
+
 .input {
     flex: 1 1 auto;
     min-width: 0;
@@ -140,9 +169,11 @@
     background: var(--panel-hover-background-color);
 }
 
+/* The primary blue at 40%. At full strength it swallowed the blue in many command
+   icons, POINT's dot and the drawing icons' blue grips among them. The text keeps the
+   theme's own colour, which reads on the lighter blue in either theme. */
 .active {
-    background: var(--primary-color);
-    color: #fff;
+    background: color-mix(in srgb, var(--primary-color) 40%, transparent);
 }
 
 /* The command's ribbon icon. Same picture in both places, so a command learned from the
@@ -177,4 +208,24 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* The wrench's and the `>_` button's drop-up: the suggestion list's look, narrower. */
+.menu {
+    min-width: 200px;
+}
+
+.menuEmpty {
+    color: var(--foreground-muted-color);
+    cursor: default;
+}
+
+.menuEmpty:hover {
+    background: transparent;
+}
+
+/* Keeps the label in line whether or not the tick is showing. */
+.menuCheck {
+    flex: 0 0 auto;
+    width: 12px;
 }

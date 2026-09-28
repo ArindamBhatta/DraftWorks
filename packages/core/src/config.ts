@@ -341,6 +341,19 @@ export class Config extends Observable {
         this.setProperty("enableSelectionCycling", value);
     }
 
+    /**
+     * AutoCAD's command-line AutoComplete, from the wrench menu at the left end of the
+     * command line. On, typing opens the list of matching commands. Off, the list stays
+     * shut and a command runs only when its name or alias is typed in full.
+     */
+    @serialize()
+    get enableAutoComplete() {
+        return this.getPrivateValue("enableAutoComplete", true);
+    }
+    set enableAutoComplete(value: boolean) {
+        this.setProperty("enableAutoComplete", value);
+    }
+
     @serialize()
     get language() {
         return this.getPrivateValue("language", I18n.defaultLanguage());

@@ -140,6 +140,7 @@ export class MainWindow extends HTMLElement implements IWindow {
             "enableDynamicInput",
             "showLineWeight",
             "enableSelectionCycling",
+            "enableAutoComplete",
         ];
         if (shouldSaveProps.includes(prop)) {
             Config.instance.saveToStorage();

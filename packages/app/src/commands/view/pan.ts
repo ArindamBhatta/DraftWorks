@@ -8,7 +8,7 @@ import { AsyncController, CancelableCommand, command, PanEventHandler } from "@d
  */
 @command({
     key: "view.pan",
-    icon: "icon-arrows",
+    icon: "icon-pan",
 })
 export class PanCommand extends CancelableCommand {
     protected async executeAsync(): Promise<void> {
