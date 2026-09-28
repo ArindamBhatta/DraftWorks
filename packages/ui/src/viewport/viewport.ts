@@ -1,5 +1,5 @@
 import { Binding, type IEventHandler, type IView, Localize } from "@draftworks/core";
-import { div, span, svg } from "@draftworks/element";
+import { div, span } from "@draftworks/element";
 import { DimensionHost, Flyout } from "./flyout";
 import style from "./viewport.module.css";
 
@@ -15,10 +15,7 @@ export class Viewport extends HTMLElement {
     private readonly _secondDimensionHost: DimensionHost;
     private readonly _eventCaches: [keyof HTMLElementEventMap, (e: any) => void][] = [];
 
-    constructor(
-        readonly view: IView,
-        readonly showViewControls: boolean,
-    ) {
+    constructor(readonly view: IView) {
         super();
         this.className = style.root;
         this._dimensionHost = new DimensionHost("first");
@@ -30,54 +27,9 @@ export class Viewport extends HTMLElement {
         view.setDom(this);
     }
 
-    // No camera-projection switcher: the view is orthographic-only (see
-    // ICameraController), so the only view controls left are fit/zoom.
+    // No zoom buttons: the wheel zooms, and fit is the TOP face of the view cube.
     private render() {
-        this.append(
-            this.showViewControls
-                ? div(
-                      {
-                          className: style.viewControls,
-                          onpointerdown: (ev) => ev.stopPropagation(),
-                          onclick: (e) => e.stopPropagation(),
-                      },
-                      this.createActionControls(),
-                  )
-                : "",
-            this.createViewLabel(),
-            this.createViewCube(),
-            this.createUcsIcon(),
-        );
-    }
-
-    private createActionControls() {
-        return div(
-            { className: style.border },
-            svg({
-                icon: "icon-fitcontent",
-                title: new Localize("viewport.fitContent"),
-                onclick: (e) => {
-                    e.stopPropagation();
-                    this.fitContent();
-                },
-            }),
-            svg({
-                icon: "icon-zoomin",
-                title: new Localize("viewport.zoomIn"),
-                onclick: () => {
-                    this.view.cameraController.zoom(this.view.width / 2, this.view.height / 2, -5);
-                    this.view.update();
-                },
-            }),
-            svg({
-                icon: "icon-zoomout",
-                title: new Localize("viewport.zoomOut"),
-                onclick: () => {
-                    this.view.cameraController.zoom(this.view.width / 2, this.view.height / 2, 5);
-                    this.view.update();
-                },
-            }),
-        );
+        this.append(this.createViewLabel(), this.createViewCube(), this.createUcsIcon());
     }
 
     private fitContent() {

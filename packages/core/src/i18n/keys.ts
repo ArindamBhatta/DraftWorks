@@ -909,9 +909,6 @@ export const I18N_KEYS = [
     // Vertex
     "vertex.point",
     // Viewport
-    "viewport.fitContent",
-    "viewport.zoomIn",
-    "viewport.zoomOut",
     "viewport.mode.solid",
     "viewport.mode.wireframe",
     "viewport.mode.solidAndWireframe",

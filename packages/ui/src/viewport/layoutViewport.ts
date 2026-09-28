@@ -12,10 +12,7 @@ import { Viewport } from "./viewport";
 export class LayoutViewport extends HTMLElement {
     private readonly _viewports: Map<IView, Viewport> = new Map();
 
-    constructor(
-        readonly app: IApplication,
-        readonly showViewControls: boolean = true,
-    ) {
+    constructor(readonly app: IApplication) {
         super();
         this.className = style.root;
         // Crosshair from the start, not just once a command publishes a cursor.
@@ -53,7 +50,7 @@ export class LayoutViewport extends HTMLElement {
     };
 
     private createViewport(view: IView) {
-        const viewport = new Viewport(view, this.showViewControls);
+        const viewport = new Viewport(view);
         viewport.classList.add(style.viewport, style.hidden);
         this.appendChild(viewport);
         this._viewports.set(view, viewport);
