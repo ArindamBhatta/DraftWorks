@@ -5,14 +5,14 @@ import { I18n } from "../i18n";
 import type { INode } from "../model";
 import type { INodeFilter } from "../selectionFilter";
 import { ShapeTypes } from "../shape";
-import { type IView, type IVisualObject, VisualStates } from "../visual";
+import { type IView, type IVisualObject, type VisualState, VisualStates } from "../visual";
 import { SelectionHandler } from "./selectionEventHandler";
 
 export class NodeSelectionHandler extends SelectionHandler {
     private _highlights: IVisualObject[] | undefined;
     private _detectAtMouse: IVisualObject[] | undefined;
     private _lockDetected: IVisualObject | undefined; // Used for cycling detected objects
-    protected highlighState = VisualStates.edgeHighlight;
+    highlightState: VisualState = VisualStates.edgeHighlight;
 
     /** In multi mode, finish the pick automatically once this returns true. */
     canFinish?: (selected: INode[]) => boolean;
@@ -166,7 +166,7 @@ export class NodeSelectionHandler extends SelectionHandler {
     private highlightDetecteds(view: IView, detecteds: IVisualObject[]) {
         this.cleanHighlights();
         detecteds.forEach((x) => {
-            view.document.visual.highlighter.addState(x, this.highlighState, ShapeTypes.shape);
+            view.document.visual.highlighter.addState(x, this.highlightState, ShapeTypes.shape);
         });
         this._highlights = detecteds;
         view.update();
@@ -174,7 +174,7 @@ export class NodeSelectionHandler extends SelectionHandler {
 
     protected override cleanHighlights(): void {
         this._highlights?.forEach((x) => {
-            this.document.visual.highlighter.removeState(x, this.highlighState, ShapeTypes.shape);
+            this.document.visual.highlighter.removeState(x, this.highlightState, ShapeTypes.shape);
         });
         this._highlights = undefined;
     }

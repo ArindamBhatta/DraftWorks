@@ -32,6 +32,10 @@ export interface PickNodeOptions {
      * for a pick that finishes on every click, where the count could only ever read 0.
      */
     showControl?: boolean;
+    /** How an object under the pickbox is shown. Highlighted by default; ERASE fades it. */
+    highlightState?: VisualState;
+    /** The pointer for this pick. The bare pickbox by default; ERASE adds its eraser. */
+    cursor?: CursorType;
 }
 
 export interface ISelection extends IDisposable {

@@ -6,6 +6,7 @@ import {
     MultiStepCommand,
     PubSub,
     Transaction,
+    VisualStates,
 } from "@draftworks/core";
 
 @command({
@@ -36,6 +37,12 @@ export class Delete extends MultiStepCommand {
     }
 
     protected override getSteps(): IStep[] {
-        return [new GetOrSelectNodeStep("prompt.select.models", { multiple: true })];
+        return [
+            new GetOrSelectNodeStep("prompt.select.models", {
+                multiple: true,
+                highlightState: VisualStates.faded,
+                cursor: "select.erase",
+            }),
+        ];
     }
 }

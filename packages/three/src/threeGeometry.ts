@@ -31,6 +31,7 @@ import { Constants } from "./constants";
 import {
     defaultEdgeMaterial,
     defaultVertexMaterial,
+    fadedMaterial,
     layerEdgeMaterial,
     lockFaceMaterial,
     lockLineMaterial,
@@ -222,6 +223,24 @@ export class ThreeGeometry extends ThreeVisualObject implements IVisualGeometry 
 
     setVertexsMateiralTemperary(material: PointsMaterial) {
         if (this._vertexs) this._vertexs.material = material;
+    }
+
+    /**
+     * The object as it is drawn now, at half strength - see fadedMaterial. Faded from
+     * the base materials rather than whatever is showing, so the fade is of the line
+     * itself and not of a highlight; a locked object keeps its lock look, the same as in
+     * removeTemperaryMaterial, which is also what undoes this.
+     */
+    setFadedTemperary(): void {
+        if (this._vertexs) this._vertexs.material = fadedMaterial(defaultVertexMaterial);
+        if (this._edges && this._edges.material !== lockLineMaterial)
+            this._edges.material = fadedMaterial(this._baseEdgeMaterial);
+        if (this._faces && this._faces.material !== lockFaceMaterial) {
+            const material = this._faceMaterial;
+            this._faces.material = Array.isArray(material)
+                ? material.map((x) => fadedMaterial(x))
+                : fadedMaterial(material);
+        }
     }
 
     removeTemperaryMaterial(): void {

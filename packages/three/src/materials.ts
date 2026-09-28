@@ -1,5 +1,12 @@
 import { Config, type LineType, VisualConfig, type VisualItemConfig } from "@draftworks/core";
-import { DoubleSide, MeshBasicMaterial, MeshLambertMaterial, PointsMaterial } from "three";
+import {
+    Color,
+    DoubleSide,
+    type Material,
+    MeshBasicMaterial,
+    MeshLambertMaterial,
+    PointsMaterial,
+} from "three";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { ThreeHelper } from "./threeHelper";
 
@@ -236,6 +243,61 @@ export const highlightFaceMaterial = new MeshBasicMaterial({
     polygonOffsetFactor: -4,
     polygonOffsetUnits: -4,
 });
+
+/**
+ * How strongly an object under ERASE's pickbox is drawn. Half, not gone: the user has
+ * to be able to see what they are about to lose, and a line that has vanished cannot
+ * be checked before the click.
+ */
+export const FADED_OPACITY = 0.5;
+
+const fadedMaterials = new WeakMap<Material, Material>();
+
+/**
+ * A material's half-strength twin, for VisualStates.faded - the object keeps its own
+ * colour, linetype and weight, only fainter, which is what separates "this will be
+ * erased" from the recolour a hover highlight gives.
+ *
+ * One twin per material, made once and kept: `transparent` is compiled into the shader
+ * (see layerEdgeMaterial), so it can only be set before the twin is first drawn. The
+ * look is re-read from the original on every call instead, because originals change in
+ * place - a theme switch recolours defaultEdgeMaterial, LWT re-widens the layer cache.
+ */
+export function fadedMaterial<T extends Material>(base: T): T {
+    let faded = fadedMaterials.get(base) as T | undefined;
+    if (!faded) {
+        const twin = base.clone();
+        twin.transparent = true;
+        fadedMaterials.set(base, twin);
+        const release = () => {
+            base.removeEventListener("dispose", release);
+            fadedMaterials.delete(base);
+            twin.dispose();
+        };
+        base.addEventListener("dispose", release);
+        faded = twin;
+    }
+
+    if (faded instanceof LineMaterial && base instanceof LineMaterial) {
+        // Property by property, never copy(): that would swap out the uniforms object
+        // the compiled program is already bound to.
+        faded.color.copy(base.color);
+        faded.linewidth = base.linewidth;
+        faded.dashed = base.dashed;
+        faded.dashScale = base.dashScale;
+        faded.dashSize = base.dashSize;
+        faded.gapSize = base.gapSize;
+    } else if (
+        "color" in faded &&
+        faded.color instanceof Color &&
+        "color" in base &&
+        base.color instanceof Color
+    ) {
+        faded.color.copy(base.color);
+    }
+    faded.opacity = base.opacity * FADED_OPACITY;
+    return faded;
+}
 
 export const lockFaceMaterial = new MeshLambertMaterial({
     color: 0x6a6a6a,

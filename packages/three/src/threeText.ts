@@ -15,6 +15,7 @@ import {
     Matrix4 as ThreeMatrix4,
     Vector3,
 } from "three";
+
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { Constants } from "./constants";
 import type { IHighlightable } from "./highlightable";

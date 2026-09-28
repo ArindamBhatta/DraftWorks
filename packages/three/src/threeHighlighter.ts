@@ -11,16 +11,20 @@ import {
     VisualStateUtils,
 } from "@draftworks/core";
 
-import { Group, Mesh, Points } from "three";
+import { Group, type Material, Mesh, type Object3D, Points } from "three";
 
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
 
 import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js";
 
+import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
+
 import { isHighlightable } from "./highlightable";
 
 import {
+    FADED_OPACITY,
     faceTransparentMaterial,
+    fadedMaterial,
     highlightFaceMaterial,
     highlightVertexMaterial,
     hilightEdgeMaterial,
@@ -44,6 +48,35 @@ function isSelectedState(state: VisualState): boolean {
         VisualStateUtils.hasState(state, VisualStates.edgeSelected) ||
         VisualStateUtils.hasState(state, VisualStates.faceSelected)
     );
+}
+
+const UNFADED = "unfadedMaterial";
+
+/**
+ * VisualStates.faded for the visuals that paint their own feedback (text, dimensions,
+ * blocks - see IHighlightable), which ThreeGeometry's temporary materials cannot reach.
+ *
+ * Every line and mesh in the object trades its material for the faded twin and keeps
+ * the original to hand back. A CSS-drawn label has no material, so it takes the same
+ * strength as a CSS opacity instead.
+ */
+function setFaded(object: Object3D, faded: boolean) {
+    object.traverse((x) => {
+        if (x instanceof CSS2DObject) {
+            x.element.style.opacity = faded ? String(FADED_OPACITY) : "";
+        } else if (x instanceof Mesh || x instanceof Points) {
+            if (faded && !x.userData[UNFADED]) {
+                const material: Material | Material[] = x.material;
+                x.userData[UNFADED] = material;
+                x.material = Array.isArray(material)
+                    ? material.map((m) => fadedMaterial(m))
+                    : fadedMaterial(material);
+            } else if (!faded && x.userData[UNFADED]) {
+                x.material = x.userData[UNFADED];
+                delete x.userData[UNFADED];
+            }
+        }
+    });
 }
 
 export class GeometryState {
@@ -82,29 +115,40 @@ export class GeometryState {
     private setWholeState(method: "add" | "remove", state: VisualState, type: ShapeType) {
         const key = this.state_key(type);
         const [_oldState, newState] = this.updateStates(key, method, state);
+        const faded = VisualStateUtils.hasState(newState, VisualStates.faded);
         if (this.visual instanceof ThreeGeometry) {
-            if (newState === VisualStates.normal) {
-                this.visual.removeTemperaryMaterial();
-            } else if (VisualStateUtils.hasState(newState, VisualStates.edgeSelected)) {
+            // Every state is painted from the object's own materials, so nothing the last
+            // one left behind carries into this one - a fade covers the faces as well as
+            // the edges, and the states below only repaint the edges.
+            this.visual.removeTemperaryMaterial();
+            if (VisualStateUtils.hasState(newState, VisualStates.edgeSelected)) {
                 // Selected before highlighted, because the cursor is still sitting on
                 // what you just clicked: letting hover win would hold the dashed
                 // selection back until you moved the mouse away, and "you did pick
                 // this" outranks "you could pick this" anyway.
                 this.visual.setVertexsMateiralTemperary(selectedVertexMaterial);
                 this.visual.setEdgesMateiralTemperary(selectedEdgeMaterial);
+            } else if (faded) {
+                this.visual.setFadedTemperary();
             } else if (VisualStateUtils.hasState(newState, VisualStates.edgeHighlight)) {
                 this.visual.setVertexsMateiralTemperary(highlightVertexMaterial);
                 this.visual.setEdgesMateiralTemperary(hilightEdgeMaterial);
             } else if (VisualStateUtils.hasState(newState, VisualStates.faceTransparent)) {
-                this.visual.removeTemperaryMaterial();
                 this.visual.setFacesMateiralTemperary(faceTransparentMaterial);
             } else if (VisualStateUtils.hasState(newState, VisualStates.faceHighlight)) {
-                this.visual.removeTemperaryMaterial();
                 this.visual.setFacesMateiralTemperary(highlightFaceMaterial);
             }
         } else if (isHighlightable(this.visual)) {
-            if (newState !== VisualStates.normal) {
-                this.visual.highlight(isSelectedState(newState));
+            // Unfaded first, for the same reason: highlight() swaps materials too, and
+            // the fade has to hand back the originals, not a highlight.
+            setFaded(this.visual, false);
+            if (isSelectedState(newState)) {
+                this.visual.highlight(true);
+            } else if (faded) {
+                this.visual.unhighlight();
+                setFaded(this.visual, true);
+            } else if (newState !== VisualStates.normal) {
+                this.visual.highlight(false);
             } else {
                 this.visual.unhighlight();
             }
@@ -138,6 +182,7 @@ export class GeometryState {
         if (this.visual instanceof ThreeGeometry) {
             this.visual.removeTemperaryMaterial();
         } else if (isHighlightable(this.visual)) {
+            setFaded(this.visual, false);
             this.visual.unhighlight();
         }
         this._states.clear();

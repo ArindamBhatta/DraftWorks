@@ -11,6 +11,20 @@ const CENTER = SIZE / 2;
 const PICKBOX = 10;
 
 /**
+ * ERASE's badge: AutoCAD's red cross, below and right of the pickbox. It has to clear
+ * the box - it rides along with the pick, it is not what picks.
+ *
+ * Red rather than the pointer's white, because the colour is the message: this pick
+ * destroys. That keeps it out of the white pass below, so it is painted on its own,
+ * with the same dark edge under it that keeps the white lines readable on a light
+ * canvas.
+ */
+const CROSS_PATH = `<path d="M23 23 L30 30 M30 23 L23 30" fill="none" />`;
+const CROSS =
+    `<g stroke="#000" stroke-opacity="0.55" stroke-width="4" stroke-linecap="round">${CROSS_PATH}</g>` +
+    `<g stroke="#ff3b30" stroke-width="2" stroke-linecap="round">${CROSS_PATH}</g>`;
+
+/**
  * AutoCAD's drawing-area pointers. There are three, and which one is showing is how a
  * draftsman knows what the program is waiting for without reading the prompt:
  *
@@ -27,7 +41,7 @@ const PICKBOX = 10;
  * black pass under a thin white pass - so the cursor stays visible against both the
  * light and the dark canvas without needing two themed variants.
  */
-function pointer(parts: { crosshair: boolean; pickbox: boolean }) {
+function pointer(parts: { crosshair: boolean; pickbox: boolean; cross?: boolean }) {
     const half = PICKBOX / 2;
     // The arms stop short of the box only when both are drawn together.
     const gap = parts.pickbox && parts.crosshair ? half : 0;
@@ -43,6 +57,7 @@ function pointer(parts: { crosshair: boolean; pickbox: boolean }) {
         `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">` +
         `<g stroke="#000" stroke-opacity="0.55" stroke-width="3">${shapes}</g>` +
         `<g stroke="#fff" stroke-width="1">${shapes}</g>` +
+        (parts.cross ? CROSS : "") +
         `</svg>`;
     // The keyword fallback matches the shape: a bare pickbox is a picking pointer, so
     // it falls back to the arrow rather than to a crosshair it does not draw.
@@ -54,6 +69,7 @@ const cursors: Map<CursorType, string> = new Map([
     ["default", pointer({ crosshair: true, pickbox: true })],
     ["select.default", pointer({ crosshair: true, pickbox: true })],
     ["select.objects", pointer({ crosshair: false, pickbox: true })],
+    ["select.erase", pointer({ crosshair: false, pickbox: true, cross: true })],
     ["draw", pointer({ crosshair: true, pickbox: false })],
     ["pan", "grab"],
     ["pan.active", "grabbing"],
