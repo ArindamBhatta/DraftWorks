@@ -60,6 +60,12 @@ export class VisualItemConfig extends Observable {
     temporaryVertexSize = 5;
     temporaryVertexColor = 0x33ff33;
     temporaryEdgeColor = 0x33ff33;
+    /**
+     * How strongly the dashed helper lines are drawn: the protractor, the dimension
+     * guides, and the polar, ortho and object-tracking lines. They are there to help
+     * aim, not part of the drawing, so they stay at 40% and never hide what they cross.
+     */
+    helperLineOpacity = 0.2;
 
     /**
      * What EXTEND draws under the cursor, and why it is not the ordinary highlight blue.
