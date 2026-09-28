@@ -45,6 +45,7 @@ export class Viewport extends HTMLElement {
                   )
                 : "",
             this.createViewLabel(),
+            this.createViewCube(),
             this.createUcsIcon(),
         );
     }
@@ -55,10 +56,9 @@ export class Viewport extends HTMLElement {
             svg({
                 icon: "icon-fitcontent",
                 title: new Localize("viewport.fitContent"),
-                onclick: async (e) => {
+                onclick: (e) => {
                     e.stopPropagation();
-                    this.view.cameraController.fitContent();
-                    this.view.update();
+                    this.fitContent();
                 },
             }),
             svg({
@@ -80,6 +80,11 @@ export class Viewport extends HTMLElement {
         );
     }
 
+    private fitContent() {
+        this.view.cameraController.fitContent();
+        this.view.update();
+    }
+
     // Static AutoCAD-style viewport corner label: "[<view name>] [2D Wireframe]".
     // This is a 2D-only drafting app locked to a single top-down view and a single
     // wireframe render mode (see Application.createActiveView and ThreeView's default
@@ -95,6 +100,59 @@ export class Viewport extends HTMLElement {
             " ]  [ ",
             span({ textContent: new Localize("viewport.2dWireframe") }),
             " ]",
+        );
+    }
+
+    // AutoCAD's ViewCube as it looks in plan view: the TOP face inside a compass ring,
+    // with the WCS tag underneath. The view is locked to Top (see
+    // Application.createActiveView), so TOP is the only face. Clicking it fits the
+    // drawing, as clicking a face does in AutoCAD. The ring and the tag let the pointer
+    // through to the drawing.
+    //
+    // The drawing handlers read offsetX/offsetY, which over the face would be measured
+    // from the face instead of the view. So the face keeps its pointer events to itself,
+    // and a click on it never picks an object or places a point in a running command.
+    private createViewCube() {
+        // The ring is four arcs with a 20° gap at each compass point, so the letters
+        // sit in open space instead of on top of the stroke.
+        const markup = `<svg viewBox="0 0 120 136" xmlns="http://www.w3.org/2000/svg">
+            <path class="${style.viewCubeRing}" d="M 67.99 14.7 A 46 46 0 0 1 105.3 52.01
+                M 105.3 67.99 A 46 46 0 0 1 67.99 105.3
+                M 52.01 105.3 A 46 46 0 0 1 14.7 67.99
+                M 14.7 52.01 A 46 46 0 0 1 52.01 14.7" />
+            <g class="${style.viewCubeCompass}">
+                <text x="60" y="14">N</text>
+                <text x="106" y="60">E</text>
+                <text x="60" y="106">S</text>
+                <text x="14" y="60">W</text>
+            </g>
+            <g class="${style.viewCubeTop}">
+                <rect class="${style.viewCubeFace}" x="38" y="38" width="44" height="44" rx="2" />
+                <text class="${style.viewCubeFaceText}" x="60" y="60">TOP</text>
+            </g>
+            <rect class="${style.viewCubeTag}" x="43" y="120" width="34" height="14" rx="3" />
+            <text class="${style.viewCubeTagText}" x="60" y="127">WCS</text>
+        </svg>`;
+        const doc = new DOMParser().parseFromString(markup, "image/svg+xml");
+        // Only the face takes pointer events (see the CSS), so everything that reaches
+        // these listeners came from the face.
+        const keep = (e: Event) => e.stopPropagation();
+        return div(
+            {
+                className: style.viewCube,
+                onpointerdown: keep,
+                onpointermove: keep,
+                onpointerup: keep,
+                onwheel: (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                },
+                onclick: (e) => {
+                    e.stopPropagation();
+                    this.fitContent();
+                },
+            },
+            doc.documentElement as unknown as SVGSVGElement,
         );
     }
 
