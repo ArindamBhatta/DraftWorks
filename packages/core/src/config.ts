@@ -62,20 +62,18 @@ export class VisualItemConfig extends Observable {
     temporaryEdgeColor = 0x33ff33;
 
     /**
-     * What TRIM and EXTEND draw under the cursor, and why they are not the ordinary
-     * highlight blue.
+     * What EXTEND draws under the cursor, and why it is not the ordinary highlight blue.
      *
-     * Blue means "you could pick this", which is the one thing these previews do not
-     * mean: they are the piece the click is about to take away or add, drawn over an
-     * edge the cursor is already on. Red for the stretch that is about to stop existing
-     * and green for the stretch about to start - the same green every other preview in
-     * the app uses for geometry that is not there yet - so a glance at the colour
-     * answers "what happens if I click" without reading anything.
+     * Blue means "you could pick this", which is the one thing this preview does not
+     * mean: it is the piece the click is about to add, drawn over an edge the cursor is
+     * already on. Green, the same green every other preview in the app uses for geometry
+     * that is not there yet, so a glance answers "what happens if I click" without
+     * reading anything. (TRIM needs no colour of its own: it shows the edge as the click
+     * will leave it, the stretch that goes dotted - see EdgePreview.)
      *
      * Wider than an ordinary edge, too, because the preview usually lies exactly on top
      * of the line it is describing and would otherwise be hidden by it.
      */
-    trimPreviewColor = 0xff5555;
     extendPreviewColor = 0x33ff33;
     trimExtendPreviewLineWidth = 4;
 

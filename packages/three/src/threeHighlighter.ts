@@ -1,6 +1,8 @@
 import {
+    type EdgeMeshData,
     type IHighlighter,
     isDisposable,
+    type LineChange,
     MeshDataUtils,
     MeshUtils,
     type ShapeMeshData,
@@ -13,6 +15,8 @@ import {
 
 import { Group, type Material, Mesh, type Object3D, Points } from "three";
 
+import type { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
+
 import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
 
 import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js";
@@ -22,6 +26,8 @@ import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import { isHighlightable } from "./highlightable";
 
 import {
+    defaultEdgeMaterial,
+    dottedMaterial,
     FADED_OPACITY,
     faceTransparentMaterial,
     fadedMaterial,
@@ -369,7 +375,48 @@ export class ThreeHighlighter implements IHighlighter {
         return group.id;
     }
 
+    /** How to take each highlightChange down again, by the id it returned. */
+    private readonly _changes = new Map<number, () => void>();
+
+    highlightChange(visual: ThreeVisualObject, change: LineChange): number {
+        // TRIM's targets are always ThreeGeometry - the only visual it can detect an edge
+        // on - but anything else still gets the preview, drawn over itself in the default
+        // look rather than standing in for it.
+        const geometry = visual instanceof ThreeGeometry ? visual : undefined;
+        const own = geometry?.baseEdgeMaterial ?? defaultEdgeMaterial;
+
+        const group = new Group();
+        const draw = (data: EdgeMeshData, material: LineMaterial) => {
+            const segments = new LineSegments2(ThreeGeometryFactory.createEdgeBufferGeometry(data), material);
+            // Needed by the dots, and by a kept piece whose own linetype is dashed.
+            segments.computeLineDistances();
+            group.add(segments);
+        };
+        for (const data of change.kept) draw(data, own);
+        for (const data of change.removed) draw(data, dottedMaterial(own));
+
+        this.container.add(group);
+        geometry?.setLinesStoodIn(true);
+        this._changes.set(group.id, () => {
+            geometry?.setLinesStoodIn(false);
+            this.container.remove(group);
+            // The geometry only: the materials are the object's own and its dotted twin,
+            // both shared, and disposing them would repaint every object that uses them.
+            group.children.forEach((x) => {
+                if (x instanceof LineSegments2) x.geometry.dispose();
+            });
+        });
+        return group.id;
+    }
+
     removeHighlightMesh(id: number) {
+        const restore = this._changes.get(id);
+        if (restore) {
+            this._changes.delete(id);
+            restore();
+            return;
+        }
+
         const shape = this.container.getObjectById(id);
         if (shape === undefined) return;
         shape.children.forEach((x) => {

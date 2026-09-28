@@ -1,7 +1,8 @@
-import { command, GeometryUtils, VisualConfig } from "@draftworks/core";
+import { command, GeometryUtils } from "@draftworks/core";
 import {
     type EdgeChange,
     type EdgeContext,
+    type EdgePreview,
     TrimExtendCommand,
     type TrimExtendPrompts,
     trimChange,
@@ -35,9 +36,10 @@ export class Trim extends TrimExtendCommand {
         return true;
     }
 
-    // Red: the stretch under the cursor is the one that will stop existing.
-    protected override get previewColor(): number {
-        return VisualConfig.trimPreviewColor;
+    // The edge as the click will leave it, the stretch that goes dotted in the edge's
+    // own colour - AutoCAD's preview, rather than a red line of the app's own.
+    protected override get preview(): EdgePreview {
+        return { kind: "outcome" };
     }
 
     protected override planEdge({ edge, span, picked, boundaries }: EdgeContext): EdgeChange | undefined {

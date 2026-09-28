@@ -179,6 +179,24 @@ export class ThreeGeometry extends ThreeVisualObject implements IVisualGeometry 
         if (this._edges && wasBase) this._edges.material = material;
     }
 
+    /** The edge material this object is drawn with when nothing temporary is showing. */
+    get baseEdgeMaterial(): LineMaterial {
+        return this._baseEdgeMaterial;
+    }
+
+    /**
+     * Hides the object's own lines while something else is drawn in their place - see
+     * ThreeHighlighter.highlightChange.
+     *
+     * Only what is drawn: hover detection raycasts these same objects and three does
+     * not skip hidden ones, so the cursor goes on finding the object underneath its
+     * stand-in, and the stand-in does not flicker away the moment it appears.
+     */
+    setLinesStoodIn(stoodIn: boolean) {
+        if (this._edges) this._edges.visible = !stoodIn;
+        if (this._vertexs) this._vertexs.visible = !stoodIn;
+    }
+
     private initEdges(data: EdgeMeshData) {
         const buff = ThreeGeometryFactory.createEdgeBufferGeometry(data);
         this._edges = new LineSegments2(buff, this._baseEdgeMaterial);

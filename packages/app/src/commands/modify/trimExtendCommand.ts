@@ -6,6 +6,7 @@ import {
     Config,
     type CursorType,
     CurveUtils,
+    type EdgeMeshData,
     EditableShapeNode,
     type GeometryNode,
     I18n,
@@ -399,12 +400,21 @@ class PickBoundaryHandler extends SubshapeSelectionHandler {
     }
 }
 
+/**
+ * How a pick shows what clicking would do.
+ *
+ *   outcome - the edge as the click will leave it, with the stretch that goes drawn
+ *             dotted in the edge's own colour. TRIM, the way AutoCAD shows it.
+ *   overlay - the stretch the click is about, painted over the edge in `color`. EXTEND,
+ *             whose stretch is not there yet to be drawn any other way.
+ */
+export type EdgePreview = { kind: "outcome" } | { kind: "overlay"; color: number };
+
 /** How a pick should look and what else it will answer to. */
 export interface PickEdgeOptions {
     /** What clicking `target` would do, worked out fresh on every hover. */
     plan: (target: VisualShapeData, keep: (disposable: IDisposable) => void) => EdgePlan | undefined;
-    /** The colour of the stretch the click is about - see VisualConfig.trimPreviewColor. */
-    previewColor: number;
+    preview: EdgePreview;
     /** Alternatives offered at this prompt: typed here, clicked in the status bar. */
     options: StepOption[];
 }
@@ -412,11 +422,12 @@ export interface PickEdgeOptions {
 /**
  * Picks one edge and shows, under the cursor, what clicking it would do.
  *
- * The preview is the point of the class. TRIM draws the piece about to disappear in red
- * and EXTEND the piece about to appear in green, right on top of the edge they describe,
- * so a click is committing to something already on screen rather than to a guess about
- * which side of a crossing the cursor counted as. Both come from the same `affected`
- * range - see EdgeChange - which is why one handler serves both commands.
+ * The preview is the point of the class. TRIM shows the edge as the click will leave it,
+ * the piece about to disappear dotted, and EXTEND draws the piece about to appear in
+ * green, right on top of the edge it describes - so a click is committing to something
+ * already on screen rather than to a guess about which side of a crossing the cursor
+ * counted as. Both come from the same `affected` range - see EdgeChange - which is why
+ * one handler serves both commands.
  *
  * An edge the command can do nothing with gets the ordinary hover highlight instead. That
  * distinction is the whole answer to "why did nothing happen when I clicked": blue says
@@ -462,22 +473,35 @@ export class PickEdgeHandler extends ShapeSelectionHandler {
             return;
         }
 
-        const curve = plan.basis.trim(plan.affected.start, plan.affected.end);
-        this.keep(curve);
-        const preview = shapeFactory.edge(curve);
-        this.keep(preview);
-
-        const mesh = preview.mesh.edges!;
-        mesh.color = this.pick.previewColor;
-        mesh.lineWidth = VisualConfig.trimExtendPreviewLineWidth;
-        this.#highlightMesh = view.document.visual.highlighter.highlightMesh(mesh);
+        const highlighter = view.document.visual.highlighter;
+        const preview = this.pick.preview;
+        if (preview.kind === "outcome") {
+            this.#highlightMesh = highlighter.highlightChange(plan.target.owner, {
+                kept: plan.result.map((range) => this.stretch(plan, range)),
+                removed: [this.stretch(plan, plan.affected)],
+            });
+        } else {
+            const mesh = this.stretch(plan, plan.affected);
+            mesh.color = preview.color;
+            mesh.lineWidth = VisualConfig.trimExtendPreviewLineWidth;
+            this.#highlightMesh = highlighter.highlightMesh(mesh);
+        }
         this.#highlight = plan;
         view.update();
     }
 
+    /** A range of the plan's curve, meshed in world space for the preview. */
+    private stretch(plan: EdgePlan, range: ParameterRange): EdgeMeshData {
+        const curve = plan.basis.trim(range.start, range.end);
+        this.keep(curve);
+        const edge = shapeFactory.edge(curve);
+        this.keep(edge);
+        return edge.mesh.edges!;
+    }
+
     protected override cleanHighlights(): void {
         // Both kinds have to go: the plain hover highlight the base class puts on an edge
-        // there is nothing to do with, and this class's own red or green preview.
+        // there is nothing to do with, and this class's own preview.
         super.cleanHighlights();
         if (this.#highlightMesh !== undefined) {
             this.document.visual.highlighter.removeHighlightMesh(this.#highlightMesh);
@@ -535,8 +559,8 @@ export abstract class TrimExtendCommand extends CancelableCommand {
      */
     protected abstract get boundariesCrossTarget(): boolean;
 
-    /** The colour of the stretch a click is about - red for gone, green for arriving. */
-    protected abstract get previewColor(): number;
+    /** How a pick shows what clicking would do - see EdgePreview. */
+    protected abstract get preview(): EdgePreview;
 
     protected abstract planEdge(context: EdgeContext): EdgeChange | undefined;
 
@@ -773,7 +797,7 @@ export abstract class TrimExtendCommand extends CancelableCommand {
             const options = this.modeOptions();
             const handler = new PickEdgeHandler(this.document, this.controller, {
                 plan: this.planFor,
-                previewColor: this.previewColor,
+                preview: this.preview,
                 options,
             });
             await this.pickWithOptions(handler, this.targetPrompt, this.controller, {

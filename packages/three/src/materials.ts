@@ -182,7 +182,7 @@ export const hilightDashedEdgeMaterial = new LineMaterial({
  * Pixels rather than drawing units because this is cursor feedback, not a drafting
  * linetype (contrast `LineDashPatterns` above, which is deliberately in drawing
  * units so LTSCALE can govern it): the pattern has to read the same however far in
- * you are zoomed. `setSelectionDashScale` is what holds it there.
+ * you are zoomed. `setScreenDashScale` is what holds it there.
  */
 const SELECTION_DASH_PIXELS = 10;
 const SELECTION_GAP_PIXELS = 6;
@@ -201,17 +201,68 @@ export const selectedEdgeMaterial = new LineMaterial({
 });
 
 /**
- * Pins the selection dash to a fixed on-screen size, given the view's current
- * pixels-per-drawing-unit.
+ * TRIM's dots, in pixels, for the same reason the selection dash is: they are cursor
+ * feedback and have to read the same at any zoom. Short and evenly spaced so they read
+ * as dots, not as a dash - a stretch about to go must not look like a selected object,
+ * or like one drawn in a dashed linetype.
+ */
+const DOT_PIXELS = 2;
+const DOT_GAP_PIXELS = 3;
+
+const dottedMaterials = new Map<LineMaterial, LineMaterial>();
+
+let screenPixelsPerUnit = 1;
+
+/**
+ * A line material's dotted twin, for the stretch TRIM is about to take away. It keeps the
+ * original's colour and weight, so the dots read as the same object, going.
+ *
+ * Kept per original and re-read from it on every call, for the reasons given at
+ * fadedMaterial - originals are few, long-lived and change in place.
+ */
+export function dottedMaterial(base: LineMaterial): LineMaterial {
+    let dotted = dottedMaterials.get(base);
+    if (!dotted) {
+        const twin = base.clone();
+        twin.dashed = true;
+        twin.dashSize = DOT_PIXELS;
+        twin.gapSize = DOT_GAP_PIXELS;
+        twin.dashScale = screenPixelsPerUnit;
+        dottedMaterials.set(base, twin);
+        const release = () => {
+            base.removeEventListener("dispose", release);
+            dottedMaterials.delete(base);
+            twin.dispose();
+        };
+        base.addEventListener("dispose", release);
+        dotted = twin;
+    }
+
+    // Property by property, never copy() - see fadedMaterial.
+    dotted.color.copy(base.color);
+    dotted.linewidth = base.linewidth;
+    dotted.opacity = base.opacity;
+    return dotted;
+}
+
+/**
+ * Pins every pixel-sized dash - the selection dash and TRIM's dots - to a fixed
+ * on-screen size, given the view's current pixels-per-drawing-unit.
  *
  * three measures a dash along the line in drawing units and then multiplies by
- * `dashScale`, so feeding it the zoom makes `dashSize`/`gapSize` above read as
- * pixels. Without this a selected object goes solid when you zoom out and turns
- * into one long dash when you zoom in - which is exactly when you most need to see
- * what you have got hold of. Called from the view's render tick.
+ * `dashScale`, so feeding it the zoom makes `dashSize`/`gapSize` read as pixels.
+ * Without this a selected object goes solid when you zoom out and turns into one
+ * long dash when you zoom in - which is exactly when you most need to see what you
+ * have got hold of. Called from the view's render tick.
  */
-export function setSelectionDashScale(pixelsPerUnit: number) {
-    if (pixelsPerUnit > 0) selectedEdgeMaterial.dashScale = pixelsPerUnit;
+export function setScreenDashScale(pixelsPerUnit: number) {
+    if (pixelsPerUnit <= 0) return;
+
+    screenPixelsPerUnit = pixelsPerUnit;
+    selectedEdgeMaterial.dashScale = pixelsPerUnit;
+    dottedMaterials.forEach((material) => {
+        material.dashScale = pixelsPerUnit;
+    });
 }
 
 // Selection and highlight faces are cursor feedback, not surfaces, so they are drawn
