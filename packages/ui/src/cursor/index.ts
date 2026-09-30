@@ -1,14 +1,19 @@
-import type { CursorType } from "@draftworks/core";
+import { Config, type CursorType } from "@draftworks/core";
 
 /**
  * 32 is the ceiling, not a preference: Firefox ignores cursor images larger than
  * 32x32 on some platforms and silently falls back to the keyword cursor, so anything
  * bigger would render as a plain crosshair for those users while looking correct in
  * Chrome. The hotspot has to land on the centre line, so SIZE must stay even.
+ *
+ * The long crosshair arms are no longer drawn here - they are a viewport overlay now
+ * (see Crosshair), which is free of this 32px cap and can reach across the screen the
+ * way AutoCAD's CURSORSIZE does. What stays in the cursor image is the pickbox: a small
+ * square pinned to the hotspot, where the browser places it to the sub-pixel without an
+ * overlay having to chase the pointer to keep it centred.
  */
 const SIZE = 32;
 const CENTER = SIZE / 2;
-const PICKBOX = 10;
 
 /**
  * ERASE's badge: AutoCAD's red cross, below and right of the pickbox. It has to clear
@@ -36,47 +41,60 @@ const CROSS =
  * "Select objects" tells the user they are placing a point when they are not, which
  * is exactly the confusion MOVE used to cause here.
  *
- * Drawn as an SVG data URI rather than a .cur file so it stays crisp at any DPI and can
- * be built for every state from one definition. Every stroke is painted twice - a wide
- * black pass under a thin white pass - so the cursor stays visible against both the
- * light and the dark canvas without needing two themed variants.
+ * The crosshair arms are drawn by the Crosshair overlay, which reads the same `crosshair`
+ * flag off the active cursor type; this image carries only the pickbox (and ERASE's
+ * cross). Drawn as an SVG data URI rather than a .cur file so it stays crisp at any DPI.
+ * Every stroke is painted twice - a wide black pass under a thin white pass - so the box
+ * stays visible against both the light and the dark canvas without two themed variants.
+ *
+ * `pickbox` is the box's edge length in pixels; the caller passes Config's pickboxSize so
+ * a `PICKBOX` change rebuilds the cursor at the new size.
  */
-function pointer(parts: { crosshair: boolean; pickbox: boolean; cross?: boolean }) {
-    const half = PICKBOX / 2;
-    // The arms stop short of the box only when both are drawn together.
-    const gap = parts.pickbox && parts.crosshair ? half : 0;
+function pointer(parts: { crosshair: boolean; pickbox: boolean; cross?: boolean }, pickbox: number) {
+    const half = pickbox / 2;
     const box = parts.pickbox
-        ? `<rect x="${CENTER - half}" y="${CENTER - half}" width="${PICKBOX}" height="${PICKBOX}" fill="none" />`
+        ? `<rect x="${CENTER - half}" y="${CENTER - half}" width="${pickbox}" height="${pickbox}" fill="none" />`
         : "";
-    const arms = parts.crosshair
-        ? `<path d="M0 ${CENTER} H${CENTER - gap} M${CENTER + gap} ${CENTER} H${SIZE}
-                 M${CENTER} 0 V${CENTER - gap} M${CENTER} ${CENTER + gap} V${SIZE}" fill="none" />`
-        : "";
-    const shapes = `${arms}${box}`;
     const markup =
         `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">` +
-        `<g stroke="#000" stroke-opacity="0.55" stroke-width="3">${shapes}</g>` +
-        `<g stroke="#fff" stroke-width="1">${shapes}</g>` +
+        `<g stroke="#000" stroke-opacity="0.55" stroke-width="3">${box}</g>` +
+        `<g stroke="#fff" stroke-width="1">${box}</g>` +
         (parts.cross ? CROSS : "") +
         `</svg>`;
-    // The keyword fallback matches the shape: a bare pickbox is a picking pointer, so
-    // it falls back to the arrow rather than to a crosshair it does not draw.
+    // The keyword fallback matches the shape: a picking pointer falls back to the arrow,
+    // an aiming one to the crosshair keyword the overlay would otherwise stand in for.
     const fallback = parts.crosshair ? "crosshair" : "default";
     return `url("data:image/svg+xml,${encodeURIComponent(markup)}") ${CENTER} ${CENTER}, ${fallback}`;
 }
 
-const cursors: Map<CursorType, string> = new Map([
-    ["default", pointer({ crosshair: true, pickbox: true })],
-    ["select.default", pointer({ crosshair: true, pickbox: true })],
-    ["select.objects", pointer({ crosshair: false, pickbox: true })],
-    ["select.erase", pointer({ crosshair: false, pickbox: true, cross: true })],
-    ["draw", pointer({ crosshair: true, pickbox: false })],
-    ["pan", "grab"],
-    ["pan.active", "grabbing"],
-]);
+/** Which parts each cursor type draws - read by both this image and the Crosshair overlay. */
+export const CursorParts: Record<CursorType, { crosshair: boolean; pickbox: boolean; cross?: boolean }> = {
+    default: { crosshair: true, pickbox: true },
+    "select.default": { crosshair: true, pickbox: true },
+    "select.objects": { crosshair: false, pickbox: true },
+    "select.erase": { crosshair: false, pickbox: true, cross: true },
+    draw: { crosshair: true, pickbox: false },
+    // Panning has no drawing pointer at all; the browser's grab/grabbing keyword is it.
+    pan: { crosshair: false, pickbox: false },
+    "pan.active": { crosshair: false, pickbox: false },
+};
+
+const keywordCursors: Partial<Record<CursorType, string>> = {
+    pan: "grab",
+    "pan.active": "grabbing",
+};
 
 export class Cursor {
+    /**
+     * The CSS cursor for a type, built at the current pickbox size. Rebuilt on each call
+     * rather than cached, so a `PICKBOX` change is picked up the next time the cursor is
+     * set - which the viewport does on the config change (see LayoutViewport).
+     */
     static get(type: CursorType) {
-        return cursors.get(type) ?? "default";
+        const keyword = keywordCursors[type];
+        if (keyword) return keyword;
+        const parts = CursorParts[type];
+        if (!parts) return "default";
+        return pointer(parts, Config.instance.pickboxSize);
     }
 }

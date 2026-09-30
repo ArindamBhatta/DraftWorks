@@ -82,6 +82,8 @@ export const CommandAliases: Partial<Record<CommandKeys, string[]>> = {
     "edit.redo": ["red", "redo"],
     "view.pan": ["p", "pan"],
     "units.setup": ["un", "units", "ddunits"],
+    "config.crosshairSize": ["cursorsize", "crosshair", "crosshairsize"],
+    "config.pickbox": ["pickbox", "pickboxsize"],
     "layer.moveToCurrent": ["laymcur", "movetolayer"],
     "layer.setup": ["la", "layer", "ddlmodes"],
     // The LAY* quick actions, under the names AutoCAD gives them.

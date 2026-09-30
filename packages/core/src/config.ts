@@ -133,7 +133,49 @@ export class Config extends Observable {
         return Config.#instance;
     }
 
-    readonly SnapDistance: number = 10;
+    /**
+     * How close a click has to land to pick a line, in pixels - AutoCAD's pick aperture.
+     * Follows the pickbox rather than being its own number: in AutoCAD a bigger PICKBOX
+     * grabs from farther, so the box you see and the reach you get stay the same thing.
+     * The half-edge is the radius, so a 10px box picks within 5px of a line, which is the
+     * value this used to be fixed at.
+     */
+    get SnapDistance(): number {
+        return this.pickboxSize / 2;
+    }
+
+    /**
+     * AutoCAD's PICKBOX: the edge length, in pixels, of the little square at the cursor
+     * that picks objects. Bigger than AutoCAD's own default of 3, because a 3px target is
+     * a strain to hit with a mouse on a high-DPI screen where AutoCAD grew up on a stylus
+     * and a CRT; 10 is close to what AutoCAD ends up at once PICKBOX is scaled for DPI.
+     * Guarded to a sane range - a zero box cannot be clicked and a huge one grabs half the
+     * drawing - and it drives SnapDistance above, so the box you see is the reach you get.
+     */
+    @serialize()
+    get pickboxSize() {
+        return this.getPrivateValue("pickboxSize", 10);
+    }
+    set pickboxSize(value: number) {
+        this.setProperty("pickboxSize", Number.isFinite(value) ? MathUtils.clamp(value, 1, 50) : 10);
+    }
+
+    /**
+     * AutoCAD's CURSORSIZE: the length of the crosshair arms as a percentage of the
+     * viewport's shorter side, 1 to 100. 100 is AutoCAD's full-screen crosshair, the one
+     * that lets you line a point up against geometry on the far side of the drawing.
+     *
+     * Default 5 matches AutoCAD's own default, but unlike AutoCAD this crosshair is drawn
+     * as a viewport overlay rather than a mouse-cursor image, so it is free of the 32px
+     * cap the browser puts on cursor images and can actually reach across the screen.
+     */
+    @serialize()
+    get crosshairSize() {
+        return this.getPrivateValue("crosshairSize", 5);
+    }
+    set crosshairSize(value: number) {
+        this.setProperty("crosshairSize", Number.isFinite(value) ? MathUtils.clamp(value, 1, 100) : 5);
+    }
 
     get snapType() {
         return this.getPrivateValue(
