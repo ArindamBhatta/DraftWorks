@@ -1,5 +1,6 @@
-import { Binding, type IEventHandler, type IView, Localize } from "@draftworks/core";
+import { Binding, type CursorType, type IEventHandler, type IView, Localize, PubSub } from "@draftworks/core";
 import { div, span } from "@draftworks/element";
+import { Crosshair } from "../cursor/crosshair";
 import { DimensionHost, Flyout } from "./flyout";
 import style from "./viewport.module.css";
 
@@ -13,6 +14,8 @@ export class Viewport extends HTMLElement {
     private readonly _dimensionHost: DimensionHost;
     /** The second box's own line - a rectangle's height, beside the width's. */
     private readonly _secondDimensionHost: DimensionHost;
+    /** AutoCAD's full crosshair, drawn over this viewport - see Crosshair. */
+    private readonly _crosshair: Crosshair;
     private readonly _eventCaches: [keyof HTMLElementEventMap, (e: any) => void][] = [];
 
     constructor(readonly view: IView) {
@@ -23,6 +26,11 @@ export class Viewport extends HTMLElement {
         // Handed over rather than looked up: the viewport builds both, so the flyout
         // never has to go hunting through the DOM for where to send its field.
         this._flyout = new Flyout(this._dimensionHost, this._secondDimensionHost);
+        this._crosshair = new Crosshair();
+        // Armed for the idle "default" pointer from the start - viewCursor is only
+        // published once a command runs, so without this the crosshair would stay off
+        // until the first pick.
+        this._crosshair.setCursor("default");
         this.render();
         view.setDom(this);
     }
@@ -130,17 +138,30 @@ export class Viewport extends HTMLElement {
 
     connectedCallback() {
         this.initEvent();
+        // Under the flyout and the HUD corners but over the drawing (see the CSS z-index).
+        this.appendChild(this._crosshair);
         this.appendChild(this._flyout);
         this.appendChild(this._dimensionHost);
         this.appendChild(this._secondDimensionHost);
+        PubSub.default.sub("viewCursor", this._handleCursor);
     }
 
     disconnectedCallback() {
         this.removeEvents();
+        PubSub.default.remove("viewCursor", this._handleCursor);
+        this._crosshair.remove();
         this._flyout.remove();
         this._dimensionHost.remove();
         this._secondDimensionHost.remove();
     }
+
+    // The crosshair overlay only draws the arms; which cursor type wants them (and so
+    // whether they show at all) comes from the same viewCursor event that sets the pickbox
+    // cursor at the LayoutViewport. Fed here rather than subscribed inside the overlay so
+    // it stays a dumb HUD the viewport drives.
+    private readonly _handleCursor = (type: CursorType) => {
+        this._crosshair.setCursor(type);
+    };
 
     dispose() {
         this.removeEvents();
@@ -190,6 +211,7 @@ export class Viewport extends HTMLElement {
             this._flyout.style.top = `${event.offsetY}px`;
             this._flyout.style.left = `${event.offsetX}px`;
         }
+        this._crosshair.moveTo(event.offsetX, event.offsetY);
 
         this.handleEvent("pointerMove", event);
     };
@@ -211,6 +233,9 @@ export class Viewport extends HTMLElement {
     };
 
     private readonly pointerOut = (event: PointerEvent) => {
+        // No pointer over the drawing, no crosshair - otherwise it freezes at the last
+        // point and reads as a placed mark rather than the live cursor it is.
+        this._crosshair.hide();
         this.handleEvent("pointerOut", event);
     };
 

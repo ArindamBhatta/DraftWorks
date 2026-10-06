@@ -1,0 +1,19 @@
+/*
+ * The crosshair overlay: a HUD stretched over the whole viewport, under the labels and
+ * the ViewCube but over the drawing. It never takes pointer events - it is feedback about
+ * where the pointer is, not something to click - so every event falls through to the
+ * canvas handlers below it.
+ */
+.root {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+    overflow: hidden;
+
+    svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+}

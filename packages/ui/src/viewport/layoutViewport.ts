@@ -1,5 +1,6 @@
 import {
     type CollectionChangedArgs,
+    Config,
     type CursorType,
     type IApplication,
     type IView,
@@ -12,11 +13,14 @@ import { Viewport } from "./viewport";
 export class LayoutViewport extends HTMLElement {
     private readonly _viewports: Map<IView, Viewport> = new Map();
 
+    /** The cursor type in force, re-applied when PICKBOX resizes the pickbox in it. */
+    private _cursorType: CursorType = "default";
+
     constructor(readonly app: IApplication) {
         super();
         this.className = style.root;
-        // Crosshair from the start, not just once a command publishes a cursor.
-        this.style.cursor = Cursor.get("default");
+        // Pickbox cursor from the start, not just once a command publishes a cursor.
+        this.style.cursor = Cursor.get(this._cursorType);
         app.views.onCollectionChanged(this._handleViewCollectionChanged);
     }
 
@@ -38,15 +42,24 @@ export class LayoutViewport extends HTMLElement {
     connectedCallback(): void {
         PubSub.default.sub("activeViewChanged", this._handleActiveViewChanged);
         PubSub.default.sub("viewCursor", this._handleCursor);
+        Config.instance.onPropertyChanged(this._handleConfigChanged);
     }
 
     disconnectedCallback(): void {
         PubSub.default.remove("activeViewChanged", this._handleActiveViewChanged);
         PubSub.default.remove("viewCursor", this._handleCursor);
+        Config.instance.removePropertyChanged(this._handleConfigChanged);
     }
 
     private readonly _handleCursor = (type: CursorType) => {
+        this._cursorType = type;
         this.style.cursor = Cursor.get(type);
+    };
+
+    // PICKBOX changes the size of the box baked into the cursor image, so re-apply the
+    // current cursor to pick up the new size - the overlay crosshair reacts on its own.
+    private readonly _handleConfigChanged = (property: keyof Config) => {
+        if (property === "pickboxSize") this.style.cursor = Cursor.get(this._cursorType);
     };
 
     private createViewport(view: IView) {

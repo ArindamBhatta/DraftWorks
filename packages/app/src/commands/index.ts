@@ -14,6 +14,7 @@ export * from "./modify";
 export * from "./plot";
 export * from "./properties";
 export * from "./redo";
+export * from "./settingsCommands";
 export * from "./undo";
 export * from "./unitSetupCommand";
 export * from "./view";

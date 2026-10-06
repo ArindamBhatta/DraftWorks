@@ -2,7 +2,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 2px;
+    gap: 8px;
     color: var(--foreground-color);
 }
 
@@ -77,7 +77,8 @@
  *
  * Narrow and unlabelled because the button it belongs to is right beside it and already
  * named: this only has to say "there is more behind this one". Pulled tight against that
- * button by the negative margin, so the pair reads as one control and not as two.
+ * button by the negative margin, so the pair reads as one control and not as two. The
+ * margin cancels the container's gap as well, so it has to follow that gap if it changes.
  */
 .flyoutTrigger {
     appearance: none;
@@ -89,7 +90,7 @@
     font-size: 9px;
     line-height: 1;
     padding: 5px 3px;
-    margin-left: -5px;
+    margin-left: -9px;
     cursor: pointer;
     opacity: 0.6;
 

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://webcad-app.web.app/sitemap.xml
